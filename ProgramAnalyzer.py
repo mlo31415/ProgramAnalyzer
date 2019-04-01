@@ -88,4 +88,15 @@ while rowIndex < len(values):
                                     participants[person].append((time, roomNames[roomIndex], itemName))
     rowIndex+=2
 
+partlist=participants.keys()
+partlist=sorted(partlist, key=lambda x: x.split(" ")[-1:])
+
+txt=open("people with items.txt", "w")
+for person in partlist:
+    print("", file=txt)
+    print(person, file=txt)
+    for item in participants[person]:
+        print("    "+item[0]+": "+item[2], file=txt)
+txt.close()
+
 
