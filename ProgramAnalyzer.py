@@ -9,26 +9,21 @@ from google.auth.transport.requests import Request
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
 
 # The ID and range of a sample spreadsheet.
-SAMPLE_SPREADSHEET_ID = '1UjHSw-R8dLNFGctUhIQiPr58aAAfBedGznJEN2xBn7o'
-SAMPLE_RANGE_NAME = 'A1:Z999'
+SPREADSHEET_ID ='1UjHSw-R8dLNFGctUhIQiPr58aAAfBedGznJEN2xBn7o'
 
-"""Shows basic usage of the Sheets API.
-Prints values from a sample spreadsheet.
-"""
 creds = None
 # The file token.pickle stores the user's access and refresh tokens, and is
-# created automatically when the authorization flow completes for the first
-# time.
+# created automatically when the authorization flow completes for the first time.
 if os.path.exists('token.pickle'):
     with open('token.pickle', 'rb') as token:
         creds = pickle.load(token)
+
 # If there are no (valid) credentials available, let the user log in.
 if not creds or not creds.valid:
     if creds and creds.expired and creds.refresh_token:
         creds.refresh(Request())
     else:
-        flow = InstalledAppFlow.from_client_secrets_file(
-            'credentials.json', SCOPES)
+        flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
         creds = flow.run_local_server()
     # Save the credentials for the next run
     with open('token.pickle', 'wb') as token:
@@ -38,8 +33,7 @@ service = build('sheets', 'v4', credentials=creds)
 
 # Call the Sheets API
 sheet = service.spreadsheets()
-result = sheet.values().get(spreadsheetId=SAMPLE_SPREADSHEET_ID,
-                            range=SAMPLE_RANGE_NAME).execute()
+result = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range='A1:Z999').execute()     # Read the whole thing.
 values = result.get('values', [])
 
 if not values:
@@ -69,28 +63,31 @@ while rowIndex < len(values):
     if len(row) == 0:   # Skip empty rows
         rowIndex+=1
         continue
-    time=row[0]
+    time=row[0] # When a row has the first column filled, that element is the time of the item
+    # Lookin at the rest of the row, there may be text in one or more of the room columns
     for roomIndex in roomIndexes:
-        if roomIndex < len(row):
-            if len(row[roomIndex]) > 0:
-                # OK, this has to be an item name since it's a cell containing text in a row that starts with a timeand in a column that starts with a room
+        if roomIndex < len(row):    # Trailing empty cells have been truncated, so better check.
+            if len(row[roomIndex]) > 0:     # So does the cell itself contain text?
+                # This has to be an item name since it's a cell containing text in a row that starts with a timeand in a column that starts with a room
                 itemName=row[roomIndex]
                 # If there are people scheduled for it, they will be in the next cell down
-                if len(values)> rowIndex+1:
-                    if len(values[rowIndex+1]) > roomIndex:
-                        if len(values[rowIndex+1][roomIndex]) > 0:
-                            people=values[rowIndex+1][roomIndex].split(",")
+                peopleRow=rowIndex+1
+                if len(values)> peopleRow:  # Does peopleRow exist?
+                    if len(values[peopleRow]) > roomIndex:  # Does it have enough columns
+                        if len(values[peopleRow][roomIndex]) > 0: # Does it have anything in the right column?
+                            people=values[peopleRow][roomIndex].split(",")  # Get a list of people
                             for person in people:
                                 person=person.strip()
-                                if len(person) > 0:
-                                    if person not in participants.keys():
+                                if len(person) > 0:     # If there's anything left, add this item to that person's entry
+                                    if person not in participants.keys():   # If this is the first time we've encountered this person, create an empty entry.
                                         participants[person]=[]
-                                    participants[person].append((time, roomNames[roomIndex], itemName))
-    rowIndex+=2
+                                    participants[person].append((time, roomNames[roomIndex], itemName))     # And append a tuple with the time, room, and item name
+    rowIndex+=2 # Skip both rows
 
-partlist=participants.keys()
-partlist=sorted(partlist, key=lambda x: x.split(" ")[-1:])
+# Get a list of the program participants (the keys of the  participants dictionary) sorted by the last token in the name (which will usually be the last name)
+partlist=sorted(participants.keys(), key=lambda x: x.split(" ")[-1])
 
+# Print the items by people wiht time list
 txt=open("people with items.txt", "w")
 for person in partlist:
     print("", file=txt)
