@@ -147,6 +147,20 @@ if count == 0:
     print("    None found", file=txt)
 txt.close()
 
+# Check for people in the schedule who are not in the people tab
+txt=open("reports/Diag - People in schedule without email.txt", "w")
+print("People who are scheduled but lack email address:", file=txt)
+print("(Note that these may be due to spelling differences, use of initials, etc.)", file=txt)
+count=0
+for person in participants.keys():
+    if person not in peopleTable.keys():
+        count+=1
+        print("   "+person, file=txt)
+if count == 0:
+    print("    None found", file=txt)
+txt.close()
+
+
 
 # Print the items by people with time list
 # Get a list of the program participants (the keys of the  participants dictionary) sorted by the last token in the name (which will usually be the last name)
