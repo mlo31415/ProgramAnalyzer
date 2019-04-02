@@ -5,6 +5,12 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 
 
+def ItemClean(s: str):
+    loc=s.find("{")
+    if loc > 0:
+        return s[:loc-1]
+    return s
+
 
 # If modifying these scopes, delete the file token.pickle.
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
@@ -78,7 +84,7 @@ while rowIndex < len(scheduleCells):
     for roomIndex in roomIndexes:
         if roomIndex < len(row):    # Trailing empty cells have been truncated, so better check.
             if len(row[roomIndex]) > 0:     # So does the cell itself contain text?
-                # This has to be an item name since it's a cell containing text in a row that starts with a timeand in a column that starts with a room
+                # This has to be an item name since it's a cell containing text in a row that starts with a time and in a column that starts with a room
                 itemName=row[roomIndex].strip()
                 # If there are people scheduled for it, they will be in the next cell down
                 peopleRow=rowIndex+1
@@ -147,6 +153,7 @@ if count == 0:
     print("    None found", file=txt)
 txt.close()
 
+
 # Check for people in the schedule who are not in the people tab
 txt=open("reports/Diag - People in schedule without email.txt", "w")
 print("People who are scheduled but lack email address:", file=txt)
@@ -161,7 +168,6 @@ if count == 0:
 txt.close()
 
 
-
 # Print the items by people with time list
 # Get a list of the program participants (the keys of the  participants dictionary) sorted by the last token in the name (which will usually be the last name)
 partlist=sorted(participants.keys(), key=lambda x: x.split(" ")[-1])
@@ -170,7 +176,7 @@ for person in partlist:
     print("", file=txt)
     print(person, file=txt)
     for item in participants[person]:
-        print("    "+item[0]+": "+item[2], file=txt)
+        print("    "+item[0]+": "+ItemClean(item[2]), file=txt)
 txt.close()
 
 # Now the raw text for the pocket program
@@ -182,7 +188,7 @@ for time in times:
         for itemName in items.keys():
             item=items[itemName]
             if item[0] == time and item[1] == room:
-                print("   "+room+":  "+itemName, file=txt)
+                print("   "+room+":  "+ItemClean(itemName), file=txt)
                 if item[2] is not None and len(item[2]) > 0:
                     print("            "+", ".join(item[2]), file=txt)
 txt.close()
