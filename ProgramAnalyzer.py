@@ -5,6 +5,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 
 
+
 # If modifying these scopes, delete the file token.pickle.
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
 
@@ -33,24 +34,31 @@ service = build('sheets', 'v4', credentials=creds)
 
 # Call the Sheets API
 sheet = service.spreadsheets()
-result = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range='A1:Z999').execute()     # Read the whole thing.
-values = result.get('values', [])
+scheduleCells = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range='Schedule!A1:Z999').execute().get('values', [])     # Read the whole thing.
+if not scheduleCells:
+    raise(ValueError, "No scheduleCells found")
+precisCells = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range='Precis!A1:Z999').execute().get('values', [])     # Read the whole thing.
+if not precisCells:
+    raise(ValueError, "No precisCells found")
+peopleCells = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range='People!A1:Z999').execute().get('values', [])     # Read the whole thing.
+if not peopleCells:
+    raise(ValueError, "No peopleCells found")
 
-if not values:
-    raise(ValueError, "No values found")
 
+#******
+# Analyze the Schedule cells
 # The first row is the rooms.
 # Make a list of room names and room column indexes
 roomIndexes=[]
-for i in range(0, len(values[0])):
-    if values[0][i] is None:
+for i in range(0, len(scheduleCells[0])):
+    if scheduleCells[0][i] is None:
         break
-    if len(values[0][i]) > 0:
+    if len(scheduleCells[0][i]) > 0:
         roomIndexes.append(i)
 
 # Drop the room names from the spreadsheet
-roomNames=[r.strip() for r in values[0]]
-values=values[1:]
+roomNames=[r.strip() for r in scheduleCells[0]]
+scheduleCells=scheduleCells[1:]
 
 # Start building the participants and items databases (dictionaries)
 participants={} # A dictionary keyed by a person's name containing a list of (time, room, item) tuples, each an item that that person is on.
@@ -59,8 +67,8 @@ times=[]        # This is a list of times in spreadsheet order which should be i
 
 # When we find a row with data in column 0, we have found a new time.
 rowIndex=0
-while rowIndex < len(values):
-    row=values[rowIndex]
+while rowIndex < len(scheduleCells):
+    row=scheduleCells[rowIndex]
     if len(row) == 0:   # Skip empty rows
         rowIndex+=1
         continue
@@ -75,10 +83,10 @@ while rowIndex < len(values):
                 # If there are people scheduled for it, they will be in the next cell down
                 peopleRow=rowIndex+1
                 peopleList=[]
-                if len(values)> peopleRow:  # Does peopleRow exist?
-                    if len(values[peopleRow]) > roomIndex:  # Does it have enough columns
-                        if len(values[peopleRow][roomIndex]) > 0: # Does it have anything in the right column?
-                            people=values[peopleRow][roomIndex].split(",")  # Get a list of people
+                if len(scheduleCells)> peopleRow:  # Does peopleRow exist?
+                    if len(scheduleCells[peopleRow]) > roomIndex:  # Does it have enough columns
+                        if len(scheduleCells[peopleRow][roomIndex]) > 0: # Does it have anything in the right column?
+                            people=scheduleCells[peopleRow][roomIndex].split(",")  # Get a list of people
                             for person in people:
                                 person=person.strip()
                                 if len(person) > 0:     # If there's anything left, add this item to that person's entry
@@ -88,6 +96,28 @@ while rowIndex < len(values):
                                     peopleList.append(person)
                 items[itemName]=(time, roomNames[roomIndex], peopleList)
     rowIndex+=2 # Skip both rows
+
+#******
+# Analyze the Precis cells
+# The first row is column labels. So ignore it.
+precisCells=precisCells[1:]
+
+# The rest of the tab is pairs title:precis.
+precis={}
+for row in precisCells:
+    if len(row[0].strip()) > 0 and len(row[1].strip()) > 0:
+        precis[row[0].strip()]=row[1].strip()
+
+#******
+# Analyze the People cells
+# The first row is column labels. So ignore it.
+peopleCells=peopleCells[1:]
+
+# the first two columns are first name and last name.  The third column is email
+peopleTable={}
+for row in peopleCells:
+    if len(row) > 2 and len(row[0].strip()) > 0 and len(row[1].strip()) > 0 and len(row[2].strip()) > 0:
+        peopleTable[row[0].strip()+" "+row[1].strip()]=row[2].strip()
 
 # Print the items by people with time list
 # Get a list of the program participants (the keys of the  participants dictionary) sorted by the last token in the name (which will usually be the last name)
