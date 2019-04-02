@@ -1,5 +1,6 @@
 import pickle
 import os.path
+import difflib
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -194,4 +195,26 @@ for time in times:
                 if itemName in precis.keys():
                     print("            "+precis[itemName], file=txt)
 
+txt.close()
+
+
+#******
+# Now look for similar name pairs
+# First we make up a list of all names that appear in any tab
+names=set()
+names.update(participants.keys())
+names.update(peopleTable.keys())
+similarNames=[]
+for p1 in names:
+    for p2 in names:
+        if p1 < p2:
+            rat=difflib.SequenceMatcher(a=p1, b=p2).ratio()
+            if rat > .75:
+                similarNames.append((p1, p2, rat))
+similarNames.sort(key=lambda x: x[2], reverse=True)
+
+txt=open("reports/Diag - Disturbingly similar names.txt", "w")
+print("Names that are disturbingly similar:", file=txt)
+for s in similarNames:
+    print("   "+s[0]+"  &  "+s[1], file=txt)
 txt.close()
