@@ -119,10 +119,14 @@ for row in peopleCells:
     if len(row) > 2 and len(row[0].strip()) > 0 and len(row[1].strip()) > 0 and len(row[2].strip()) > 0:
         peopleTable[row[0].strip()+" "+row[1].strip()]=row[2].strip()
 
+# Create the reports folder if none exists
+if not os.path.exists("reports"):
+    os.mkdir("reports")
+
 # Print the items by people with time list
 # Get a list of the program participants (the keys of the  participants dictionary) sorted by the last token in the name (which will usually be the last name)
 partlist=sorted(participants.keys(), key=lambda x: x.split(" ")[-1])
-txt=open("People with items by time.txt", "w")
+txt=open("reports/People with items by time.txt", "w")
 for person in partlist:
     print("", file=txt)
     print(person, file=txt)
@@ -131,7 +135,7 @@ for person in partlist:
 txt.close()
 
 # Now the raw text for the pocket program
-txt=open("Pocket program.txt", "w")
+txt=open("reports/Pocket program.txt", "w")
 for time in times:
     print("\n"+time, file=txt)
     for room in roomNames:
