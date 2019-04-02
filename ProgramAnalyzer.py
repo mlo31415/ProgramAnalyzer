@@ -6,7 +6,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 
 
-def ItemClean(s: str):
+def ItemDisplay(s: str):
     loc=s.find("{")
     if loc > 0:
         return s[:loc-1]
@@ -177,7 +177,7 @@ for person in partlist:
     print("", file=txt)
     print(person, file=txt)
     for item in participants[person]:
-        print("    "+item[0]+": "+ItemClean(item[2]), file=txt)
+        print("    "+item[0]+": "+ItemDisplay(item[2]), file=txt)
 txt.close()
 
 # Now the raw text for the pocket program
@@ -189,7 +189,7 @@ for time in times:
         for itemName in items.keys():
             item=items[itemName]
             if item[0] == time and item[1] == room:
-                print("   "+room+":  "+ItemClean(itemName), file=txt)   # Print the room and item name
+                print("   "+room+":  "+ItemDisplay(itemName), file=txt)   # Print the room and item name
                 if item[2] is not None and len(item[2]) > 0:            # And the item's people list
                     print("            "+", ".join(item[2]), file=txt)
                 if itemName in precis.keys():
