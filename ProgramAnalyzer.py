@@ -123,6 +123,31 @@ for row in peopleCells:
 if not os.path.exists("reports"):
     os.mkdir("reports")
 
+#**************************
+# Generate reports
+
+# Print a list of precis without corresponding items and items without precis
+txt=open("reports/Diag - Precis without items and items without precis.txt", "w")
+print("Items without precis:", file=txt)
+count=0
+for itemName in items.keys():
+    if itemName not in precis.keys():
+        count+=1
+        print("   "+itemName, file=txt)
+if count == 0:
+    print("    None found", file=txt)
+
+count=0
+print("\n\nPrecis without items:", file=txt)
+for itemName in precis.keys():
+    if itemName not in items.keys():
+        count+=1
+        print("   "+itemName, file=txt)
+if count == 0:
+    print("    None found", file=txt)
+txt.close()
+
+
 # Print the items by people with time list
 # Get a list of the program participants (the keys of the  participants dictionary) sorted by the last token in the name (which will usually be the last name)
 partlist=sorted(participants.keys(), key=lambda x: x.split(" ")[-1])
