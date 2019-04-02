@@ -188,7 +188,10 @@ for time in times:
         for itemName in items.keys():
             item=items[itemName]
             if item[0] == time and item[1] == room:
-                print("   "+room+":  "+ItemClean(itemName), file=txt)
-                if item[2] is not None and len(item[2]) > 0:
+                print("   "+room+":  "+ItemClean(itemName), file=txt)   # Print the room and item name
+                if item[2] is not None and len(item[2]) > 0:            # And the item's people list
                     print("            "+", ".join(item[2]), file=txt)
+                if itemName in precis.keys():
+                    print("            "+precis[itemName], file=txt)
+
 txt.close()
