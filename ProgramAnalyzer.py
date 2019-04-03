@@ -12,16 +12,10 @@ def ItemDisplay(s: str):
         return s[:loc-1]
     return s
 
-
-# If modifying these scopes, delete the file token.pickle.
-SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
-
-# The ID and range of a sample spreadsheet.
-SPREADSHEET_ID ='1UjHSw-R8dLNFGctUhIQiPr58aAAfBedGznJEN2xBn7o'
-
 creds = None
 # The file token.pickle stores the user's access and refresh tokens, and is
 # created automatically when the authorization flow completes for the first time.
+# Pickle is a scheme for serializing data to disk and retrieving it
 if os.path.exists('token.pickle'):
     with open('token.pickle', 'rb') as token:
         creds = pickle.load(token)
@@ -31,7 +25,7 @@ if not creds or not creds.valid:
     if creds and creds.expired and creds.refresh_token:
         creds.refresh(Request())
     else:
-        flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
+        flow = InstalledAppFlow.from_client_secrets_file('credentials.json', 'https://www.googleapis.com/auth/spreadsheets.readonly')
         creds = flow.run_local_server()
     # Save the credentials for the next run
     with open('token.pickle', 'wb') as token:
@@ -39,8 +33,9 @@ if not creds or not creds.valid:
 
 service = build('sheets', 'v4', credentials=creds)
 
-# Call the Sheets API
+# Call the Sheets API to load the various tabs of the spreadsheet
 sheet = service.spreadsheets()
+SPREADSHEET_ID ='1UjHSw-R8dLNFGctUhIQiPr58aAAfBedGznJEN2xBn7o'  # This is the ID of the specific spreadsheet we're reading
 scheduleCells = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range='Schedule!A1:Z999').execute().get('values', [])     # Read the whole thing.
 if not scheduleCells:
     raise(ValueError, "No scheduleCells found")
@@ -63,7 +58,7 @@ for i in range(0, len(scheduleCells[0])):
     if len(scheduleCells[0][i]) > 0:
         roomIndexes.append(i)
 
-# Drop the room names from the spreadsheet
+# Drop the room names from the spreadsheet leaving just the schedules
 roomNames=[r.strip() for r in scheduleCells[0]]
 scheduleCells=scheduleCells[1:]
 
@@ -75,28 +70,29 @@ times=[]        # This is a list of times in spreadsheet order which should be i
 # When we find a row with data in column 0, we have found a new time.
 rowIndex=0
 while rowIndex < len(scheduleCells):
-    row=scheduleCells[rowIndex]
+    row=[c.strip() for c in scheduleCells[rowIndex]]  # Get just the one row as a list of cells. Strip off leading and trailing blanks.
     if len(row) == 0:   # Skip empty rows
         rowIndex+=1
         continue
-    time=row[0].strip() # When a row has the first column filled, that element is the time of the item
+
+    time=row[0] # When a row has the first column filled, that element is the time of the item
     times.append(time)
-    # Lookin at the rest of the row, there may be text in one or more of the room columns
+    # Looking at the rest of the row, there may be text in one or more of the room columns
     for roomIndex in roomIndexes:
         if roomIndex < len(row):    # Trailing empty cells have been truncated, so better check.
             if len(row[roomIndex]) > 0:     # So does the cell itself contain text?
                 # This has to be an item name since it's a cell containing text in a row that starts with a time and in a column that starts with a room
-                itemName=row[roomIndex].strip()
+                itemName=row[roomIndex]
                 # If there are people scheduled for it, they will be in the next cell down
-                peopleRow=rowIndex+1
+                peopleRowIndex=rowIndex+1
                 peopleList=[]
-                if len(scheduleCells)> peopleRow:  # Does peopleRow exist?
-                    if len(scheduleCells[peopleRow]) > roomIndex:  # Does it have enough columns
-                        if len(scheduleCells[peopleRow][roomIndex]) > 0: # Does it have anything in the right column?
-                            people=scheduleCells[peopleRow][roomIndex].split(",")  # Get a list of people
-                            for person in people:
-                                person=person.strip()
-                                if len(person) > 0:     # If there's anything left, add this item to that person's entry
+                if len(scheduleCells)> peopleRowIndex:  # Does a row indexed by peopleRowIndex exist in the spreadsheet?
+                    if len(scheduleCells[peopleRowIndex]) > roomIndex:  # Does it have enough columns?
+                        if len(scheduleCells[peopleRowIndex][roomIndex]) > 0: # Does it have anything in the right column?
+                            people=scheduleCells[peopleRowIndex][roomIndex].split(",")  # Get a list of people
+                            people=[p.strip() for p in people]
+                            for person in people:       # For each person listed on this item
+                                if len(person) > 0:     # Is it's not empty...
                                     if person not in participants.keys():   # If this is the first time we've encountered this person, create an empty entry.
                                         participants[person]=[]
                                     participants[person].append((time, roomNames[roomIndex], itemName))     # And append a tuple with the time, room, and item name
@@ -112,21 +108,24 @@ precisCells=precisCells[1:]
 # The rest of the tab is pairs title:precis.
 precis={}
 for row in precisCells:
-    if len(row[0].strip()) > 0 and len(row[1].strip()) > 0:
-        precis[row[0].strip()]=row[1].strip()
+    row=[r.strip() for r in row]    # Get rid of leading and trailing blanks
+    if len(row[0]) > 0 and len(row[1]) > 0: # If both the item name and the precis exist, store them in the precis table.
+        precis[row[0]]=row[1]
 
 #******
 # Analyze the People cells
 # The first row is column labels. So ignore it.
 peopleCells=peopleCells[1:]
 
-# the first two columns are first name and last name.  The third column is email
+# The first two columns are first name and last name.  The third column is email
+# We'll combine the first and last names to create a full name like is used elsewhere.
 peopleTable={}
 for row in peopleCells:
-    if len(row) > 2 and len(row[0].strip()) > 0 and len(row[1].strip()) > 0 and len(row[2].strip()) > 0:
-        peopleTable[row[0].strip()+" "+row[1].strip()]=row[2].strip()
+    row=[r.strip() for r in row]    # Get rid of leading and trailing blanks
+    if len(row) > 2 and len(row[0]) > 0 and len(row[1]) > 0 and len(row[2]) > 0:
+        peopleTable[row[0]+" "+row[1]]=row[2]       # Store the email in the entry indexed by the full name
 
-# Create the reports folder if none exists
+# Create the reports subfolder if none exists
 if not os.path.exists("reports"):
     os.mkdir("reports")
 
