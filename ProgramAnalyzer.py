@@ -214,6 +214,10 @@ similarNames.sort(key=lambda x: x[2], reverse=True)
 
 txt=open("reports/Diag - Disturbingly similar names.txt", "w")
 print("Names that are disturbingly similar:", file=txt)
+count=0
 for s in similarNames:
     print("   "+s[0]+"  &  "+s[1], file=txt)
+    count+=1
+if count == 0:
+    print("    None found", file=txt)
 txt.close()
