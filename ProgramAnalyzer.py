@@ -12,26 +12,26 @@ def ItemDisplay(s: str):
         return s[:loc-1]
     return s
 
-creds = None
+credentials = None
 # The file token.pickle stores the user's access and refresh tokens, and is
 # created automatically when the authorization flow completes for the first time.
 # Pickle is a scheme for serializing data to disk and retrieving it
 if os.path.exists('token.pickle'):
     with open('token.pickle', 'rb') as token:
-        creds = pickle.load(token)
+        credentials = pickle.load(token)
 
 # If there are no (valid) credentials available, let the user log in.
-if not creds or not creds.valid:
-    if creds and creds.expired and creds.refresh_token:
-        creds.refresh(Request())
+if not credentials or not credentials.valid:
+    if credentials and credentials.expired and credentials.refresh_token:
+        credentials.refresh(Request())
     else:
         flow = InstalledAppFlow.from_client_secrets_file('credentials.json', 'https://www.googleapis.com/auth/spreadsheets.readonly')
-        creds = flow.run_local_server()
+        credentials = flow.run_local_server()
     # Save the credentials for the next run
     with open('token.pickle', 'wb') as token:
-        pickle.dump(creds, token)
+        pickle.dump(credentials, token)
 
-service = build('sheets', 'v4', credentials=creds)
+service = build('sheets', 'v4', credentials=credentials)
 
 # Call the Sheets API to load the various tabs of the spreadsheet
 sheet = service.spreadsheets()
