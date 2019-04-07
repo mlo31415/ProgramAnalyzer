@@ -1,6 +1,9 @@
 import pickle
 import os.path
 import difflib
+import docx
+from docx.shared import Pt
+from docx.shared import Inches
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -179,21 +182,56 @@ for person in partlist:
         print("    "+item[0]+": "+ItemDisplay(item[2]), file=txt)
 txt.close()
 
-# Now the raw text for the pocket program
+
+def AddPara(doc, txt: str, bold: bool, ital: bool, size: int, indent: float):
+    para=doc.add_paragraph()
+    run=para.add_run(txt)
+    run.bold=bold
+    run.italic=ital
+    font=run.font
+    font.name="Calibri"
+    font.size=Pt(size)
+    para.paragraph_format.left_indent=Inches(indent)
+    para.paragraph_format.line_spacing=1
+    para.paragraph_format.space_after=0
+
+def AddRun(para, txt: str, bold: bool, ital: bool, size: int, indent: float):
+    run=para.add_run(txt)
+    run.bold=bold
+    run.italic=ital
+    font=run.font
+    font.name="Calibri"
+    font.size=Pt(size)
+    para.paragraph_format.left_indent=Inches(indent)
+    para.paragraph_format.line_spacing=1
+    para.paragraph_format.space_after=0
+
+# Create a docx and a .txt version for the pocket program
+doc=docx.Document()
 txt=open("reports/Pocket program.txt", "w")
+AddPara(doc, "Schedule", True, False, 24, 0)
+print("Schedule")
 for time in times:
+    AddPara(doc, "", True, False, 14, 0)
+    AddPara(doc, time, True, False, 14, 0)
     print("\n"+time, file=txt)
     for room in roomNames:
         # Now search for the program item and people list for this slot
         for itemName in items.keys():
             item=items[itemName]
             if item[0] == time and item[1] == room:
+                para=doc.add_paragraph()
+                AddRun(para, room+": ", False, True, 12, 0.3)
+                AddRun(para, ItemDisplay(itemName), False, False, 12, 0.3)
                 print("   "+room+":  "+ItemDisplay(itemName), file=txt)   # Print the room and item name
                 if item[2] is not None and len(item[2]) > 0:            # And the item's people list
-                    print("            "+", ".join(item[2]), file=txt)
+                    plist=", ".join(item[2])
+                    AddPara(doc, plist, False, False, 12, 0.6)
+                    print("            "+plist, file=txt)
                 if itemName in precis.keys():
+                    AddPara(doc, precis[itemName], False, True, 10, 0.6)
                     print("            "+precis[itemName], file=txt)
-
+doc.save("reports/Pocket program.docx")
 txt.close()
 
 
