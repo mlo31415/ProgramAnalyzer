@@ -240,7 +240,7 @@ def AppendTextToPara(para, txt: str, bold=False, italic=False, size=14, indent=0
 doc=docx.Document()
 txt=open("reports/Pocket program.txt", "w")
 AppendParaToDoc(doc, "Schedule", bold=True, size=24)
-print("Schedule")
+print("Schedule", file=txt)
 for time in times:
     AppendParaToDoc(doc, "")
     AppendParaToDoc(doc, time, bold=True)
@@ -266,4 +266,21 @@ txt.close()
 
 #******
 # Do the room signs.  They'll go in reports/rooms/<name>.docx
-
+# Create the roomsigns subfolder if none exists
+path=os.path.join("reports", "roomsigns")
+if not os.path.exists(path):
+    os.mkdir(path)
+for room in roomNames:
+    doc=docx.Document()
+    AppendParaToDoc(doc, room, bold=True, size=32)
+    # items[itemName]=(time, roomNames[roomIndex], peopleList)
+    for time in times:
+        for itemName in items.keys():
+            item=items[itemName]
+            if item[0] == time and item[1] == room:
+                AppendParaToDoc(doc, "")
+                para=doc.add_paragraph()
+                AppendTextToPara(para, time+":  ", bold=True)
+                AppendTextToPara(para, itemName)
+                AppendParaToDoc(doc, ", ".join(item[2]), indent=0.5)
+    doc.save(os.path.join(path, room+".docx"))
