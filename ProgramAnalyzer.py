@@ -271,16 +271,17 @@ path=os.path.join("reports", "roomsigns")
 if not os.path.exists(path):
     os.mkdir(path)
 for room in roomNames:
+    if len(room.strip()) == 0:
+        continue
     doc=docx.Document()
-    AppendParaToDoc(doc, room, bold=True, size=32)
-    # items[itemName]=(time, roomNames[roomIndex], peopleList)
+    AppendParaToDoc(doc, room, bold=True, size=32)  # Room name at top
     for time in times:
         for itemName in items.keys():
             item=items[itemName]
             if item[0] == time and item[1] == room:
-                AppendParaToDoc(doc, "")
+                AppendParaToDoc(doc, "")    # Skip a line
                 para=doc.add_paragraph()
-                AppendTextToPara(para, time+":  ", bold=True)
+                AppendTextToPara(para, time+":  ", bold=True)   # Add the time in bold followed by the item's title
                 AppendTextToPara(para, itemName)
-                AppendParaToDoc(doc, ", ".join(item[2]), indent=0.5)
+                AppendParaToDoc(doc, ", ".join(item[2]), italic=True, indent=0.5)        # Then, on a new line, the people list in italic
     doc.save(os.path.join(path, room+".docx"))
