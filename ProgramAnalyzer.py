@@ -52,7 +52,7 @@ if not peopleCells:
 
 #******
 # Analyze the Schedule cells
-# The first row is the rooms.
+# The first row of the spreadsheet is the list of rooms.
 # Make a list of room names and room column indexes
 roomIndexes=[]
 for i in range(0, len(scheduleCells[0])):
@@ -65,7 +65,7 @@ for i in range(0, len(scheduleCells[0])):
 roomNames=[r.strip() for r in scheduleCells[0]]
 scheduleCells=scheduleCells[1:]
 
-# Start building the participants and items databases (dictionaries)
+# Start reading ths spreadsheet and building the participants and items databases (dictionaries)
 participants={} # A dictionary keyed by a person's name containing a list of (time, room, item) tuples, each an item that that person is on.
 items={}        # A dictionary keyed by item name containing a (time, room, people-list) tuple, where people-list is the list of people on the item
 times=[]        # This is a list of times in spreadsheet order which should be in sorted order.
@@ -73,12 +73,12 @@ times=[]        # This is a list of times in spreadsheet order which should be i
 # When we find a row with data in column 0, we have found a new time.
 rowIndex=0
 while rowIndex < len(scheduleCells):
-    row=[c.strip() for c in scheduleCells[rowIndex]]  # Get just the one row as a list of cells. Strip off leading and trailing blanks.
-    if len(row) == 0:   # Skip empty rows
+    row=[c.strip() for c in scheduleCells[rowIndex]]  # Get just the one row as a list of cells. Strip off leading and trailing blanks for each cell.
+    if len(row) == 0:   # Ignore empty rows
         rowIndex+=1
         continue
 
-    time=row[0] # When a row has the first column filled, that element is the time of the item
+    time=row[0] # When a row has the first column filled, that element is the time of the item.  If the spreadsheet is well-formed, the next non-blank line is a time line
     times.append(time)
     # Looking at the rest of the row, there may be text in one or more of the room columns
     for roomIndex in roomIndexes:
@@ -132,8 +132,9 @@ for row in peopleCells:
 if not os.path.exists("reports"):
     os.mkdir("reports")
 
-#**************************
+#*****************************************
 # Generate reports
+# The first reports are all error reports or checking reports
 
 # Print a list of precis without corresponding items and items without precis
 txt=open("reports/Diag - Precis without items and items without precis.txt", "w")
@@ -157,6 +158,7 @@ if count == 0:
 txt.close()
 
 
+#******
 # Check for people in the schedule who are not in the people tab
 txt=open("reports/Diag - People in schedule without email.txt", "w")
 print("People who are scheduled but lack email address:", file=txt)
@@ -170,6 +172,34 @@ if count == 0:
     print("    None found", file=txt)
 txt.close()
 
+#******
+# Now look for similar name pairs
+# First we make up a list of all names that appear in any tab
+names=set()
+names.update(participants.keys())
+names.update(peopleTable.keys())
+similarNames=[]
+for p1 in names:
+    for p2 in names:
+        if p1 < p2:
+            rat=difflib.SequenceMatcher(a=p1, b=p2).ratio()
+            if rat > .75:
+                similarNames.append((p1, p2, rat))
+similarNames.sort(key=lambda x: x[2], reverse=True)
+
+txt=open("reports/Diag - Disturbingly similar names.txt", "w")
+print("Names that are disturbingly similar:", file=txt)
+count=0
+for s in similarNames:
+    print("   "+s[0]+"  &  "+s[1], file=txt)
+    count+=1
+if count == 0:
+    print("    None found", file=txt)
+txt.close()
+
+
+#****************************************************
+# Now do the content/working reports
 
 # Print the items by people with time list
 # Get a list of the program participants (the keys of the  participants dictionary) sorted by the last token in the name (which will usually be the last name)
@@ -234,28 +264,6 @@ for time in times:
 doc.save("reports/Pocket program.docx")
 txt.close()
 
-
 #******
-# Now look for similar name pairs
-# First we make up a list of all names that appear in any tab
-names=set()
-names.update(participants.keys())
-names.update(peopleTable.keys())
-similarNames=[]
-for p1 in names:
-    for p2 in names:
-        if p1 < p2:
-            rat=difflib.SequenceMatcher(a=p1, b=p2).ratio()
-            if rat > .75:
-                similarNames.append((p1, p2, rat))
-similarNames.sort(key=lambda x: x[2], reverse=True)
+# Do the room signs.  They'll go in reports/rooms/<name>.docx
 
-txt=open("reports/Diag - Disturbingly similar names.txt", "w")
-print("Names that are disturbingly similar:", file=txt)
-count=0
-for s in similarNames:
-    print("   "+s[0]+"  &  "+s[1], file=txt)
-    count+=1
-if count == 0:
-    print("    None found", file=txt)
-txt.close()
