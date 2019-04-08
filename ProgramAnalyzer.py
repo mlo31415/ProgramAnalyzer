@@ -213,25 +213,25 @@ for person in partlist:
 txt.close()
 
 
-def AppendParaToDoc(doc, txt: str, bold: bool, ital: bool, size: int, indent: float):
+def AppendParaToDoc(doc, txt: str, bold=False, italic=False, size=14, indent=0.0, font="Calibri"):
     para=doc.add_paragraph()
     run=para.add_run(txt)
     run.bold=bold
-    run.italic=ital
-    font=run.font
-    font.name="Calibri"
-    font.size=Pt(size)
+    run.italic=italic
+    runfont=run.font
+    runfont.name=font
+    runfont.size=Pt(size)
     para.paragraph_format.left_indent=Inches(indent)
     para.paragraph_format.line_spacing=1
     para.paragraph_format.space_after=0
 
-def AppendTextToPara(para, txt: str, bold: bool, ital: bool, size: int, indent: float):
+def AppendTextToPara(para, txt: str, bold=False, italic=False, size=14, indent=0.0, font="Calibri"):
     run=para.add_run(txt)
     run.bold=bold
-    run.italic=ital
-    font=run.font
-    font.name="Calibri"
-    font.size=Pt(size)
+    run.italic=italic
+    runfont=run.font
+    runfont.name=font
+    runfont.size=Pt(size)
     para.paragraph_format.left_indent=Inches(indent)
     para.paragraph_format.line_spacing=1
     para.paragraph_format.space_after=0
@@ -239,11 +239,11 @@ def AppendTextToPara(para, txt: str, bold: bool, ital: bool, size: int, indent: 
 # Create a docx and a .txt version for the pocket program
 doc=docx.Document()
 txt=open("reports/Pocket program.txt", "w")
-AppendParaToDoc(doc, "Schedule", True, False, 24, 0)
+AppendParaToDoc(doc, "Schedule", bold=True, size=24)
 print("Schedule")
 for time in times:
-    AppendParaToDoc(doc, "", True, False, 14, 0)
-    AppendParaToDoc(doc, time, True, False, 14, 0)
+    AppendParaToDoc(doc, "")
+    AppendParaToDoc(doc, time, bold=True)
     print("\n"+time, file=txt)
     for room in roomNames:
         # Now search for the program item and people list for this slot
@@ -251,15 +251,15 @@ for time in times:
             item=items[itemName]
             if item[0] == time and item[1] == room:
                 para=doc.add_paragraph()
-                AppendTextToPara(para, room+": ", False, True, 12, 0.3)
-                AppendTextToPara(para, ItemDisplay(itemName), False, False, 12, 0.3)
+                AppendTextToPara(para, room+": ", italic=True, size=12, indent=0.3)
+                AppendTextToPara(para, ItemDisplay(itemName), size=12, indent=0.3)
                 print("   "+room+":  "+ItemDisplay(itemName), file=txt)   # Print the room and item name
                 if item[2] is not None and len(item[2]) > 0:            # And the item's people list
                     plist=", ".join(item[2])
-                    AppendParaToDoc(doc, plist, False, False, 12, 0.6)
+                    AppendParaToDoc(doc, plist, size=12, indent=0.6)
                     print("            "+plist, file=txt)
                 if itemName in precis.keys():
-                    AppendParaToDoc(doc, precis[itemName], False, True, 10, 0.6)
+                    AppendParaToDoc(doc, precis[itemName], italic=True, size=12, indent=0.6)
                     print("            "+precis[itemName], file=txt)
 doc.save("reports/Pocket program.docx")
 txt.close()
