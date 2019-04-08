@@ -15,6 +15,13 @@ def ItemDisplay(s: str):
         return s[:loc-1]
     return s
 
+# Delete a file, ignoring any errors
+def SafeDelete(fn):
+    try:
+        os.remove(fn)
+    except:
+        return
+
 credentials = None
 # The file token.pickle stores the user's access and refresh tokens, and is
 # created automatically when the authorization flow completes for the first time.
@@ -137,7 +144,8 @@ if not os.path.exists("reports"):
 # The first reports are all error reports or checking reports
 
 # Print a list of precis without corresponding items and items without precis
-txt=open("reports/Diag - Precis without items and items without precis.txt", "w")
+fname=os.path.join("reports", "Diag - Precis without items and items without precis.txt")
+txt=open(fname, "w")
 print("Items without precis:", file=txt)
 count=0
 for itemName in items.keys():
@@ -160,7 +168,8 @@ txt.close()
 
 #******
 # Check for people in the schedule who are not in the people tab
-txt=open("reports/Diag - People in schedule without email.txt", "w")
+fname=os.path.join("reports", "Diag - People in schedule without email.txt")
+txt=open(fname, "w")
 print("People who are scheduled but lack email address:", file=txt)
 print("(Note that these may be due to spelling differences, use of initials, etc.)", file=txt)
 count=0
@@ -187,15 +196,19 @@ for p1 in names:
                 similarNames.append((p1, p2, rat))
 similarNames.sort(key=lambda x: x[2], reverse=True)
 
-txt=open("reports/Diag - Disturbingly similar names.txt", "w")
-print("Names that are disturbingly similar:", file=txt)
-count=0
-for s in similarNames:
-    print("   "+s[0]+"  &  "+s[1], file=txt)
-    count+=1
-if count == 0:
-    print("    None found", file=txt)
-txt.close()
+
+fname=os.path.join("reports", "Diag - Disturbingly similar names.txt")
+SafeDelete(fname)
+if len(similarNames) > 0:
+    txt=open(fname, "w")
+    print("Names that are disturbingly similar:", file=txt)
+    count=0
+    for s in similarNames:
+        print("   "+s[0]+"  &  "+s[1], file=txt)
+        count+=1
+    if count == 0:
+        print("    None found", file=txt)
+    txt.close()
 
 
 #****************************************************
@@ -204,7 +217,8 @@ txt.close()
 # Print the items by people with time list
 # Get a list of the program participants (the keys of the  participants dictionary) sorted by the last token in the name (which will usually be the last name)
 partlist=sorted(participants.keys(), key=lambda x: x.split(" ")[-1])
-txt=open("reports/People with items by time.txt", "w")
+fname=os.path.join("reports", "People with items by time.txt")
+txt=open(fname, "w")
 for person in partlist:
     print("", file=txt)
     print(person, file=txt)
@@ -238,7 +252,8 @@ def AppendTextToPara(para, txt: str, bold=False, italic=False, size=14, indent=0
 
 # Create a docx and a .txt version for the pocket program
 doc=docx.Document()
-txt=open("reports/Pocket program.txt", "w")
+fname=os.path.join("reports", "Pocket program.txt")
+txt=open(fname, "w")
 AppendParaToDoc(doc, "Schedule", bold=True, size=24)
 print("Schedule", file=txt)
 for time in times:
@@ -261,7 +276,8 @@ for time in times:
                 if itemName in precis.keys():
                     AppendParaToDoc(doc, precis[itemName], italic=True, size=12, indent=0.6)
                     print("            "+precis[itemName], file=txt)
-doc.save("reports/Pocket program.docx")
+fname=os.path.join("reports", "Pocket program.docx")
+doc.save(fname)
 txt.close()
 
 #******
@@ -284,7 +300,9 @@ for room in roomNames:
                 AppendParaToDoc(doc, "")    # Skip a line
                 para=doc.add_paragraph()
                 AppendTextToPara(para, time+":  ", bold=True)   # Add the time in bold followed by the item's title
-                AppendTextToPara(para, itemName)
+                AppendTextToPara(para, ItemDisplay(itemName))
                 AppendParaToDoc(doc, ", ".join(item[2]), italic=True, indent=0.5)        # Then, on a new line, the people list in italic
+    fname=os.path.join(path, room+".docx")
+    SafeDelete(fname)
     if inuse:
-        doc.save(os.path.join(path, room+".docx"))
+        doc.save(fname)
