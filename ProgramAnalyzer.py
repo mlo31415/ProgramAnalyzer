@@ -271,6 +271,7 @@ path=os.path.join("reports", "roomsigns")
 if not os.path.exists(path):
     os.mkdir(path)
 for room in roomNames:
+    inuse=False  # Make sure that this room is actually in use
     if len(room.strip()) == 0:
         continue
     doc=docx.Document()
@@ -279,9 +280,11 @@ for room in roomNames:
         for itemName in items.keys():
             item=items[itemName]
             if item[0] == time and item[1] == room:
+                inuse=True
                 AppendParaToDoc(doc, "")    # Skip a line
                 para=doc.add_paragraph()
                 AppendTextToPara(para, time+":  ", bold=True)   # Add the time in bold followed by the item's title
                 AppendTextToPara(para, itemName)
                 AppendParaToDoc(doc, ", ".join(item[2]), italic=True, indent=0.5)        # Then, on a new line, the people list in italic
-    doc.save(os.path.join(path, room+".docx"))
+    if inuse:
+        doc.save(os.path.join(path, room+".docx"))
