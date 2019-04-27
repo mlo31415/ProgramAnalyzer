@@ -125,7 +125,7 @@ for row in precisCells:
 #******
 # Analyze the People cells
 # The first row is column labels. So ignore it.
-peopleCells=peopleCells[1:]
+peopleCells=peopleCells[1:] 
 
 # The first two columns are first name and last name.  The third column is email
 # We'll combine the first and last names to create a full name like is used elsewhere.
@@ -180,6 +180,28 @@ for person in participants.keys():
 if count == 0:
     print("    None found", file=txt)
 txt.close()
+
+
+#******
+# Check for people who are scheduled opposite themselves
+fname=os.path.join("reports", "Diag - People scheduled against themselves.txt")
+txt=open(fname, "w")
+print("People who are scheduled to be in two places at the same time", file=txt)
+count=0
+for person in participants.keys():
+    pSched=participants[person] # pSched is a person's schedule, which is a list of (time, room, item) tuples
+    # Sort pSched by time, then look for duplicate times
+    pSched.sort(key=lambda x: x[0])
+    last=(0,0,0)
+    for it in pSched:
+        if it[0] == last[0]:
+            print(person+": "+last+"    "+it)
+            count+=1
+        last=it
+if count == 0:
+    print("    None found", file=txt)
+txt.close()
+
 
 #******
 # Now look for similar name pairs
