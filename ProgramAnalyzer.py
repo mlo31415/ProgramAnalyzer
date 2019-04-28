@@ -9,19 +9,37 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 
 
-def ItemDisplay(s: str):
+# Generate the display-name of an item. (Remove any text following the first "{")
+def ItemDisplayName(s: str):
     loc=s.find("{")
     if loc > 0:
         return s[:loc-1]
     return s
 
+def ItemDisplayPlist(item: tuple):
+    s=""
+    for person in item[2]:
+        s=s + (", " if len(s) > 0 else "") + person + (" (M)" if person == item[3] else "")
+    return s
+
+# Generate the name of a person stripped if any "(M)" or "(m)" flags
+def RemoveModFlag(s: str):
+    return s.replace("(M)", "").replace("(m)", "").strip()
+
+# Is this person's name flagged as a moderator?
+def IsModerator(s: str):
+    return s != RemoveModFlag(s)
+
 # Delete a file, ignoring any errors
+# We do this because of as-yet not understood failures to delete files
 def SafeDelete(fn):
     try:
         os.remove(fn)
     except:
         return
 
+#-------
+# MAIN
 credentials = None
 # The file token.pickle stores the user's access and refresh tokens, and is
 # created automatically when the authorization flow completes for the first time.
@@ -74,7 +92,7 @@ scheduleCells=scheduleCells[1:]
 
 # Start reading ths spreadsheet and building the participants and items databases (dictionaries)
 participants={} # A dictionary keyed by a person's name containing a list of (time, room, item) tuples, each an item that that person is on.
-items={}        # A dictionary keyed by item name containing a (time, room, people-list) tuple, where people-list is the list of people on the item
+items={}        # A dictionary keyed by item name containing a (time, room, people-list, moderator) tuple, where people-list is the list of people on the item
 times=[]        # This is a list of times in spreadsheet order which should be in sorted order.
 
 # When we find a row with data in column 0, we have found a new time.
@@ -93,6 +111,7 @@ while rowIndex < len(scheduleCells):
             if len(row[roomIndex]) > 0:     # So does the cell itself contain text?
                 # This has to be an item name since it's a cell containing text in a row that starts with a time and in a column that starts with a room
                 itemName=row[roomIndex]
+                modName=""
                 # If there are people scheduled for it, they will be in the next cell down
                 peopleRowIndex=rowIndex+1
                 peopleList=[]
@@ -103,11 +122,13 @@ while rowIndex < len(scheduleCells):
                             people=[p.strip() for p in people]
                             for person in people:       # For each person listed on this item
                                 if len(person) > 0:     # Is it's not empty...
+                                    if IsModerator(person):
+                                        modName=person=RemoveModFlag(person)
                                     if person not in participants.keys():   # If this is the first time we've encountered this person, create an empty entry.
                                         participants[person]=[]
-                                    participants[person].append((time, roomNames[roomIndex], itemName))     # And append a tuple with the time, room, and item name
+                                    participants[person].append((time, roomNames[roomIndex], itemName, person == modName))     # And append a tuple with the time, room, item name, and moderator flag
                                     peopleList.append(person)
-                items[itemName]=(time, roomNames[roomIndex], peopleList)
+                items[itemName]=(time, roomNames[roomIndex], peopleList, modName)
     rowIndex+=2 # Skip both rows
 
 #******
@@ -125,7 +146,7 @@ for row in precisCells:
 #******
 # Analyze the People cells
 # The first row is column labels. So ignore it.
-peopleCells=peopleCells[1:] 
+peopleCells=peopleCells[1:]
 
 # The first two columns are first name and last name.  The third column is email
 # We'll combine the first and last names to create a full name like is used elsewhere.
@@ -245,7 +266,7 @@ for person in partlist:
     print("", file=txt)
     print(person, file=txt)
     for item in participants[person]:
-        print("    "+item[0]+": "+ItemDisplay(item[2]), file=txt)
+        print("    "+item[0]+": "+ItemDisplayName(item[2]), file=txt)
 txt.close()
 
 
@@ -289,10 +310,10 @@ for time in times:
             if item[0] == time and item[1] == room:
                 para=doc.add_paragraph()
                 AppendTextToPara(para, room+": ", italic=True, size=12, indent=0.3)
-                AppendTextToPara(para, ItemDisplay(itemName), size=12, indent=0.3)
-                print("   "+room+":  "+ItemDisplay(itemName), file=txt)   # Print the room and item name
+                AppendTextToPara(para, ItemDisplayName(itemName), size=12, indent=0.3)
+                print("   "+room+":  "+ItemDisplayName(itemName), file=txt)   # Print the room and item name
                 if item[2] is not None and len(item[2]) > 0:            # And the item's people list
-                    plist=", ".join(item[2])
+                    plist=ItemDisplayPlist(item)
                     AppendParaToDoc(doc, plist, size=12, indent=0.6)
                     print("            "+plist, file=txt)
                 if itemName in precis.keys():
@@ -322,8 +343,9 @@ for room in roomNames:
                 AppendParaToDoc(doc, "")    # Skip a line
                 para=doc.add_paragraph()
                 AppendTextToPara(para, time+":  ", bold=True)   # Add the time in bold followed by the item's title
-                AppendTextToPara(para, ItemDisplay(itemName))
-                AppendParaToDoc(doc, ", ".join(item[2]), italic=True, indent=0.5)        # Then, on a new line, the people list in italic
+                AppendTextToPara(para, ItemDisplayName(itemName))
+                plist=ItemDisplayPlist(item)
+                AppendParaToDoc(doc, plist, italic=True, indent=0.5)        # Then, on a new line, the people list in italic
     fname=os.path.join(path, room+".docx")
     SafeDelete(fname)
     if inuse:
