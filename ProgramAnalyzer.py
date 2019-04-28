@@ -148,16 +148,61 @@ for row in precisCells:
 
 #******
 # Analyze the People cells
-# The first row is column labels. So ignore it.
-peopleCells=peopleCells[1:]
 
-# The first two columns are first name and last name.  The third column is email
+# Step 1 is to find the column labels.
+# They are in the first non-empty row.
+firstNonEmptyRow=0
+while firstNonEmptyRow < len(peopleCells):
+    if len(peopleCells[firstNonEmptyRow]) > 0:      # Rely on Googledocs truncating of trailing empty cells so that a blank line has no cells in it.
+        break
+    firstNonEmptyRow+=1
+
+# The first non-empty row is column labels.  Read them and identify the Fname, Lname, Email, and Response columns
+fnameCol=None
+lnameCol=None
+emailCol=None
+responseCol=None
+for i in range(0, len(peopleCells[firstNonEmptyRow])):
+    cell=peopleCells[firstNonEmptyRow][i].lower()
+    if cell == "fname":
+        fnameCol=i
+    if cell == "lname":
+        lnameCol=i
+    if cell == "email":
+        emailCol=i
+    if cell == "response":
+        responseCol=i
+
+#TODO: Need some sort of error report if the fname, lname, or response is missing
 # We'll combine the first and last names to create a full name like is used elsewhere.
 peopleTable={}
-for row in peopleCells:
-    row=[r.strip() for r in row]    # Get rid of leading and trailing blanks
-    if len(row) > 2 and len(row[0]) > 0 and len(row[1]) > 0 and len(row[2]) > 0:
-        peopleTable[row[0]+" "+row[1]]=row[2]       # Store the email in the entry indexed by the full name
+for i in range(firstNonEmptyRow+1, len(peopleCells)):
+    if len(peopleCells) == 0:   # Skip empty rows
+        continue
+    row=[r.strip() for r in peopleCells[i]]    # Get rid of leading and trailing blanks in each cell
+    fname=""
+    if fnameCol < len(row):
+        fname=row[fnameCol]
+    lname=""
+    if lnameCol < len(row):
+        lname=row[lnameCol]
+    fullname=None
+    if len(fname) > 0 and len(lname) > 0:   # Gotta handle Ctein!
+        fullname=fname+" "+lname
+    elif len(fname) > 0:
+        fullname=fname
+    elif len(lname) > 0:
+        fullname=lname
+
+    email=""
+    if emailCol < len(row):
+        email=row[emailCol]
+    response=""
+    if responseCol < len(row):
+        response=row[responseCol]
+
+    if fullname is not None:    # TODO, and what if it is?
+        peopleTable[fullname]=email, response.lower()       # Store the email and response as a tuple in the entry indexed by the full name
 
 
 #*************************************************************************************************
