@@ -38,8 +38,11 @@ def SafeDelete(fn):
     except:
         return
 
-#-------
+#*************************************************************************************************
+#*************************************************************************************************
 # MAIN
+# Read and analyze the spreadsheet
+
 credentials = None
 # The file token.pickle stores the user's access and refresh tokens, and is
 # created automatically when the authorization flow completes for the first time.
@@ -156,13 +159,15 @@ for row in peopleCells:
     if len(row) > 2 and len(row[0]) > 0 and len(row[1]) > 0 and len(row[2]) > 0:
         peopleTable[row[0]+" "+row[1]]=row[2]       # Store the email in the entry indexed by the full name
 
+
+#*************************************************************************************************
+#*************************************************************************************************
+# Generate reports
+# The first reports are all error reports or checking reports
+
 # Create the reports subfolder if none exists
 if not os.path.exists("reports"):
     os.mkdir("reports")
-
-#*****************************************
-# Generate reports
-# The first reports are all error reports or checking reports
 
 # Print a list of precis without corresponding items and items without precis
 fname=os.path.join("reports", "Diag - Precis without items and items without precis.txt")
