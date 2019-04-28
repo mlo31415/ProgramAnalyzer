@@ -257,7 +257,7 @@ if len(similarNames) > 0:
 #****************************************************
 # Now do the content/working reports
 
-# Print the items by people with time list
+# Print the People with items by time report
 # Get a list of the program participants (the keys of the  participants dictionary) sorted by the last token in the name (which will usually be the last name)
 partlist=sorted(participants.keys(), key=lambda x: x.split(" ")[-1])
 fname=os.path.join("reports", "People with items by time.txt")
@@ -266,7 +266,7 @@ for person in partlist:
     print("", file=txt)
     print(person, file=txt)
     for item in participants[person]:
-        print("    "+item[0]+": "+ItemDisplayName(item[2]), file=txt)
+        print("    " + item[0] + ": " + ItemDisplayName(item[2]) + (" (moderator)" if item[3] else ""), file=txt)
 txt.close()
 
 
