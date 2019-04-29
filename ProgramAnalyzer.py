@@ -320,6 +320,21 @@ for person in partlist:
 txt.close()
 
 
+#******
+# Report on the number of items/person
+# Include all people in the people tab, even thouse with no items
+fname=os.path.join("reports", "People's item counts.txt")
+txt=open(fname, "w")
+print("List of number of items each person is scheduled on\n\n", file=txt)
+for person in peopleTable:
+    if person in participants.keys():
+        print(person+": "+str(len(participants[person]))+("" if peopleTable[person][1] == "y" else " not confirmed"), file=txt)
+    else:
+        if peopleTable[person][1] == "y":
+            print(person+": coming, but not scheduled", file=txt)
+txt.close()
+
+
 def AppendParaToDoc(doc, txt: str, bold=False, italic=False, size=14, indent=0.0, font="Calibri"):
     para=doc.add_paragraph()
     run=para.add_run(txt)
