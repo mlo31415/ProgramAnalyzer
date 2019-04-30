@@ -9,6 +9,9 @@ from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 
+#*************************************************************************************************
+#*************************************************************************************************
+# Miscellaneous helper functions
 
 # Generate the display-name of an item. (Remove any text following the first "{")
 def ItemDisplayName(s: str):
@@ -17,6 +20,7 @@ def ItemDisplayName(s: str):
         return s[:loc-1]
     return s
 
+# Generate the display text of a list of people
 def ItemDisplayPlist(item: tuple):
     s=""
     for person in item[2]:
@@ -39,9 +43,9 @@ def SafeDelete(fn):
     except:
         return
 
-# Convert a text date to numeric and back again
+# Convert a text date string to numeric
 def TextToNumericTime(s: str):
-    # The date string is of the form Day Hour AM/PM
+    # The date string is of the form Day Hour AM/PM or Day Noon
     s=s.split(" ")
     d=gDayList.index(s[0])
     if len(s) == 3:
@@ -52,7 +56,10 @@ def TextToNumericTime(s: str):
     if s[1].lower() == "noon":
         return 24*d+12
 
+    if s[1].lower() == "midnight":
+        return 24*d+24
 
+# Convert a numeric time to text
 def NumericToTextTime(f):
     d=math.floor(f/24)
     f=f-24*d
@@ -69,6 +76,7 @@ def NumericToTextTime(f):
             return gDayList[int(d)] + " noon"
 
     return gDayList[int(d)] + " " + str(h) + ("" if f == 0 else ":" + str(f)) + " " + ("pm" if isPM else "am")
+
 
 
 #*************************************************************************************************
