@@ -70,12 +70,17 @@ SPREADSHEET_ID ='1UjHSw-R8dLNFGctUhIQiPr58aAAfBedGznJEN2xBn7o'  # This is the ID
 scheduleCells = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range='Schedule!A1:Z999').execute().get('values', [])     # Read the whole thing.
 if not scheduleCells:
     raise(ValueError, "No scheduleCells found")
+scheduleCells=[p for p in scheduleCells if len(p) == 0 or (len(p) > 0 and p[0] != "#")]      # Drop lines with a "#" alone in column 1.
+
 precisCells = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range='Precis!A1:Z999').execute().get('values', [])     # Read the whole thing.
 if not precisCells:
     raise(ValueError, "No precisCells found")
+precisCells=[p for p in precisCells if len(p) > 0 and p[0] != "#"]      # Drop blank lines and lines with a "#" alone in column 1.if not precisCells:
+
 peopleCells = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range='People!A1:Z999').execute().get('values', [])     # Read the whole thing.
 if not peopleCells:
     raise(ValueError, "No peopleCells found")
+peopleCells=[p for p in peopleCells if len(p) > 0 and p[0] != "#"]      # Drop blank lines and lines with a "#" alone in column 1.
 
 
 #******
