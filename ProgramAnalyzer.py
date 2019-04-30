@@ -2,6 +2,7 @@ import pickle
 import os.path
 import difflib
 import docx
+import math
 from docx.shared import Pt
 from docx.shared import Inches
 from googleapiclient.discovery import build
@@ -38,6 +39,38 @@ def SafeDelete(fn):
     except:
         return
 
+# Convert a text date to numeric and back again
+def TextToNumericTime(s: str):
+    # The date string is of the form Day Hour AM/PM
+    s=s.split(" ")
+    d=gDayList.index(s[0])
+    if len(s) == 3:
+        h=int(s[1])
+        isAM=s[2].lower() == "am"
+        return 24*d + h + (0 if isAM else 12)
+
+    if s[1].lower() == "noon":
+        return 24*d+12
+
+
+def NumericToTextTime(f):
+    d=math.floor(f/24)
+    f=f-24*d
+    isPM=f>12
+    if isPM:
+        f=f-12
+    h=math.floor(f)
+    f=f-h
+
+    if h == 12:
+        if isPM:
+            return gDayList[int(d)]+" midnight"
+        else:
+            return gDayList[int(d)] + " noon"
+
+    return gDayList[int(d)] + " " + str(h) + ("" if f == 0 else ":" + str(f)) + " " + ("pm" if isPM else "am")
+
+
 #*************************************************************************************************
 #*************************************************************************************************
 # MAIN
@@ -67,7 +100,7 @@ service = build('sheets', 'v4', credentials=credentials)
 # Call the Sheets API to load the various tabs of the spreadsheet
 sheet = service.spreadsheets()
 SPREADSHEET_ID ='1UjHSw-R8dLNFGctUhIQiPr58aAAfBedGznJEN2xBn7o'  # This is the ID of the specific spreadsheet we're reading
-scheduleCells = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range='Schedule!A1:Z999').execute().get('values', [])     # Read the whole thing.
+scheduleCells = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range='Schedule!A1:Z1999').execute().get('values', [])     # Read the whole thing.
 if not scheduleCells:
     raise(ValueError, "No scheduleCells found")
 scheduleCells=[p for p in scheduleCells if len(p) == 0 or (len(p) > 0 and p[0] != "#")]      # Drop lines with a "#" alone in column 1.
@@ -82,6 +115,22 @@ if not peopleCells:
     raise(ValueError, "No peopleCells found")
 peopleCells=[p for p in peopleCells if len(p) > 0 and p[0] != "#"]      # Drop blank lines and lines with a "#" alone in column 1.
 
+parameterCells = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range='Controls!A1:Z999').execute().get('values', [])     # Read the whole thing.
+if not parameterCells:
+    raise(ValueError, "No parameterCells found")
+parameterCells=[p for p in parameterCells if len(p) > 0 and p[0] != "#"]      # Drop blank lines and lines with a "#" alone in column 1.
+
+# Read parameters from the Control sheet
+startingDay="Friday"
+for row in parameterCells:
+    if row[0] == "Starting day":
+        if len(row) > 1:
+            startingDay=row[1]
+# Reorganize the dayList so it starts with our starting day
+global gDayList
+gDayList=["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+i=gDayList.index(startingDay)
+gDayList=gDayList[i:]
 
 #******
 # Analyze the Schedule cells
@@ -111,7 +160,7 @@ while rowIndex < len(scheduleCells):
         rowIndex+=1
         continue
 
-    time=row[0] # When a row has the first column filled, that element is the time of the item.  If the spreadsheet is well-formed, the next non-blank line is a time line
+    time=TextToNumericTime(row[0]) # When a row has the first column filled, that element is the time of the item.  If the spreadsheet is well-formed, the next non-blank line is a time line
     times.append(time)
     # Looking at the rest of the row, there may be text in one or more of the room columns
     for roomIndex in roomIndexes:
@@ -271,7 +320,7 @@ for person in participants.keys():
     last=(0,0,0)
     for it in pSched:
         if it[0] == last[0]:
-            print(person+": "+last+"    "+it)
+            print(person+": "+NumericToTextTime(last[0])+"    "+NumericToTextTime(it[0]))
             count+=1
         last=it
 if count == 0:
@@ -321,7 +370,7 @@ for person in partlist:
     print("", file=txt)
     print(person, file=txt)
     for item in participants[person]:
-        print("    " + item[0] + ": " + ItemDisplayName(item[2]) + (" (moderator)" if item[3] else ""), file=txt)
+        print("    " + NumericToTextTime(item[0]) + ": " + ItemDisplayName(item[2]) + (" (moderator)" if item[3] else ""), file=txt)
 txt.close()
 
 
@@ -371,8 +420,8 @@ AppendParaToDoc(doc, "Schedule", bold=True, size=24)
 print("Schedule", file=txt)
 for time in times:
     AppendParaToDoc(doc, "")
-    AppendParaToDoc(doc, time, bold=True)
-    print("\n"+time, file=txt)
+    AppendParaToDoc(doc, NumericToTextTime(time), bold=True)
+    print("\n"+NumericToTextTime(time), file=txt)
     for room in roomNames:
         # Now search for the program item and people list for this slot
         for itemName in items.keys():
@@ -412,7 +461,7 @@ for room in roomNames:
                 inuse=True
                 AppendParaToDoc(doc, "")    # Skip a line
                 para=doc.add_paragraph()
-                AppendTextToPara(para, time+":  ", bold=True)   # Add the time in bold followed by the item's title
+                AppendTextToPara(para, NumericToTextTime(time)+":  ", bold=True)   # Add the time in bold followed by the item's title
                 AppendTextToPara(para, ItemDisplayName(itemName))
                 plist=ItemDisplayPlist(item)
                 AppendParaToDoc(doc, plist, italic=True, indent=0.5)        # Then, on a new line, the people list in italic
