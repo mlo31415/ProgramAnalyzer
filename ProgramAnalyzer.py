@@ -168,8 +168,9 @@ while rowIndex < len(scheduleCells):
         rowIndex+=1
         continue
 
-    time=TextToNumericTime(row[0]) # When a row has the first column filled, that element is the time of the item.  If the spreadsheet is well-formed, the next non-blank line is a time line
+    time=TextToNumericTime(row[0]) # When a row has text in the first column, that text gives the time of the item.  If the spreadsheet is well-formed, the next non-blank line is a time line
     times.append(time)
+
     # Looking at the rest of the row, there may be text in one or more of the room columns
     for roomIndex in roomIndexes:
         if roomIndex < len(row):    # Trailing empty cells have been truncated, so better check.
