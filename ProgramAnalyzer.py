@@ -330,7 +330,7 @@ for person in participants.keys():
     last=(0,0,0)
     for it in pSched:
         if it[0] == last[0]:
-            print(person+": "+NumericToTextTime(last[0])+"    "+NumericToTextTime(it[0]))
+            print(person+": "+NumericToTextTime(last[0])+": "+last[1] + " and also " + it[1], file=txt)
             count+=1
         last=it
 if count == 0:
