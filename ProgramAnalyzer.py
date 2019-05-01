@@ -45,6 +45,7 @@ def SafeDelete(fn):
 
 # Convert a text date string to numeric
 def TextToNumericTime(s: str):
+    global gDayList
     # The date string is of the form Day Hour AM/PM or Day Noon
     s=s.split(" ")
     d=gDayList.index(s[0])
@@ -61,6 +62,7 @@ def TextToNumericTime(s: str):
 
 # Convert a numeric time to text
 def NumericToTextTime(f):
+    global gDayList
     d=math.floor(f/24)
     f=f-24*d
     isPM=f>12
@@ -135,7 +137,6 @@ for row in parameterCells:
         if len(row) > 1:
             startingDay=row[1]
 # Reorganize the dayList so it starts with our starting day
-global gDayList
 gDayList=["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 i=gDayList.index(startingDay)
 gDayList=gDayList[i:]
