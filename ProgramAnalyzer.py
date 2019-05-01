@@ -3,6 +3,7 @@ import os.path
 import difflib
 import docx
 import math
+import re as RegEx
 from docx.shared import Pt
 from docx.shared import Inches
 from googleapiclient.discovery import build
@@ -153,16 +154,38 @@ for i in range(0, len(scheduleCells[0])):
         roomIndexes.append(i)
 
 # Drop the room names from the spreadsheet leaving just the schedules
-roomNames=[r.strip() for r in scheduleCells[0]]
+gRoomNames=[r.strip() for r in scheduleCells[0]]
 scheduleCells=scheduleCells[1:]
 
 # Start reading ths spreadsheet and building the participants and items databases (dictionaries)
-participants={} # A dictionary keyed by a person's name containing a list of (time, room, item) tuples, each an item that that person is on.
-items={}        # A dictionary keyed by item name containing a (time, room, people-list, moderator) tuple, where people-list is the list of people on the item
-times=[]        # This is a list of times in spreadsheet order which should be in sorted order.
+gParticipants={} # A dictionary keyed by a person's name containing a list of (time, room, item) tuples, each an item that that person is on.
+gItems={}        # A dictionary keyed by item name containing a (time, room, people-list, moderator) tuple, where people-list is the list of people on the item
+gTimes=[]        # This is a list of times in spreadsheet order which should be in sorted order.
 
 # When we find a row with data in column 0, we have found a new time.
 rowIndex=0
+
+
+def AddItemWithPeople(plistText):
+    global gParticipants
+    global peopleList
+    global gItems
+
+    people=plistText.split(",")  # Get a list of people
+    people=[p.strip() for p in people]
+    modName=""
+    peopleList=[]
+    for person in people:  # For each person listed on this item
+        if len(person) > 0:  # Is it's not empty...
+            if IsModerator(person):
+                modName=person=RemoveModFlag(person)
+            if person not in gParticipants.keys():  # If this is the first time we've encountered this person, create an empty entry.
+                gParticipants[person]=[]
+            gParticipants[person].append((time, gRoomNames[roomIndex], itemName, person == modName))  # And append a tuple with the time, room, item name, and moderator flag
+            peopleList.append(person)
+    gItems[itemName]=(time, gRoomNames[roomIndex], peopleList, modName)
+
+
 while rowIndex < len(scheduleCells):
     row=[c.strip() for c in scheduleCells[rowIndex]]  # Get just the one row as a list of cells. Strip off leading and trailing blanks for each cell.
     if len(row) == 0:   # Ignore empty rows
@@ -170,7 +193,7 @@ while rowIndex < len(scheduleCells):
         continue
 
     time=TextToNumericTime(row[0]) # When a row has text in the first column, that text gives the time of the item.  If the spreadsheet is well-formed, the next non-blank line is a time line
-    times.append(time)
+    gTimes.append(time)
 
     # Looking at the rest of the row, there may be text in one or more of the room columns
     for roomIndex in roomIndexes:
@@ -178,28 +201,25 @@ while rowIndex < len(scheduleCells):
             if len(row[roomIndex]) > 0:     # So does the cell itself contain text?
                 # This has to be an item name since it's a cell containing text in a row that starts with a time and in a column that starts with a room
                 itemName=row[roomIndex]
-                modName=""
                 # If there are people scheduled for it, they will be in the next cell down
                 peopleRowIndex=rowIndex+1
-                peopleList=[]
                 if len(scheduleCells)> peopleRowIndex:  # Does a row indexed by peopleRowIndex exist in the spreadsheet?
                     if len(scheduleCells[peopleRowIndex]) > roomIndex:  # Does it have enough columns?
                         if len(scheduleCells[peopleRowIndex][roomIndex]) > 0: # Does it have anything in the right column?
-                            people=scheduleCells[peopleRowIndex][roomIndex].split(",")  # Get a list of people
-                            people=[p.strip() for p in people]
-                            for person in people:       # For each person listed on this item
-                                if len(person) > 0:     # Is it's not empty...
-                                    if IsModerator(person):
-                                        modName=person=RemoveModFlag(person)
-                                    if person not in participants.keys():   # If this is the first time we've encountered this person, create an empty entry.
-                                        participants[person]=[]
-                                    participants[person].append((time, roomNames[roomIndex], itemName, person == modName))     # And append a tuple with the time, room, item name, and moderator flag
-                                    peopleList.append(person)
-                items[itemName]=(time, roomNames[roomIndex], peopleList, modName)
+                            # We indicate items which go for an hour, but have some people in one part and some in another using a special notation in the people list.
+                            # Robert A. Heinlein, [0.0] John W. Campbell puts RAH on the hour and JWC a half-hour later.
+                            # There is much messiness in this.
+                            # We look for the [##] in the people list.  If we find it, we divide the people list in half and create two items with separate plists.
+                            plistText=scheduleCells[peopleRowIndex][roomIndex]
+                            r=RegEx.match("(.*)\[([0-9.]*)(.*)", plistText)
+                            if r is None:
+                                AddItemWithPeople(plistText)
     rowIndex+=2 # Skip both rows
 
+
+
 # Make sure times are sorted properly
-times.sort()
+gTimes.sort()
 
 #******
 # Analyze the Precis cells
@@ -286,7 +306,7 @@ fname=os.path.join("reports", "Diag - Precis without items and items without pre
 txt=open(fname, "w")
 print("Items without precis:", file=txt)
 count=0
-for itemName in items.keys():
+for itemName in gItems.keys():
     if itemName not in precis.keys():
         count+=1
         print("   "+itemName, file=txt)
@@ -296,7 +316,7 @@ if count == 0:
 count=0
 print("\n\nPrecis without items:", file=txt)
 for itemName in precis.keys():
-    if itemName not in items.keys():
+    if itemName not in gItems.keys():
         count+=1
         print("   "+itemName, file=txt)
 if count == 0:
@@ -311,7 +331,7 @@ txt=open(fname, "w")
 print("People who are scheduled but lack email address:", file=txt)
 print("(Note that these may be due to spelling differences, use of initials, etc.)", file=txt)
 count=0
-for person in participants.keys():
+for person in gParticipants.keys():
     if person not in peopleTable.keys():
         count+=1
         print("   "+person, file=txt)
@@ -326,14 +346,14 @@ fname=os.path.join("reports", "Diag - People scheduled against themselves.txt")
 txt=open(fname, "w")
 print("People who are scheduled to be in two places at the same time", file=txt)
 count=0
-for person in participants.keys():
-    pSched=participants[person] # pSched is a person's schedule, which is a list of (time, room, item) tuples
+for person in gParticipants.keys():
+    pSched=gParticipants[person] # pSched is a person's schedule, which is a list of (time, room, item) tuples
     # Sort pSched by time, then look for duplicate times
     pSched.sort(key=lambda x: x[0])
     last=(0,0,0)
     for it in pSched:
         if it[0] == last[0]:
-            print(person+": "+NumericToTextTime(last[0])+": "+last[1] + " and also " + it[1], file=txt)
+            print(person+": "+NumericToTextTime(last[0])+": "+last[1]+" and also "+it[1], file=txt)
             count+=1
         last=it
 if count == 0:
@@ -345,7 +365,7 @@ txt.close()
 # Now look for similar name pairs
 # First we make up a list of all names that appear in any tab
 names=set()
-names.update(participants.keys())
+names.update(gParticipants.keys())
 names.update(peopleTable.keys())
 similarNames=[]
 for p1 in names:
@@ -376,13 +396,13 @@ if len(similarNames) > 0:
 
 # Print the People with items by time report
 # Get a list of the program participants (the keys of the  participants dictionary) sorted by the last token in the name (which will usually be the last name)
-partlist=sorted(participants.keys(), key=lambda x: x.split(" ")[-1])
+partlist=sorted(gParticipants.keys(), key=lambda x: x.split(" ")[-1])
 fname=os.path.join("reports", "People with items by time.txt")
 txt=open(fname, "w")
-for person in partlist:
+for gPerson in partlist:
     print("", file=txt)
-    print(person, file=txt)
-    for item in participants[person]:
+    print(gPerson, file=txt)
+    for item in gParticipants[gPerson]:
         print("    " + NumericToTextTime(item[0]) + ": " + ItemDisplayName(item[2]) + (" (moderator)" if item[3] else ""), file=txt)
 txt.close()
 
@@ -393,12 +413,12 @@ txt.close()
 fname=os.path.join("reports", "People's item counts.txt")
 txt=open(fname, "w")
 print("List of number of items each person is scheduled on\n\n", file=txt)
-for person in peopleTable:
-    if person in participants.keys():
-        print(person+": "+str(len(participants[person]))+("" if peopleTable[person][1] == "y" else " not confirmed"), file=txt)
+for gPerson in peopleTable:
+    if gPerson in gParticipants.keys():
+        print(gPerson+": "+str(len(gParticipants[gPerson]))+("" if peopleTable[gPerson][1] == "y" else " not confirmed"), file=txt)
     else:
-        if peopleTable[person][1] == "y":
-            print(person+": coming, but not scheduled", file=txt)
+        if peopleTable[gPerson][1] == "y":
+            print(gPerson+": coming, but not scheduled", file=txt)
 txt.close()
 
 
@@ -431,14 +451,14 @@ fname=os.path.join("reports", "Pocket program.txt")
 txt=open(fname, "w")
 AppendParaToDoc(doc, "Schedule", bold=True, size=24)
 print("Schedule", file=txt)
-for time in times:
+for time in gTimes:
     AppendParaToDoc(doc, "")
     AppendParaToDoc(doc, NumericToTextTime(time), bold=True)
     print("\n"+NumericToTextTime(time), file=txt)
-    for room in roomNames:
+    for room in gRoomNames:
         # Now search for the program item and people list for this slot
-        for itemName in items.keys():
-            item=items[itemName]
+        for itemName in gItems.keys():
+            item=gItems[itemName]
             if item[0] == time and item[1] == room:
                 para=doc.add_paragraph()
                 AppendTextToPara(para, room+": ", italic=True, size=12, indent=0.3)
@@ -461,15 +481,15 @@ txt.close()
 path=os.path.join("reports", "roomsigns")
 if not os.path.exists(path):
     os.mkdir(path)
-for room in roomNames:
+for room in gRoomNames:
     inuse=False  # Make sure that this room is actually in use
     if len(room.strip()) == 0:
         continue
     doc=docx.Document()
     AppendParaToDoc(doc, room, bold=True, size=32)  # Room name at top
-    for time in times:
-        for itemName in items.keys():
-            item=items[itemName]
+    for time in gTimes:
+        for itemName in gItems.keys():
+            item=gItems[itemName]
             if item[0] == time and item[1] == room:
                 inuse=True
                 AppendParaToDoc(doc, "")    # Skip a line
