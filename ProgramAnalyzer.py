@@ -198,6 +198,9 @@ while rowIndex < len(scheduleCells):
                 items[itemName]=(time, roomNames[roomIndex], peopleList, modName)
     rowIndex+=2 # Skip both rows
 
+# Make sure times are sorted properly
+times.sort()
+
 #******
 # Analyze the Precis cells
 # The first row is column labels. So ignore it.
