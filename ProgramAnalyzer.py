@@ -78,7 +78,7 @@ def NumericToTextTime(f):
         else:
             return gDayList[int(d)] + " noon"
 
-    return gDayList[int(d)] + " " + str(h) + ("" if f == 0 else ":" + str(f)) + " " + ("pm" if isPM else "am")
+    return gDayList[int(d)] + " " + str(h) + ("" if f == 0 else ":" + str(math.floor(60*f))) + " " + ("pm" if isPM else "am")
 
 
 
@@ -166,13 +166,13 @@ gTimes=[]        # This is a list of times in spreadsheet order which should be 
 rowIndex=0
 
 
-def AddItemWithPeople(plistText):
+# Add an item with a list of people, and add the item to each of the persons
+def AddItemWithPeople(time, roomName, itemName, plistText):
     global gParticipants
-    global peopleList
     global gItems
 
-    people=plistText.split(",")  # Get a list of people
-    people=[p.strip() for p in people]
+    people=plistText.split(",")  # Get the people as a list
+    people=[p.strip() for p in people]  # Remove excess spaces
     modName=""
     peopleList=[]
     for person in people:  # For each person listed on this item
@@ -181,9 +181,10 @@ def AddItemWithPeople(plistText):
                 modName=person=RemoveModFlag(person)
             if person not in gParticipants.keys():  # If this is the first time we've encountered this person, create an empty entry.
                 gParticipants[person]=[]
-            gParticipants[person].append((time, gRoomNames[roomIndex], itemName, person == modName))  # And append a tuple with the time, room, item name, and moderator flag
+            gParticipants[person].append((time, roomName, itemName, person == modName))  # And append a tuple with the time, room, item name, and moderator flag
             peopleList.append(person)
-    gItems[itemName]=(time, gRoomNames[roomIndex], peopleList, modName)
+    # And add the item with its list of people to the items table.
+    gItems[itemName]=(time, roomName, peopleList, modName)
 
 
 while rowIndex < len(scheduleCells):
@@ -211,9 +212,21 @@ while rowIndex < len(scheduleCells):
                             # There is much messiness in this.
                             # We look for the [##] in the people list.  If we find it, we divide the people list in half and create two items with separate plists.
                             plistText=scheduleCells[peopleRowIndex][roomIndex]
-                            r=RegEx.match("(.*)\[([0-9.]*)(.*)", plistText)
+                            r=RegEx.match("(.*)\[([0-9.]*)\](.*)", plistText)
+                            roomName=gRoomNames[roomIndex]
                             if r is None:
-                                AddItemWithPeople(plistText)
+                                AddItemWithPeople(time, roomName, itemName, plistText)
+                            else:
+                                plist1=r.groups()[0].strip()
+                                deltaT=r.groups()[1].strip()
+                                plist2=r.groups()[2].strip()
+                                AddItemWithPeople(time, roomName, itemName, plist1)
+                                newTime=time+float(deltaT)
+                                if newTime not in gTimes:
+                                    gTimes.append(newTime)
+                                # This second instance will need to have a distinct item name, so add {#2} to the item name
+                                AddItemWithPeople(newTime, roomName, itemName+" {#2}", plist2)
+
     rowIndex+=2 # Skip both rows
 
 
