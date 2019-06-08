@@ -240,11 +240,11 @@ gTimes.sort()
 precisCells=precisCells[1:]
 
 # The rest of the tab is pairs title:precis.
-precis={}
+gPrecis={}
 for row in precisCells:
     row=[r.strip() for r in row]    # Get rid of leading and trailing blanks
     if len(row[0]) > 0 and len(row[1]) > 0: # If both the item name and the precis exist, store them in the precis table.
-        precis[row[0]]=row[1]
+        gPrecis[row[0]]=row[1]
 
 #******
 # Analyze the People cells
@@ -320,7 +320,7 @@ txt=open(fname, "w")
 print("Items without precis:", file=txt)
 count=0
 for itemName in gItems.keys():
-    if itemName not in precis.keys():
+    if itemName not in gPrecis.keys():
         count+=1
         print("   "+itemName, file=txt)
 if count == 0:
@@ -328,7 +328,7 @@ if count == 0:
 
 count=0
 print("\n\nPrecis without items:", file=txt)
-for itemName in precis.keys():
+for itemName in gPrecis.keys():
     if itemName not in gItems.keys():
         count+=1
         print("   "+itemName, file=txt)
@@ -407,16 +407,35 @@ if len(similarNames) > 0:
 #****************************************************
 # Now do the content/working reports
 
+#*******
 # Print the People with items by time report
 # Get a list of the program participants (the keys of the  participants dictionary) sorted by the last token in the name (which will usually be the last name)
-partlist=sorted(gParticipants.keys(), key=lambda x: x.split(" ")[-1])
+sortedallpartlist=sorted(gParticipants.keys(), key=lambda x: x.split(" ")[-1])
 fname=os.path.join("reports", "People with items by time.txt")
 txt=open(fname, "w")
-for gPerson in partlist:
+for person in sortedallpartlist:
     print("", file=txt)
-    print(gPerson, file=txt)
-    for item in gParticipants[gPerson]:
+    print(person, file=txt)
+    for item in gParticipants[person]:
         print("    " + NumericToTextTime(item[0]) + ": " + ItemDisplayName(item[2]) + " [" + item[1] + "]" + (" (moderator)" if item[3] else ""), file=txt)
+txt.close()
+
+
+#*******
+# Print the program participant's schedule report
+# Get a list of the program participants (the keys of the  participants dictionary) sorted by the last token in the name (which will usually be the last name)
+sortedallpartlist=sorted(gParticipants.keys(), key=lambda x: x.split(" ")[-1])
+fname=os.path.join("reports", "Program participant schedules.txt")
+txt=open(fname, "w")
+for person in sortedallpartlist:
+    print("\n\n********************************************", file=txt)
+    print(person, file=txt)
+    for item in gParticipants[person]:
+        print("\n" + NumericToTextTime(item[0]) + ": " + ItemDisplayName(item[2]) + " [" + item[1] + "]" + (" (moderator)" if item[3] else ""), file=txt)
+        gitem=gItems[item[2]]
+        print("Participants: "+ItemDisplayPlist(gitem), file=txt)
+        if item[2] in gPrecis.keys():
+            print("Precis: "+gPrecis[item[2]], file=txt)
 txt.close()
 
 
@@ -481,9 +500,9 @@ for time in gTimes:
                     plist=ItemDisplayPlist(item)
                     AppendParaToDoc(doc, plist, size=12, indent=0.6)
                     print("            "+plist, file=txt)
-                if itemName in precis.keys():
-                    AppendParaToDoc(doc, precis[itemName], italic=True, size=12, indent=0.6)
-                    print("            "+precis[itemName], file=txt)
+                if itemName in gPrecis.keys():
+                    AppendParaToDoc(doc, gPrecis[itemName], italic=True, size=12, indent=0.6)
+                    print("            "+gPrecis[itemName], file=txt)
 fname=os.path.join("reports", "Pocket program.docx")
 doc.save(fname)
 txt.close()
