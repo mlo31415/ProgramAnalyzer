@@ -416,7 +416,7 @@ for gPerson in partlist:
     print("", file=txt)
     print(gPerson, file=txt)
     for item in gParticipants[gPerson]:
-        print("    " + NumericToTextTime(item[0]) + ": " + ItemDisplayName(item[2]) + (" (moderator)" if item[3] else ""), file=txt)
+        print("    " + NumericToTextTime(item[0]) + ": " + ItemDisplayName(item[2]) + " [" + item[1] + "]" + (" (moderator)" if item[3] else ""), file=txt)
 txt.close()
 
 
