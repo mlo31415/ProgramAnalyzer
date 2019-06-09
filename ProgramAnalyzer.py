@@ -440,19 +440,28 @@ txt.close()
 
 
 #******
+# Report on the number of people/item
+fname=os.path.join("reports", "Item's people counts.txt")
+txt=open(fname, "w")
+print("List of number of people scheduled on each item\n\n", file=txt)
+for item in gItems:
+    print(NumericToTextTime(gItems[item][0])+" " +item+": "+str(len(gItems[item][2])), file=txt)
+txt.close()
+
+
+#******
 # Report on the number of items/person
-# Include all people in the people tab, even thouse with no items
+# Include all people in the people tab, even those with no items
 fname=os.path.join("reports", "People's item counts.txt")
 txt=open(fname, "w")
 print("List of number of items each person is scheduled on\n\n", file=txt)
-for gPerson in peopleTable:
-    if gPerson in gParticipants.keys():
-        print(gPerson+": "+str(len(gParticipants[gPerson]))+("" if peopleTable[gPerson][1] == "y" else " not confirmed"), file=txt)
+for person in peopleTable:
+    if person in gParticipants.keys():
+        print(person+": "+str(len(gParticipants[person]))+("" if peopleTable[person][1] == "y" else " not confirmed"), file=txt)
     else:
-        if peopleTable[gPerson][1] == "y":
-            print(gPerson+": coming, but not scheduled", file=txt)
+        if peopleTable[person][1] == "y":
+            print(person+": coming, but not scheduled", file=txt)
 txt.close()
-
 
 def AppendParaToDoc(doc, txt: str, bold=False, italic=False, size=14, indent=0.0, font="Calibri"):
     para=doc.add_paragraph()
