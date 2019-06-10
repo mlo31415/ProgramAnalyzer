@@ -6,6 +6,8 @@ import math
 import re as RegEx
 from docx.shared import Pt
 from docx.shared import Inches
+from docx import text
+from docx.text import paragraph
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -26,7 +28,7 @@ def IsModerator(s: str):
 
 # Delete a file, ignoring any errors
 # We do this because of as-yet not understood failures to delete files
-def SafeDelete(fn):
+def SafeDelete(fn: str):
     try:
         os.remove(fn)
     except:
@@ -50,7 +52,7 @@ def TextToNumericTime(s: str):
         return 24*d+24
 
 # Convert a numeric time to text
-def NumericToTextTime(f):
+def NumericToTextTime(f: float):
     global gDayList
     d=math.floor(f/24)
     f=f-24*d
@@ -155,7 +157,7 @@ rowIndex=0
 
 
 # Add an item with a list of people, and add the item to each of the persons
-def AddItemWithPeople(time, roomName, itemName, plistText):
+def AddItemWithPeople(time: float, roomName: str, itemName: str, plistText: str):
     global gSchedules
     global gItems
 
@@ -452,7 +454,7 @@ for personname in peopleTable:
             print(personname+": coming, but not scheduled", file=txt)
 txt.close()
 
-def AppendParaToDoc(doc, txt: str, bold=False, italic=False, size=14, indent=0.0, font="Calibri"):
+def AppendParaToDoc(doc: docx.Document, txt: str, bold=False, italic=False, size=14, indent=0.0, font="Calibri"):
     para=doc.add_paragraph()
     run=para.add_run(txt)
     run.bold=bold
@@ -464,7 +466,7 @@ def AppendParaToDoc(doc, txt: str, bold=False, italic=False, size=14, indent=0.0
     para.paragraph_format.line_spacing=1
     para.paragraph_format.space_after=0
 
-def AppendTextToPara(para, txt: str, bold=False, italic=False, size=14, indent=0.0, font="Calibri"):
+def AppendTextToPara(para: docx.text.paragraph.Paragraph, txt: str, bold: bool=False, italic: bool=False, size: float=14, indent: float=0.0, font: str="Calibri"):
     run=para.add_run(txt)
     run.bold=bold
     run.italic=italic
