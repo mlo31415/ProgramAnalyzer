@@ -8,15 +8,15 @@ class ScheduleItem:
     Time: float=None        # A numeric time
     Room: str=None          # The name of a room
     ItemName: str=None      # The name of an item
-    Moderator: bool=False   # Is this person the moderator of this item?
+    IsMod: bool=False       # Is this person the moderator of this item?
 
 
-    def __init__(self, Name:str=None, Time:float=None, Room:str=None, ItemName:str=None, Moderator:bool=False):
+    def __init__(self, Name:str=None, Time:float=None, Room:str=None, ItemName:str=None, IsMod:bool=False):
         self.Name=Name
         self.Time=Time
         self.Room=Room
         self.ItemName=ItemName
-        self.Moderator=Moderator
+        self.IsMod=IsMod
 
     @property
     # Generate the display-name of an item. (Remove any text following the first "{")

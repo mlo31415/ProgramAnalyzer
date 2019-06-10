@@ -169,10 +169,10 @@ def AddItemWithPeople(time, roomName, itemName, plistText):
                 modName=person=RemoveModFlag(person)
             if person not in gSchedules.keys():  # If this is the first time we've encountered this person, create an empty entry.
                 gSchedules[person]=[]
-            gSchedules[person].append(ScheduleItem(Name=person, Time=time, Room=roomName, ItemName=itemName, Moderator=(person == modName)))  # And append a tuple with the time, room, item name, and moderator flag
+            gSchedules[person].append(ScheduleItem(Name=person, Time=time, Room=roomName, ItemName=itemName, IsMod=(person == modName)))  # And append a tuple with the time, room, item name, and moderator flag
             peopleList.append(person)
     # And add the item with its list of people to the items table.
-    gItems[itemName]=Item(Name=itemName, Time=time, Room=roomName, People=peopleList, Moderator=modName)
+    gItems[itemName]=Item(Name=itemName, Time=time, Room=roomName, People=peopleList, ModName=modName)
 
 
 while rowIndex < len(scheduleCells):
@@ -404,10 +404,9 @@ sortedallpartlist=sorted(gSchedules.keys(), key=lambda x: x.split(" ")[-1])
 fname=os.path.join("reports", "People with items by time.txt")
 txt=open(fname, "w")
 for personname in sortedallpartlist:
-    print("", file=txt)
-    print(personname, file=txt)
-    for sched in gSchedules[personname]:
-        print("    " + NumericToTextTime(sched.Time) + ": " + sched.DisplayName + " [" + sched.Room + "]" + (" (moderator)" if sched.Moderator else ""), file=txt)
+    print("\n"+personname, file=txt)
+    for schedItem in gSchedules[personname]:
+        print("    " + NumericToTextTime(schedItem.Time) + ": " + schedItem.DisplayName + " [" + schedItem.Room + "]" + (" (moderator)" if schedItem.IsMod else ""), file=txt)
 txt.close()
 
 
@@ -421,7 +420,7 @@ for personname in sortedallpartlist:
     print("\n\n********************************************", file=txt)
     print(personname, file=txt)
     for schedItem in gSchedules[personname]:
-        print("\n" + NumericToTextTime(schedItem.Time) + ": " + schedItem.DisplayName + " [" + schedItem.Room + "]" + (" (moderator)" if schedItem.Moderator else ""), file=txt)
+        print("\n" + NumericToTextTime(schedItem.Time) + ": " + schedItem.DisplayName + " [" + schedItem.Room + "]" + (" (moderator)" if schedItem.IsMod else ""), file=txt)
         item=gItems[schedItem.ItemName]
         print("Participants: "+item.DisplayPlist(), file=txt)
         if item.Precis is not None:
