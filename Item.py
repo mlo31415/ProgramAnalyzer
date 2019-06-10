@@ -9,14 +9,16 @@ class Item:
     Room: str=None          # The name of a room
     People: list=None       # The name of an item
     Moderator: bool=False   # Is this person the moderator of this item?
+    Precis: str=None        # The item's precis
 
 
-    def __init__(self, Name:str=None, Time:float=None, Room:str=None, People:list=None, Moderator:str=None):
+    def __init__(self, Name:str=None, Time:float=None, Room:str=None, People:list=None, Moderator:bool=None, Precis:str=None):
         self.Name=Name
         self.Time=Time
         self.Room=Room
         self.People=People
         self.Moderator=Moderator
+        self.Precis=Precis
 
     # Generate the display text of a list of people
     def DisplayPlist(self):

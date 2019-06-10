@@ -223,16 +223,27 @@ while rowIndex < len(scheduleCells):
 gTimes.sort()
 
 #******
-# Analyze the Precis cells
+# Analyze the Precis cells and add the information to the
 # The first row is column labels. So ignore it.
 precisCells=precisCells[1:]
 
-# The rest of the tab is pairs title:precis.
-gPrecis={}
+# The rest of the rows of the tab is pairs title:precis.
+count=0
+fname=os.path.join("reports", "Diag - precis without items.txt")
+txt=open(fname, "w")
+print("Precis without corresponding items:", file=txt)
 for row in precisCells:
     row=[r.strip() for r in row]    # Get rid of leading and trailing blanks
     if len(row[0]) > 0 and len(row[1]) > 0: # If both the item name and the precis exist, store them in the precis table.
-        gPrecis[row[0]]=row[1]
+        itemname=row[0]
+        if itemname not in gItems.keys():
+            count+=1
+            print("   "+itemname, file=txt)
+        else:
+            gItems[itemname].Precis=row[1]
+if count == 0:
+    print("    None found", file=txt)
+txt.close()
 
 #******
 # Analyze the People cells
@@ -303,21 +314,12 @@ if not os.path.exists("reports"):
     os.mkdir("reports")
 
 # Print a list of precis without corresponding items and items without precis
-fname=os.path.join("reports", "Diag - Precis without items and items without precis.txt")
+fname=os.path.join("reports", "Diag - items without precis.txt")
 txt=open(fname, "w")
 print("Items without precis:", file=txt)
 count=0
-for itemName in gItems.keys():
-    if itemName not in gPrecis.keys():
-        count+=1
-        print("   "+itemName, file=txt)
-if count == 0:
-    print("    None found", file=txt)
-
-count=0
-print("\n\nPrecis without items:", file=txt)
-for itemName in gPrecis.keys():
-    if itemName not in gItems.keys():
+for itemName, item in gItems.items():
+    if item.Precis is None:
         count+=1
         print("   "+itemName, file=txt)
 if count == 0:
@@ -418,12 +420,12 @@ txt=open(fname, "w")
 for personname in sortedallpartlist:
     print("\n\n********************************************", file=txt)
     print(personname, file=txt)
-    for item in gSchedules[personname]:
-        print("\n" + NumericToTextTime(item.Time) + ": " + item.DisplayName + " [" + item.Room + "]" + (" (moderator)" if item.Moderator else ""), file=txt)
-        gitem=gItems[item.ItemName]
-        print("Participants: "+gitem.DisplayPlist(), file=txt)
-        if item.ItemName in gPrecis.keys():
-            print("Precis: "+gPrecis[item.ItemName], file=txt)
+    for schedItem in gSchedules[personname]:
+        print("\n" + NumericToTextTime(schedItem.Time) + ": " + schedItem.DisplayName + " [" + schedItem.Room + "]" + (" (moderator)" if schedItem.Moderator else ""), file=txt)
+        item=gItems[schedItem.ItemName]
+        print("Participants: "+item.DisplayPlist(), file=txt)
+        if item.Precis is not None:
+            print("Precis: "+item.Precis, file=txt)
 txt.close()
 
 
@@ -432,8 +434,7 @@ txt.close()
 fname=os.path.join("reports", "Item's people counts.txt")
 txt=open(fname, "w")
 print("List of number of people scheduled on each item\n\n", file=txt)
-for itemname in gItems:
-    item=gItems[itemname]
+for itemname, item in gItems.items():
     print(NumericToTextTime(item.Time)+" " + item.Name + ": " + str(len(item.People)), file=txt)
 txt.close()
 
@@ -487,8 +488,7 @@ for time in gTimes:
     print("\n"+NumericToTextTime(time), file=txt)
     for room in gRoomNames:
         # Now search for the program item and people list for this slot
-        for itemName in gItems.keys():
-            item=gItems[itemName]
+        for itemName, item in gItems.items():
             if item.Time == time and item.Room == room:
                 para=doc.add_paragraph()
                 AppendTextToPara(para, room+": ", italic=True, size=12, indent=0.3)
@@ -498,9 +498,9 @@ for time in gTimes:
                     plist=item.DisplayPlist()
                     AppendParaToDoc(doc, plist, size=12, indent=0.6)
                     print("            "+plist, file=txt)
-                if itemName in gPrecis.keys():
-                    AppendParaToDoc(doc, gPrecis[itemName], italic=True, size=12, indent=0.6)
-                    print("            "+gPrecis[itemName], file=txt)
+                if item.Precis is not None:
+                    AppendParaToDoc(doc, item.Precis, italic=True, size=12, indent=0.6)
+                    print("            "+item.Precis, file=txt)
 fname=os.path.join("reports", "Pocket program.docx")
 doc.save(fname)
 txt.close()
