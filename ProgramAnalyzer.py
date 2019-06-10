@@ -9,24 +9,12 @@ from docx.shared import Inches
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
+from ScheduleItem import ScheduleItem
+from Item import Item
 
 #*************************************************************************************************
 #*************************************************************************************************
 # Miscellaneous helper functions
-
-# Generate the display-name of an item. (Remove any text following the first "{")
-def ItemDisplayName(s: str):
-    loc=s.find("{")
-    if loc > 0:
-        return s[:loc-1]
-    return s
-
-# Generate the display text of a list of people
-def ItemDisplayPlist(item: tuple):
-    s=""
-    for person in item[2]:
-        s=s + (", " if len(s) > 0 else "") + person + (" (M)" if person == item[3] else "")
-    return s
 
 # Generate the name of a person stripped if any "(M)" or "(m)" flags
 def RemoveModFlag(s: str):
@@ -158,9 +146,9 @@ gRoomNames=[r.strip() for r in scheduleCells[0]]
 scheduleCells=scheduleCells[1:]
 
 # Start reading ths spreadsheet and building the participants and items databases (dictionaries)
-gParticipants={} # A dictionary keyed by a person's name containing a list of (time, room, item) tuples, each an item that that person is on.
-gItems={}        # A dictionary keyed by item name containing a (time, room, people-list, moderator) tuple, where people-list is the list of people on the item
-gTimes=[]        # This is a list of times in spreadsheet order which should be in sorted order.
+gSchedules={}   # A dictionary keyed by a person's name containing a list of (time, room, item, moderator) tuples, each an item that that person is on.
+gItems={}       # A dictionary keyed by item name containing a (time, room, people-list, moderator) tuple, where people-list is the list of people on the item
+gTimes=[]       # A list of times in spreadsheet order which should be in sorted order.
 
 # When we find a row with data in column 0, we have found a new time.
 rowIndex=0
@@ -168,7 +156,7 @@ rowIndex=0
 
 # Add an item with a list of people, and add the item to each of the persons
 def AddItemWithPeople(time, roomName, itemName, plistText):
-    global gParticipants
+    global gSchedules
     global gItems
 
     people=plistText.split(",")  # Get the people as a list
@@ -179,12 +167,12 @@ def AddItemWithPeople(time, roomName, itemName, plistText):
         if len(person) > 0:  # Is it's not empty...
             if IsModerator(person):
                 modName=person=RemoveModFlag(person)
-            if person not in gParticipants.keys():  # If this is the first time we've encountered this person, create an empty entry.
-                gParticipants[person]=[]
-            gParticipants[person].append((time, roomName, itemName, person == modName))  # And append a tuple with the time, room, item name, and moderator flag
+            if person not in gSchedules.keys():  # If this is the first time we've encountered this person, create an empty entry.
+                gSchedules[person]=[]
+            gSchedules[person].append(ScheduleItem(Name=person, Time=time, Room=roomName, ItemName=itemName, Moderator=(person == modName)))  # And append a tuple with the time, room, item name, and moderator flag
             peopleList.append(person)
     # And add the item with its list of people to the items table.
-    gItems[itemName]=(time, roomName, peopleList, modName)
+    gItems[itemName]=Item(Name=itemName, Time=time, Room=roomName, People=peopleList, Moderator=modName)
 
 
 while rowIndex < len(scheduleCells):
@@ -344,10 +332,10 @@ txt=open(fname, "w")
 print("People who are scheduled but lack email address:", file=txt)
 print("(Note that these may be due to spelling differences, use of initials, etc.)", file=txt)
 count=0
-for person in gParticipants.keys():
-    if person not in peopleTable.keys():
+for personname in gSchedules.keys():
+    if personname not in peopleTable.keys():
         count+=1
-        print("   "+person, file=txt)
+        print("   "+personname, file=txt)
 if count == 0:
     print("    None found", file=txt)
 txt.close()
@@ -359,16 +347,16 @@ fname=os.path.join("reports", "Diag - People scheduled against themselves.txt")
 txt=open(fname, "w")
 print("People who are scheduled to be in two places at the same time", file=txt)
 count=0
-for person in gParticipants.keys():
-    pSched=gParticipants[person] # pSched is a person's schedule, which is a list of (time, room, item) tuples
+for personname in gSchedules.keys():
+    pSched=gSchedules[personname] # pSched is a person's schedule, which is a list of (time, room, item) tuples
     # Sort pSched by time, then look for duplicate times
-    pSched.sort(key=lambda x: x[0])
-    last=(0,0,0)
-    for it in pSched:
-        if it[0] == last[0]:
-            print(person+": "+NumericToTextTime(last[0])+": "+last[1]+" and also "+it[1], file=txt)
+    pSched.sort(key=lambda x: x.Time)
+    last=ScheduleItem()
+    for part in pSched:
+        if part.Time == last:
+            print(personname+": "+NumericToTextTime(last[0])+": "+last[1]+" and also "+part.Room, file=txt)
             count+=1
-        last=it
+        last=part
 if count == 0:
     print("    None found", file=txt)
 txt.close()
@@ -378,7 +366,7 @@ txt.close()
 # Now look for similar name pairs
 # First we make up a list of all names that appear in any tab
 names=set()
-names.update(gParticipants.keys())
+names.update(gSchedules.keys())
 names.update(peopleTable.keys())
 similarNames=[]
 for p1 in names:
@@ -410,32 +398,32 @@ if len(similarNames) > 0:
 #*******
 # Print the People with items by time report
 # Get a list of the program participants (the keys of the  participants dictionary) sorted by the last token in the name (which will usually be the last name)
-sortedallpartlist=sorted(gParticipants.keys(), key=lambda x: x.split(" ")[-1])
+sortedallpartlist=sorted(gSchedules.keys(), key=lambda x: x.split(" ")[-1])
 fname=os.path.join("reports", "People with items by time.txt")
 txt=open(fname, "w")
-for person in sortedallpartlist:
+for personname in sortedallpartlist:
     print("", file=txt)
-    print(person, file=txt)
-    for item in gParticipants[person]:
-        print("    " + NumericToTextTime(item[0]) + ": " + ItemDisplayName(item[2]) + " [" + item[1] + "]" + (" (moderator)" if item[3] else ""), file=txt)
+    print(personname, file=txt)
+    for sched in gSchedules[personname]:
+        print("    " + NumericToTextTime(sched.Time) + ": " + sched.DisplayName + " [" + sched.Room + "]" + (" (moderator)" if sched.Moderator else ""), file=txt)
 txt.close()
 
 
 #*******
 # Print the program participant's schedule report
 # Get a list of the program participants (the keys of the  participants dictionary) sorted by the last token in the name (which will usually be the last name)
-sortedallpartlist=sorted(gParticipants.keys(), key=lambda x: x.split(" ")[-1])
+sortedallpartlist=sorted(gSchedules.keys(), key=lambda x: x.split(" ")[-1])
 fname=os.path.join("reports", "Program participant schedules.txt")
 txt=open(fname, "w")
-for person in sortedallpartlist:
+for personname in sortedallpartlist:
     print("\n\n********************************************", file=txt)
-    print(person, file=txt)
-    for item in gParticipants[person]:
-        print("\n" + NumericToTextTime(item[0]) + ": " + ItemDisplayName(item[2]) + " [" + item[1] + "]" + (" (moderator)" if item[3] else ""), file=txt)
-        gitem=gItems[item[2]]
-        print("Participants: "+ItemDisplayPlist(gitem), file=txt)
-        if item[2] in gPrecis.keys():
-            print("Precis: "+gPrecis[item[2]], file=txt)
+    print(personname, file=txt)
+    for item in gSchedules[personname]:
+        print("\n" + NumericToTextTime(item.Time) + ": " + item.DisplayName + " [" + item.Room + "]" + (" (moderator)" if item.Moderator else ""), file=txt)
+        gitem=gItems[item.ItemName]
+        print("Participants: "+gitem.DisplayPlist(), file=txt)
+        if item.ItemName in gPrecis.keys():
+            print("Precis: "+gPrecis[item.ItemName], file=txt)
 txt.close()
 
 
@@ -444,8 +432,9 @@ txt.close()
 fname=os.path.join("reports", "Item's people counts.txt")
 txt=open(fname, "w")
 print("List of number of people scheduled on each item\n\n", file=txt)
-for item in gItems:
-    print(NumericToTextTime(gItems[item][0])+" " +item+": "+str(len(gItems[item][2])), file=txt)
+for itemname in gItems:
+    item=gItems[itemname]
+    print(NumericToTextTime(item.Time)+" " + item.Name + ": " + str(len(item.People)), file=txt)
 txt.close()
 
 
@@ -455,12 +444,12 @@ txt.close()
 fname=os.path.join("reports", "People's item counts.txt")
 txt=open(fname, "w")
 print("List of number of items each person is scheduled on\n\n", file=txt)
-for person in peopleTable:
-    if person in gParticipants.keys():
-        print(person+": "+str(len(gParticipants[person]))+("" if peopleTable[person][1] == "y" else " not confirmed"), file=txt)
+for personname in peopleTable:
+    if personname in gSchedules.keys():
+        print(personname+": "+str(len(gSchedules[personname]))+("" if peopleTable[personname][1] == "y" else " not confirmed"), file=txt)
     else:
-        if peopleTable[person][1] == "y":
-            print(person+": coming, but not scheduled", file=txt)
+        if peopleTable[personname][1] == "y":
+            print(personname+": coming, but not scheduled", file=txt)
 txt.close()
 
 def AppendParaToDoc(doc, txt: str, bold=False, italic=False, size=14, indent=0.0, font="Calibri"):
@@ -500,13 +489,13 @@ for time in gTimes:
         # Now search for the program item and people list for this slot
         for itemName in gItems.keys():
             item=gItems[itemName]
-            if item[0] == time and item[1] == room:
+            if item.Time == time and item.Room == room:
                 para=doc.add_paragraph()
                 AppendTextToPara(para, room+": ", italic=True, size=12, indent=0.3)
-                AppendTextToPara(para, ItemDisplayName(itemName), size=12, indent=0.3)
-                print("   "+room+":  "+ItemDisplayName(itemName), file=txt)   # Print the room and item name
-                if item[2] is not None and len(item[2]) > 0:            # And the item's people list
-                    plist=ItemDisplayPlist(item)
+                AppendTextToPara(para, item.DisplayName, size=12, indent=0.3)
+                print("   "+room+":  "+item.DisplayName, file=txt)   # Print the room and item name
+                if item.People is not None and len(item.People) > 0:            # And the item's people list
+                    plist=item.DisplayPlist()
                     AppendParaToDoc(doc, plist, size=12, indent=0.6)
                     print("            "+plist, file=txt)
                 if itemName in gPrecis.keys():
@@ -531,14 +520,13 @@ for room in gRoomNames:
     for time in gTimes:
         for itemName in gItems.keys():
             item=gItems[itemName]
-            if item[0] == time and item[1] == room:
+            if item.Time == time and item.Room == room:
                 inuse=True
                 AppendParaToDoc(doc, "")    # Skip a line
                 para=doc.add_paragraph()
-                AppendTextToPara(para, NumericToTextTime(time)+":  ", bold=True)   # Add the time in bold followed by the item's title
-                AppendTextToPara(para, ItemDisplayName(itemName))
-                plist=ItemDisplayPlist(item)
-                AppendParaToDoc(doc, plist, italic=True, indent=0.5)        # Then, on a new line, the people list in italic
+                AppendTextToPara(para, NumericToTextTime(item.Time)+":  ", bold=True)   # Add the time in bold followed by the item's title
+                AppendTextToPara(para, item.DisplayName)
+                AppendParaToDoc(doc, item.DisplayPlist(), italic=True, indent=0.5)        # Then, on a new line, the people list in italic
     fname=os.path.join(path, room+".docx")
     SafeDelete(fname)
     if inuse:
