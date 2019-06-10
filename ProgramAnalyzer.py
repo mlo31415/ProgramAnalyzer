@@ -161,7 +161,7 @@ def AddItemWithPeople(time, roomName, itemName, plistText):
 
     people=plistText.split(",")  # Get the people as a list
     people=[p.strip() for p in people]  # Remove excess spaces
-    modName=""
+    modName=None
     peopleList=[]
     for person in people:  # For each person listed on this item
         if len(person) > 0:  # Is it's not empty...
