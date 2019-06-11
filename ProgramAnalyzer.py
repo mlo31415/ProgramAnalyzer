@@ -132,6 +132,7 @@ gDayList=["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Sat
 i=gDayList.index(startingDay)
 gDayList=gDayList[i:]
 
+# We're done with reading the spreadsheet. Now analyze the data.
 #******
 # Analyze the Schedule cells
 # The first row of the spreadsheet is the list of rooms.
@@ -381,7 +382,6 @@ for p1 in names:
                 similarNames.append((p1, p2, rat))
 similarNames.sort(key=lambda x: x[2], reverse=True)
 
-
 fname=os.path.join("reports", "Diag - Disturbingly similar names.txt")
 SafeDelete(fname)
 if len(similarNames) > 0:
@@ -404,6 +404,7 @@ if len(similarNames) > 0:
 # Get a list of the program participants (the keys of the  participants dictionary) sorted by the last token in the name (which will usually be the last name)
 sortedallpartlist=sorted(gSchedules.keys(), key=lambda x: x.split(" ")[-1])
 fname=os.path.join("reports", "People with items by time.txt")
+SafeDelete(fname)
 txt=open(fname, "w")
 for personname in sortedallpartlist:
     print("\n"+personname, file=txt)
@@ -417,6 +418,7 @@ txt.close()
 # Get a list of the program participants (the keys of the  participants dictionary) sorted by the last token in the name (which will usually be the last name)
 sortedallpartlist=sorted(gSchedules.keys(), key=lambda x: x.split(" ")[-1])
 fname=os.path.join("reports", "Program participant schedules.txt")
+SafeDelete(fname)
 txt=open(fname, "w")
 for personname in sortedallpartlist:
     print("\n\n********************************************", file=txt)
@@ -433,6 +435,7 @@ txt.close()
 #******
 # Report on the number of people/item
 fname=os.path.join("reports", "Item's people counts.txt")
+SafeDelete(fname)
 txt=open(fname, "w")
 print("List of number of people scheduled on each item\n\n", file=txt)
 for itemname, item in gItems.items():
@@ -444,6 +447,7 @@ txt.close()
 # Report on the number of items/person
 # Include all people in the people tab, even those with no items
 fname=os.path.join("reports", "People's item counts.txt")
+SafeDelete(fname)
 txt=open(fname, "w")
 print("List of number of items each person is scheduled on\n\n", file=txt)
 for personname in peopleTable:
@@ -480,6 +484,7 @@ def AppendTextToPara(para: docx.text.paragraph.Paragraph, txt: str, bold: bool=F
 # Create a docx and a .txt version for the pocket program
 doc=docx.Document()
 fname=os.path.join("reports", "Pocket program.txt")
+SafeDelete(fname)
 txt=open(fname, "w")
 AppendParaToDoc(doc, "Schedule", bold=True, size=24)
 print("Schedule", file=txt)
