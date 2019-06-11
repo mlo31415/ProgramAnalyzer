@@ -316,19 +316,6 @@ for i in range(firstNonEmptyRow+1, len(peopleCells)):
 if not os.path.exists("reports"):
     os.mkdir("reports")
 
-# Print a list of precis without corresponding items and items without precis
-fname=os.path.join("reports", "Diag - items without precis.txt")
-txt=open(fname, "w")
-print("Items without precis:", file=txt)
-count=0
-for itemName, item in gItems.items():
-    if item.Precis is None:
-        count+=1
-        print("   "+itemName, file=txt)
-if count == 0:
-    print("    None found", file=txt)
-txt.close()
-
 
 #******
 # Check for people in the schedule who are not in the people tab
