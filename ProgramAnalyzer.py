@@ -434,7 +434,7 @@ txt.close()
 
 #******
 # Report on the number of people/item
-fname=os.path.join("reports", "Item's people counts.txt")
+fname=os.path.join("reports", "Items' people counts.txt")
 SafeDelete(fname)
 txt=open(fname, "w")
 print("List of number of people scheduled on each item\n\n", file=txt)
@@ -442,11 +442,63 @@ for itemname, item in gItems.items():
     print(NumericToTextTime(item.Time)+" " + item.Name + ": " + str(len(item.People)), file=txt)
 txt.close()
 
+#******
+# Flag items with a suspiciously small number of people on them
+fname=os.path.join("reports", "Diag - Items with unexpectedly low number of participants.txt")
+SafeDelete(fname)
+txt=open(fname, "w")
+print("List of non-readings and KKs with fewer than 3 people on them\n\n", file=txt)
+found=False
+for itemname, item in gItems.items():
+    if len(item.People) >= 3:
+        continue
+    if item.Name.find("Reading") > -1 or item.Name.find("KK") > -1 or item.Name.find("Kaffe") > -1 or item.Name.find("Autograph") > -1:
+        continue
+    print(NumericToTextTime(item.Time)+" " + item.Name + ": " + str(len(item.People)), file=txt)
+    found=True
+if not found:
+    print("None found")
+txt.close()
+
+
+#******
+# Flag items missing a moderator or a precis
+fname=os.path.join("reports", "Diag - Items missing a moderator.txt")
+SafeDelete(fname)
+txt=open(fname, "w")
+print("List of non-readings and KKs with no moderator\n\n", file=txt)
+found=False
+for itemname, item in gItems.items():
+    if item.Name.find("Reading") > -1 or item.Name.find("KK") > -1 or item.Name.find("Kaffe") > -1 or item.Name.find("Autograph") > -1:
+        continue
+    if item.ModName is not None:
+        continue
+    print(NumericToTextTime(item.Time)+" " + item.Name + ": " + str(len(item.People)), file=txt)
+    found=True
+if not found:
+    print("None found")
+txt.close()
+
+fname=os.path.join("reports", "Diag - Items missing a precis.txt")
+SafeDelete(fname)
+txt=open(fname, "w")
+print("List of non-readings and KKs with no precis\n\n", file=txt)
+found=False
+for itemname, item in gItems.items():
+    if item.Name.find("Reading") > -1 or item.Name.find("KK") > -1 or item.Name.find("Kaffe") > -1 or item.Name.find("Autograph") > -1:
+        continue
+    if item.Precis is not None and len(item.Precis) > 0:
+        continue
+    print(NumericToTextTime(item.Time)+" "+item.Name+": "+str(len(item.People)), file=txt)
+    found=True
+if not found:
+    print("None found")
+txt.close()
 
 #******
 # Report on the number of items/person
 # Include all people in the people tab, even those with no items
-fname=os.path.join("reports", "People's item counts.txt")
+fname=os.path.join("reports", "Peoples' item counts.txt")
 SafeDelete(fname)
 txt=open(fname, "w")
 print("List of number of items each person is scheduled on\n\n", file=txt)
