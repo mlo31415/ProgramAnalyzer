@@ -230,6 +230,11 @@ gTimes.sort()
 # The first row is column labels. So ignore it.
 precisCells=precisCells[1:]
 
+
+# Create the reports subfolder if none exists
+if not os.path.exists("reports"):
+    os.mkdir("reports")
+
 # The rest of the rows of the tab is pairs title:precis.
 count=0
 fname=os.path.join("reports", "Diag - precis without items.txt")
@@ -311,11 +316,6 @@ for i in range(firstNonEmptyRow+1, len(peopleCells)):
 #*************************************************************************************************
 # Generate reports
 # The first reports are all error reports or checking reports
-
-# Create the reports subfolder if none exists
-if not os.path.exists("reports"):
-    os.mkdir("reports")
-
 
 #******
 # Check for people in the schedule who are not in the people tab
