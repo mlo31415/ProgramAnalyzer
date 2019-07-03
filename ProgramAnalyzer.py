@@ -53,8 +53,13 @@ def TextToNumericTime(s: str):
 
 # Convert a numeric time to text
 # The input time is a floating point number of hours since the start of the 1st day of the convention
-def NumericToTextTime(f: float):
+def NumericToTextDayTime(f: float):
     global gDayList
+    d=math.floor(f/24)  # Compute the day number
+    return gDayList[int(d)] + " " + NumericToTextTime(f)
+
+
+def NumericToTextTime(f: float):
     d=math.floor(f/24)  # Compute the day number
     f=f-24*d
     isPM=f>12           # AM or PM?
@@ -65,17 +70,23 @@ def NumericToTextTime(f: float):
 
     if h == 12:         # Handle noon and midnight specially
         if isPM:
-            return gDayList[int(d)]+" midnight"
+            return "midnight"
         else:
-            return gDayList[int(d)] + " noon"
+            return "noon"
 
     if h == 0 and f != 0:
         numerictime="12:"+str(math.floor(60*f))     # Handle the special case of times after noon but before 1
     else:
         numerictime=str(h) + ("" if f == 0 else ":" + str(math.floor(60*f)))
 
-    return gDayList[int(d)] + " " + numerictime + " " + ("pm" if isPM else "am")
+    return numerictime + ("pm" if isPM else "am")
 
+
+# Return the name of the day corresponding to a numeric time
+def NumericTimeToDayString(f: float):
+    global gDayList
+    d=math.floor(f/24)  # Compute the day number
+    return gDayList[int(d)]
 
 
 #*************************************************************************************************
@@ -352,7 +363,7 @@ for personname in gSchedules.keys():
     last=ScheduleItem()
     for part in pSched:
         if part.Time == last:
-            print(personname+": "+NumericToTextTime(last[0])+": "+last[1]+" and also "+part.Room, file=txt)
+            print(personname+": "+NumericToTextDayTime(last[0])+": "+last[1]+" and also "+part.Room, file=txt)
             count+=1
         last=part
 if count == 0:
@@ -402,7 +413,7 @@ txt=open(fname, "w")
 for personname in sortedallpartlist:
     print("\n"+personname, file=txt)
     for schedItem in gSchedules[personname]:
-        print("    " + NumericToTextTime(schedItem.Time) + ": " + schedItem.DisplayName + " [" + schedItem.Room + "]" + (" (moderator)" if schedItem.IsMod else ""), file=txt)
+        print("    "+NumericToTextDayTime(schedItem.Time)+": "+schedItem.DisplayName+" ["+schedItem.Room+"]"+(" (moderator)" if schedItem.IsMod else ""), file=txt)
 txt.close()
 
 
@@ -417,7 +428,7 @@ for personname in sortedallpartlist:
     print("\n\n********************************************", file=txt)
     print(personname, file=txt)
     for schedItem in gSchedules[personname]:
-        print("\n" + NumericToTextTime(schedItem.Time) + ": " + schedItem.DisplayName + " [" + schedItem.Room + "]" + (" (moderator)" if schedItem.IsMod else ""), file=txt)
+        print("\n"+NumericToTextDayTime(schedItem.Time)+": "+schedItem.DisplayName+" ["+schedItem.Room+"]"+(" (moderator)" if schedItem.IsMod else ""), file=txt)
         item=gItems[schedItem.ItemName]
         print("Participants: "+item.DisplayPlist(), file=txt)
         if item.Precis is not None:
@@ -432,7 +443,7 @@ SafeDelete(fname)
 txt=open(fname, "w")
 print("List of number of people scheduled on each item\n\n", file=txt)
 for itemname, item in gItems.items():
-    print(NumericToTextTime(item.Time)+" " + item.Name + ": " + str(len(item.People)), file=txt)
+    print(NumericToTextDayTime(item.Time)+" "+item.Name+": "+str(len(item.People)), file=txt)
 txt.close()
 
 #******
@@ -447,7 +458,7 @@ for itemname, item in gItems.items():
         continue
     if item.Name.find("Reading") > -1 or item.Name.find("KK") > -1 or item.Name.find("Kaffe") > -1 or item.Name.find("Autograph") > -1:
         continue
-    print(NumericToTextTime(item.Time)+" " + item.Name + ": " + str(len(item.People)), file=txt)
+    print(NumericToTextDayTime(item.Time)+" "+item.Name+": "+str(len(item.People)), file=txt)
     found=True
 if not found:
     print("None found")
@@ -466,7 +477,7 @@ for itemname, item in gItems.items():
         continue
     if item.ModName is not None:
         continue
-    print(NumericToTextTime(item.Time)+" " + item.Name + ": " + str(len(item.People)), file=txt)
+    print(NumericToTextDayTime(item.Time)+" "+item.Name+": "+str(len(item.People)), file=txt)
     found=True
 if not found:
     print("None found")
@@ -482,7 +493,7 @@ for itemname, item in gItems.items():
         continue
     if item.Precis is not None and len(item.Precis) > 0:
         continue
-    print(NumericToTextTime(item.Time)+" "+item.Name+": "+str(len(item.People)), file=txt)
+    print(NumericToTextDayTime(item.Time)+" "+item.Name+": "+str(len(item.People)), file=txt)
     found=True
 if not found:
     print("None found")
@@ -503,6 +514,10 @@ for personname in peopleTable:
             print(personname+": coming, but not scheduled", file=txt)
 txt.close()
 
+
+#******
+# Create a docx and a .txt version for the pocket program
+# Note that we're generating two files at once here.
 def AppendParaToDoc(doc: docx.Document, txt: str, bold=False, italic=False, size=14, indent=0.0, font="Calibri"):
     para=doc.add_paragraph()
     run=para.add_run(txt)
@@ -526,7 +541,6 @@ def AppendTextToPara(para: docx.text.paragraph.Paragraph, txt: str, bold: bool=F
     para.paragraph_format.line_spacing=1
     para.paragraph_format.space_after=0
 
-# Create a docx and a .txt version for the pocket program
 doc=docx.Document()
 fname=os.path.join("reports", "Pocket program.txt")
 SafeDelete(fname)
@@ -535,8 +549,8 @@ AppendParaToDoc(doc, "Schedule", bold=True, size=24)
 print("Schedule", file=txt)
 for time in gTimes:
     AppendParaToDoc(doc, "")
-    AppendParaToDoc(doc, NumericToTextTime(time), bold=True)
-    print("\n"+NumericToTextTime(time), file=txt)
+    AppendParaToDoc(doc, NumericToTextDayTime(time), bold=True)
+    print("\n"+NumericToTextDayTime(time), file=txt)
     for room in gRoomNames:
         # Now search for the program item and people list for this slot
         for itemName, item in gItems.items():
@@ -555,6 +569,46 @@ for time in gTimes:
 fname=os.path.join("reports", "Pocket program.docx")
 doc.save(fname)
 txt.close()
+
+
+#******
+# Generate web pages, one for each day.
+day=""
+f=None
+for time in gTimes:
+    # We generate a separate report for each day
+    d=NumericTimeToDayString(time)
+    if d != day:
+        # Close the old file, if any
+        if f is not None:
+            # Read and append the footer
+            with open("control-WebpageFooter.txt", "r") as f2:
+                f.writelines(f2.readlines())
+            f.close()
+            f=None
+        # Open the new one
+        day=d
+        fname=os.path.join("reports", day+" Schedule.html")
+        SafeDelete(fname)
+        f=open(fname, "w")
+        with open("control-WebpageHeader.txt", "r") as f2:
+            f.writelines(f2.readlines())
+        print("<h2>"+day+"</h2>\n", file=f)
+
+    print("<p>\n", file=f)
+    print('<b><span style="font-size: 14pt">' + NumericToTextTime(time) + '</span></b></p>', file=f)
+    for room in gRoomNames:
+        # Now search for the program item and people list for this slot
+        for itemName, item in gItems.items():
+            if item.Time == time and item.Room == room:
+                print('<p style="margin-left:.3in;font-size: 12pt"><i>' + room +': </span></i><span style="font-size: 12pt">' + item.DisplayName +'</span></p>', file=f)
+                if item.People is not None and len(item.People) > 0:            # And the item's people list
+                    print('<p style="margin-left:.6in;font-size: 12pt">'+ item.DisplayPlist() +'</span></p>', file=f)
+                if item.Precis is not None:
+                    print('<p style="margin-left:.6in;font-size: 10pt"><i>'+item.Precis+'</span></i></p>', file=f)
+if f is not None:
+    f.close()
+
 
 #******
 # Do the room signs.  They'll go in reports/rooms/<name>.docx
@@ -575,7 +629,7 @@ for room in gRoomNames:
                 inuse=True
                 AppendParaToDoc(doc, "")    # Skip a line
                 para=doc.add_paragraph()
-                AppendTextToPara(para, NumericToTextTime(item.Time)+":  ", bold=True)   # Add the time in bold followed by the item's title
+                AppendTextToPara(para, NumericToTextDayTime(item.Time)+":  ", bold=True)   # Add the time in bold followed by the item's title
                 AppendTextToPara(para, item.DisplayName)
                 AppendParaToDoc(doc, item.DisplayPlist(), italic=True, indent=0.5)        # Then, on a new line, the people list in italic
     fname=os.path.join(path, room+".docx")
