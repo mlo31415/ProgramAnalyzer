@@ -41,7 +41,7 @@ def TextToNumericTime(s: str):
     s=s.split(" ")
     d=gDayList.index(s[0])
     if len(s) == 3:
-        h=int(s[1])
+        h=int(s[1])         # TODO: Should handle hour:minutes (e.g., 11:30)
         isAM=s[2].lower() == "am"
         return 24*d + h + (0 if isAM else 12)
 
@@ -52,17 +52,18 @@ def TextToNumericTime(s: str):
         return 24*d+24
 
 # Convert a numeric time to text
+# The input time is a floating point number of hours since the start of the 1st day of the convention
 def NumericToTextTime(f: float):
     global gDayList
-    d=math.floor(f/24)
+    d=math.floor(f/24)  # Compute the day number
     f=f-24*d
-    isPM=f>12
+    isPM=f>12           # AM or PM?
     if isPM:
         f=f-12
-    h=math.floor(f)
-    f=f-h
+    h=math.floor(f)     # Get the hour
+    f=f-h               # What's left is the fractional hour
 
-    if h == 12:
+    if h == 12:         # Handle noon and midnight specially
         if isPM:
             return gDayList[int(d)]+" midnight"
         else:
