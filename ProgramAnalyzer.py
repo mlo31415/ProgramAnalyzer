@@ -69,7 +69,12 @@ def NumericToTextTime(f: float):
         else:
             return gDayList[int(d)] + " noon"
 
-    return gDayList[int(d)] + " " + str(h) + ("" if f == 0 else ":" + str(math.floor(60*f))) + " " + ("pm" if isPM else "am")
+    if h == 0 and f != 0:
+        numerictime="12:"+str(math.floor(60*f))     # Handle the special case of times after noon but before 1
+    else:
+        numerictime=str(h) + ("" if f == 0 else ":" + str(math.floor(60*f)))
+
+    return gDayList[int(d)] + " " + numerictime + " " + ("pm" if isPM else "am")
 
 
 
@@ -200,7 +205,7 @@ while rowIndex < len(scheduleCells):
                     if len(scheduleCells[peopleRowIndex]) > roomIndex:  # Does it have enough columns?
                         if len(scheduleCells[peopleRowIndex][roomIndex]) > 0: # Does it have anything in the right column?
                             # We indicate items which go for an hour, but have some people in one part and some in another using a special notation in the people list.
-                            # Robert A. Heinlein, [0.0] John W. Campbell puts RAH on the hour and JWC a half-hour later.
+                            # Robert A. Heinlein, [0.5] John W. Campbell puts RAH on the hour and JWC a half-hour later.
                             # There is much messiness in this.
                             # We look for the [##] in the people list.  If we find it, we divide the people list in half and create two items with separate plists.
                             plistText=scheduleCells[peopleRowIndex][roomIndex]
