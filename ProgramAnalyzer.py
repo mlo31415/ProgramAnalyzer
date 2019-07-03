@@ -70,9 +70,9 @@ def NumericToTextTime(f: float):
 
     if h == 12:         # Handle noon and midnight specially
         if isPM:
-            return "midnight"
+            return "Midnight"
         else:
-            return "noon"
+            return "Noon"
 
     if h == 0 and f != 0:
         numerictime="12:"+str(math.floor(60*f))     # Handle the special case of times after noon but before 1
@@ -588,7 +588,7 @@ for time in gTimes:
             f=None
         # Open the new one
         day=d
-        fname=os.path.join("reports", day+" Schedule.html")
+        fname=os.path.join("reports", "Schedule - "+day+".html")
         SafeDelete(fname)
         f=open(fname, "w")
         with open("control-WebpageHeader.txt", "r") as f2:
