@@ -606,15 +606,15 @@ for time in gTimes:
         for itemName, item in gItems.items():
             if item.Time == time and item.Room == room:
                 f.write('<tr><td width="40">&nbsp;</td><td colspan="2">')   # Two columns, the first 40 pixes wide and empty
-                f.write('<p style="font-size: 12pt"><i>' + room +': </i><b>' + item.DisplayName +'</b></span>')
+                f.write('<span style="font-size: 12pt"><i>' + room +': </i><b>' + item.DisplayName +'</b></span>')
                 f.write('</td></tr>')
                 if item.People is not None and len(item.People) > 0:            # And the item's people list
                     f.write('<tr><td width="40">&nbsp;</td><td width="40">&nbsp;</td><td width="600">')     # Three columns, the first two 40 pixes wide and empty; the third 600 pixels wide
-                    f.write('<p style=font-size: 12pt">'+item.DisplayPlist()+'</span>')
+                    f.write('<span style="font-size: 12pt">'+item.DisplayPlist()+'</span>')
                     f.write('</td></tr>\n')
                 if item.Precis is not None:
                     f.write('<tr><td width="40">&nbsp;</td><td width="40">&nbsp;</td><td width="600">')     # Same
-                    f.write('<p style=font-size: 10pt"><i>'+item.Precis+'</span></i>')
+                    f.write('<span style="font-size: 10pt"><i>'+item.Precis+'</i></span>')
                     f.write('</td></tr>\n')
 if f is not None:
     # Read and append the footer
