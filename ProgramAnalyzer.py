@@ -255,29 +255,28 @@ while rowIndex < len(scheduleCells):
                 itemName=row[roomIndex]
                 # If there are people scheduled for it, they will be in the next cell down
                 peopleRowIndex=rowIndex+1
-                if len(scheduleCells)> peopleRowIndex:  # Does a row indexed by peopleRowIndex exist in the spreadsheet?
-                    if len(scheduleCells[peopleRowIndex]) > roomIndex:  # Does it have enough columns?
-                        if len(scheduleCells[peopleRowIndex][roomIndex]) > 0: # Does it have anything in the right column?
-                            # We indicate items which go for an hour, but have some people in one part and some in another using a special notation in the people list.
-                            # Robert A. Heinlein, [0.5] John W. Campbell puts RAH on the hour and JWC a half-hour later.
-                            # There is much messiness in this.
-                            # We look for the [##] in the people list.  If we find it, we divide the people list in half and create two items with separate plists.
-                            plistText=scheduleCells[peopleRowIndex][roomIndex]
-                            r=RegEx.match("(.*)\[([0-9.]*)\](.*)", plistText)
-                            if r is None:
-                                AddItemWithPeople(time, roomName, itemName, plistText)
-                            else:
-                                plist1=r.groups()[0].strip()
-                                deltaT=r.groups()[1].strip()
-                                plist2=r.groups()[2].strip()
-                                AddItemWithPeople(time, roomName, itemName, plist1)
-                                newTime=time+float(deltaT)
-                                if newTime not in gTimes:
-                                    gTimes.append(newTime)
-                                # This second instance will need to have a distinct item name, so add {#2} to the item name
-                                AddItemWithPeople(newTime, roomName, itemName+" {#2}", plist2)
-                        else:   # We have an item with no people on it.
-                            AddItemWithoutPeople(time, roomName, itemName)
+                # Does a row indexed by peopleRowIndex exist in the spreadsheet? Does it have enough columns? Does it have anything in the correct column?
+                if len(scheduleCells) > peopleRowIndex and len(scheduleCells[peopleRowIndex]) > roomIndex and len(scheduleCells[peopleRowIndex][roomIndex]) > 0:
+                    # We indicate items which go for an hour, but have some people in one part and some in another using a special notation in the people list.
+                    # Robert A. Heinlein, [0.5] John W. Campbell puts RAH on the hour and JWC a half-hour later.
+                    # There is much messiness in this.
+                    # We look for the [##] in the people list.  If we find it, we divide the people list in half and create two items with separate plists.
+                    plistText=scheduleCells[peopleRowIndex][roomIndex]
+                    r=RegEx.match("(.*)\[([0-9.]*)\](.*)", plistText)
+                    if r is None:
+                        AddItemWithPeople(time, roomName, itemName, plistText)
+                    else:
+                        plist1=r.groups()[0].strip()
+                        deltaT=r.groups()[1].strip()
+                        plist2=r.groups()[2].strip()
+                        AddItemWithPeople(time, roomName, itemName, plist1)
+                        newTime=time+float(deltaT)
+                        if newTime not in gTimes:
+                            gTimes.append(newTime)
+                        # This second instance will need to have a distinct item name, so add {#2} to the item name
+                        AddItemWithPeople(newTime, roomName, itemName+" {#2}", plist2)
+                else:   # We have an item with no people on it.
+                    AddItemWithoutPeople(time, roomName, itemName)
 
 
     rowIndex+=2 # Skip both rows
