@@ -38,20 +38,48 @@ def SafeDelete(fn: str):
 def TextToNumericTime(s: str):
     global gDayList
     # The date string is of the form Day Hour AM/PM or Day Noon
-    s=s.split(" ")
-    d=gDayList.index(s[0])
-    if len(s) == 3:
-        h=int(s[1])         # TODO: Should handle hour:minutes (e.g., 11:30)
-        isAM=s[2].lower() == "am"
-        return 24*d + h + (0 if isAM else 12)
+    day=""
+    hour=""
+    minutes=""
+    suffix=""
 
-    if s[1].lower() == "noon":
-        return 24*d+12
+    m=RegEx.match(r"^([A-Za-z]+)\s*([0-9]+)\s*([A-Za-z]+)$", s)     # <day> <hr> <am/pm/noon/etc>
+    if m is not None:
+        day=m.groups()[0]
+        hour=m.groups()[1]
+        suffix=m.groups()[2]
+    else:
+        m=RegEx.match(r"^([A-Za-z]+)\s*([0-9]+):([0-9]+)\s*([A-Za-z]+)$", s)    # <day> <hr>:<min> <am/pm/noon/etc>
+        if m is not None:
+            day=m.groups()[0]
+            hour=m.groups()[1]
+            minutes=m.groups()[2]
+            suffix=m.groups()[3]
+        else:
+            m=RegEx.match(r"^([A-Za-z]+)\s*([A-Za-z]+)$", s)    # <day> <am/pm/noon/etc>
+            if m is not None:
+                day=m.groups()[0]
+                suffix=m.groups()[1]
+            else:
+                print("Can't interpret time: '"+s+"'")
 
-    if s[1].lower() == "midnight":
-        return 24*d+24
+    d=gDayList.index(day)
+    h=0
+    if hour != "":
+        h=int(hour)
+    if minutes != "":
+        h=h+int(minutes)/60
+    if suffix.lower() == "pm":
+        h=h+12
+    elif suffix.lower() == "noon":
+        h=12
+    elif suffix.lower() == "midnight":
+        h=24
 
-# Convert a numeric time to text
+    #print("'"+s+"'  --> day="+day+"  hour="+hour+"  minutes="+minutes+"  suffix="+suffix+"   --> d="+str(d)+"  h="+str(h)+"  24*d+h="+(str(24*d+h))+"  --> "+NumericToTextDayTime(24*d+h))
+    return 24*d+h
+
+# Convert a numeric daytime to text
 # The input time is a floating point number of hours since the start of the 1st day of the convention
 def NumericToTextDayTime(f: float):
     global gDayList
@@ -87,6 +115,13 @@ def NumericTimeToDayString(f: float):
     global gDayList
     d=math.floor(f/24)  # Compute the day number
     return gDayList[int(d)]
+
+
+def FmtLen(val: list):
+    if val is None:
+        return "0"
+    return str(len(val))
+
 
 
 #*************************************************************************************************
@@ -174,6 +209,7 @@ gTimes=[]       # A list of times in spreadsheet order which should be in sorted
 rowIndex=0
 
 
+
 # Add an item with a list of people, and add the item to each of the persons
 def AddItemWithPeople(time: float, roomName: str, itemName: str, plistText: str):
     global gSchedules
@@ -195,6 +231,12 @@ def AddItemWithPeople(time: float, roomName: str, itemName: str, plistText: str)
     gItems[itemName]=Item(Name=itemName, Time=time, Room=roomName, People=peopleList, ModName=modName)
 
 
+# Add an item with a list of people, and add the item to each of the persons
+def AddItemWithoutPeople(time: float, roomName: str, itemName: str):
+    global gItems
+    gItems[itemName]=Item(Name=itemName, Time=time, Room=roomName, People=None, ModName=None)
+
+
 while rowIndex < len(scheduleCells):
     row=[c.strip() for c in scheduleCells[rowIndex]]  # Get just the one row as a list of cells. Strip off leading and trailing blanks for each cell.
     if len(row) == 0:   # Ignore empty rows
@@ -206,6 +248,7 @@ while rowIndex < len(scheduleCells):
 
     # Looking at the rest of the row, there may be text in one or more of the room columns
     for roomIndex in roomIndexes:
+        roomName=gRoomNames[roomIndex]
         if roomIndex < len(row):    # Trailing empty cells have been truncated, so better check.
             if len(row[roomIndex]) > 0:     # So does the cell itself contain text?
                 # This has to be an item name since it's a cell containing text in a row that starts with a time and in a column that starts with a room
@@ -221,7 +264,6 @@ while rowIndex < len(scheduleCells):
                             # We look for the [##] in the people list.  If we find it, we divide the people list in half and create two items with separate plists.
                             plistText=scheduleCells[peopleRowIndex][roomIndex]
                             r=RegEx.match("(.*)\[([0-9.]*)\](.*)", plistText)
-                            roomName=gRoomNames[roomIndex]
                             if r is None:
                                 AddItemWithPeople(time, roomName, itemName, plistText)
                             else:
@@ -234,6 +276,9 @@ while rowIndex < len(scheduleCells):
                                     gTimes.append(newTime)
                                 # This second instance will need to have a distinct item name, so add {#2} to the item name
                                 AddItemWithPeople(newTime, roomName, itemName+" {#2}", plist2)
+                        else:   # We have an item with no people on it.
+                            AddItemWithoutPeople(time, roomName, itemName)
+
 
     rowIndex+=2 # Skip both rows
 
@@ -443,7 +488,7 @@ SafeDelete(fname)
 txt=open(fname, "w")
 print("List of number of people scheduled on each item\n\n", file=txt)
 for itemname, item in gItems.items():
-    print(NumericToTextDayTime(item.Time)+" "+item.Name+": "+str(len(item.People)), file=txt)
+    print(NumericToTextDayTime(item.Time)+" "+item.Name+": "+FmtLen(item.People), file=txt)
 txt.close()
 
 #******
@@ -454,11 +499,11 @@ txt=open(fname, "w")
 print("List of non-readings and KKs with fewer than 3 people on them\n\n", file=txt)
 found=False
 for itemname, item in gItems.items():
-    if len(item.People) >= 3:
+    if item.People is not None and len(item.People) >= 3:
         continue
     if item.Name.find("Reading") > -1 or item.Name.find("KK") > -1 or item.Name.find("Kaffe") > -1 or item.Name.find("Autograph") > -1:
         continue
-    print(NumericToTextDayTime(item.Time)+" "+item.Name+": "+str(len(item.People)), file=txt)
+    print(NumericToTextDayTime(item.Time)+" "+item.Name+": "+FmtLen(item.People), file=txt)
     found=True
 if not found:
     print("None found")
@@ -477,7 +522,7 @@ for itemname, item in gItems.items():
         continue
     if item.ModName is not None:
         continue
-    print(NumericToTextDayTime(item.Time)+" "+item.Name+": "+str(len(item.People)), file=txt)
+    print(NumericToTextDayTime(item.Time)+" "+item.Name+": "+FmtLen(item.People), file=txt)
     found=True
 if not found:
     print("None found")
@@ -493,7 +538,7 @@ for itemname, item in gItems.items():
         continue
     if item.Precis is not None and len(item.Precis) > 0:
         continue
-    print(NumericToTextDayTime(item.Time)+" "+item.Name+": "+str(len(item.People)), file=txt)
+    print(NumericToTextDayTime(item.Time)+" "+item.Name+": "+FmtLen(item.People), file=txt)
     found=True
 if not found:
     print("None found")

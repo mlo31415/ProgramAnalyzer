@@ -22,6 +22,8 @@ class Item:
 
     # Generate the display text of a list of people
     def DisplayPlist(self):
+        if self.People is None:
+            return ""
         s=""
         for person in self.People:
             s=s+(", " if len(s) > 0 else "")+person+(" (M)" if person == self.ModName else "")
