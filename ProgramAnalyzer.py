@@ -689,7 +689,7 @@ for room in gRoomNames:
                 AppendTextToPara(para, NumericToTextDayTime(item.Time)+":  ", bold=True)   # Add the time in bold followed by the item's title
                 AppendTextToPara(para, item.DisplayName)
                 AppendParaToDoc(doc, item.DisplayPlist(), italic=True, indent=0.5)        # Then, on a new line, the people list in italic
-    fname=os.path.join(path, room+".docx")
+    fname=os.path.join(path, room.replace("/", "-")+".docx")
     SafeDelete(fname)
     if inuse:
         doc.save(fname)
