@@ -291,7 +291,6 @@ gTimes.sort()
 # The first row is column labels. So ignore it.
 precisCells=precisCells[1:]
 
-
 # Create the reports subfolder if none exists
 if not os.path.exists("reports"):
     os.mkdir("reports")
@@ -460,11 +459,26 @@ for personname in sortedallpartlist:
         print("    "+NumericToTextDayTime(schedItem.Time)+": "+schedItem.DisplayName+" ["+schedItem.Room+"]"+(" (moderator)" if schedItem.IsMod else ""), file=txt)
 txt.close()
 
+#*******
+# Print the Items with people by time report
+# Get a list of the program participants (the keys of the  participants dictionary) sorted by the last token in the name (which will usually be the last name)
+fname=os.path.join("reports", "Items with people by time.txt")
+SafeDelete(fname)
+txt=open(fname, "w")
+for time in gTimes:
+    for room in gRoomNames:
+        # Now search for the program item and people list for this slot
+        for itemName, item in gItems.items():
+            if item.Time == time and item.Room == room:
+                print(NumericToTextDayTime(time)+", "+room+": "+itemName+"   "+item.DisplayPlist(), file=txt)
+                if item.Precis is not None:
+                    print("     "+item.Precis, file=txt)
+txt.close()
+
 
 #*******
 # Print the program participant's schedule report
 # Get a list of the program participants (the keys of the  participants dictionary) sorted by the last token in the name (which will usually be the last name)
-sortedallpartlist=sorted(gSchedules.keys(), key=lambda x: x.split(" ")[-1])
 fname=os.path.join("reports", "Program participant schedules.txt")
 SafeDelete(fname)
 txt=open(fname, "w")
