@@ -317,6 +317,8 @@ while rowIndex < len(scheduleCells):
             i=0
             rowIndex+=1
 
+if timeRow is not None:
+    ProcessRows(timeRow, None)
 
 # Make sure times are sorted properly
 gTimes.sort()
