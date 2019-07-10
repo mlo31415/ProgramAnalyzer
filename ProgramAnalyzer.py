@@ -110,7 +110,7 @@ def NumericToTextTime(f: float):
     else:
         numerictime=str(h) + ("" if f == 0 else ":" + str(math.floor(60*f)))
 
-    return numerictime + ("pm" if isPM else "am")
+    return numerictime + (" pm" if isPM else " am")
 
 
 # Return the name of the day corresponding to a numeric time
