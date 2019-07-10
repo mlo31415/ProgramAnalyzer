@@ -391,10 +391,9 @@ for i in range(0, len(peopleCells[firstNonEmptyRow])):
     if cell == "response":
         responseCol=i
 if fnameCol is None or lnameCol is None or emailCol is None or responseCol is None:
-    print("Response tab is missing at least one column label.")
-    print("    lebels="+" ".join(peopleCells[firstNonEmptyRow]))
+    print("People tab is missing at least one column label.")
+    print("    labels="+" ".join(peopleCells[firstNonEmptyRow]))
 
-#TODO: Need some sort of error report if the fname, lname, or response is missing
 # We'll combine the first and last names to create a full name like is used elsewhere.
 peopleTable={}
 for i in range(firstNonEmptyRow+1, len(peopleCells)):
@@ -414,6 +413,9 @@ for i in range(firstNonEmptyRow+1, len(peopleCells)):
         fullname=fname
     elif len(lname) > 0:
         fullname=lname
+    if len(fullname.strip()) == 0:
+        print("Name missing from People tab row #"+str(i+1))
+        print("    row="+" ".join(peopleCells[i]))
 
     email=""
     if emailCol < len(row):
@@ -422,7 +424,7 @@ for i in range(firstNonEmptyRow+1, len(peopleCells)):
     if responseCol < len(row):
         response=row[responseCol]
 
-    if fullname is not None:    # TODO, and what if it is?
+    if fullname is not None:
         peopleTable[fullname]=email, response.lower()       # Store the email and response as a tuple in the entry indexed by the full name
 
 
