@@ -205,11 +205,6 @@ gSchedules={}   # A dictionary keyed by a person's name containing a list of (ti
 gItems={}       # A dictionary keyed by item name containing a (time, room, people-list, moderator) tuple, where people-list is the list of people on the item
 gTimes=[]       # A list of times in spreadsheet order which should be in sorted order.
 
-# When we find a row with data in column 0, we have found a new time.
-rowIndex=0
-
-
-
 # Add an item with a list of people, and add the item to each of the persons
 def AddItemWithPeople(time: float, roomName: str, itemName: str, plistText: str):
     global gSchedules
@@ -228,40 +223,40 @@ def AddItemWithPeople(time: float, roomName: str, itemName: str, plistText: str)
         gSchedules[person].append(ScheduleItem(PersonName=person, Time=time, Room=roomName, ItemName=itemName, IsMod=(person == modName)))  # And append a tuple with the time, room, item name, and moderator flag
         peopleList.append(person)
     # And add the item with its list of people to the items table.
+    if itemName in gItems:  # If the item's name is already in use, add a uniquifier of room+day/time
+        itemName=itemName+"  {"+roomName+" "+NumericToTextDayTime(time)+"}"
     gItems[itemName]=Item(Name=itemName, Time=time, Room=roomName, People=peopleList, ModName=modName)
 
 
 # Add an item with a list of people, and add the item to each of the persons
 def AddItemWithoutPeople(time: float, roomName: str, itemName: str):
     global gItems
+    if itemName in gItems:  # If the item's name is already in use, add a uniquifier of room+day/time
+        itemName=itemName+"  {"+roomName+" "+NumericToTextDayTime(time)+"}"
     gItems[itemName]=Item(Name=itemName, Time=time, Room=roomName, People=None, ModName=None)
 
+def ProcessRows(timeRow, peopleRow):
 
-while rowIndex < len(scheduleCells):
-    row=[c.strip() for c in scheduleCells[rowIndex]]  # Get just the one row as a list of cells. Strip off leading and trailing blanks for each cell.
-    if len(row) == 0:   # Ignore empty rows
-        rowIndex+=1
-        continue
-
-    time=TextToNumericTime(row[0]) # When a row has text in the first column, that text gives the time of the item.  If the spreadsheet is well-formed, the next non-blank line is a time line
-    gTimes.append(time)
+    # Get the time from the timerow and add it to gTimes
+    time=TextToNumericTime(timeRow[0])
+    if time not in gTimes:
+        gTimes.append(time)     # We want to allow duplicate time rows, just-in-case
 
     # Looking at the rest of the row, there may be text in one or more of the room columns
     for roomIndex in roomIndexes:
         roomName=gRoomNames[roomIndex]
-        if roomIndex < len(row):    # Trailing empty cells have been truncated, so better check.
-            if len(row[roomIndex]) > 0:     # So does the cell itself contain text?
+        if roomIndex < len(timeRow):    # Trailing empty cells have been truncated, so better check.
+            if len(timeRow[roomIndex]) > 0:     # So does the cell itself contain text?
                 # This has to be an item name since it's a cell containing text in a row that starts with a time and in a column that starts with a room
-                itemName=row[roomIndex]
-                # If there are people scheduled for it, they will be in the next cell down
-                peopleRowIndex=rowIndex+1
+                itemName=timeRow[roomIndex]
+
                 # Does a row indexed by peopleRowIndex exist in the spreadsheet? Does it have enough columns? Does it have anything in the correct column?
-                if len(scheduleCells) > peopleRowIndex and len(scheduleCells[peopleRowIndex]) > roomIndex and len(scheduleCells[peopleRowIndex][roomIndex]) > 0:
+                if peopleRow is not None and len(peopleRow) > roomIndex and len(peopleRow[roomIndex]) > 0:
                     # We indicate items which go for an hour, but have some people in one part and some in another using a special notation in the people list.
                     # Robert A. Heinlein, [0.5] John W. Campbell puts RAH on the hour and JWC a half-hour later.
                     # There is much messiness in this.
                     # We look for the [##] in the people list.  If we find it, we divide the people list in half and create two items with separate plists.
-                    plistText=scheduleCells[peopleRowIndex][roomIndex]
+                    plistText=peopleRow[roomIndex]
                     r=RegEx.match("(.*)\[([0-9.]*)\](.*)", plistText)
                     if r is None:
                         AddItemWithPeople(time, roomName, itemName, plistText)
@@ -279,8 +274,42 @@ while rowIndex < len(scheduleCells):
                     AddItemWithoutPeople(time, roomName, itemName)
 
 
-    rowIndex+=2 # Skip both rows
+# When we find a row with data in column 0, we have found a new time.
+# A time row contains items.
+# A time row will normally be followed by a people row containing the participants for those items
+rowIndex=0
+timeRow=None
+while rowIndex < len(scheduleCells):
+    row=[c.strip() for c in scheduleCells[rowIndex]]  # Get the next row as a list of cells. Strip off leading and trailing blanks for each cell.
+    if len(row) == 0:   # Ignore empty rows
+        rowIndex+=1
+        continue
 
+    # We have a non-empty row. It can be a time row or a people row.
+    if len(row[0]) > 0:     # Is it a time row?
+        if timeRow is None:     # Is it a time row without a pending time row?
+            # Save it and go to the next row
+            timeRow=row
+            rowIndex+=1
+            continue
+
+        if timeRow is not None: # If it's a time row, and we already have a time row, then that first time row has no people.  Process the first row, save the second and move on.
+            # Process time row without people row
+            ProcessRows(timeRow, None)
+            timeRow=row
+            rowIndex+=1
+            continue
+    else:   # Then it must be a people row
+        if timeRow is not None:      # Is it a people row following a time row?
+            ProcessRows(timeRow, row)
+            rowIndex+=1
+            timeRow=None
+            continue
+
+        if timeRow is None and len(row[0]) == 0:    # Is it a people row that doesn't follow a time row?
+            # error
+            i=0
+            rowIndex+=1
 
 
 # Make sure times are sorted properly
