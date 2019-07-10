@@ -338,7 +338,8 @@ while rowIndex < len(scheduleCells):
 if timeRow is not None:
     ProcessRows(timeRow, None)
 
-# Make sure times are sorted properly
+# Make sure times are sorted into ascending order.
+# The simple sort works because the times are stored as numeric hours since start of first day.
 gTimes.sort()
 
 #******
