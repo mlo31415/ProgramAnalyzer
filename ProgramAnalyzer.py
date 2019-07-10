@@ -129,6 +129,10 @@ def FmtLen(val: list):
 # MAIN
 # Read and analyze the spreadsheet
 
+# Create the reports subfolder if none exists
+if not os.path.exists("reports"):
+    os.mkdir("reports")
+
 credentials = None
 # The file token.pickle stores the user's access and refresh tokens, and is
 # created automatically when the authorization flow completes for the first time.
@@ -341,10 +345,6 @@ gTimes.sort()
 # Analyze the Precis cells and add the information to the
 # The first row is column labels. So ignore it.
 precisCells=precisCells[1:]
-
-# Create the reports subfolder if none exists
-if not os.path.exists("reports"):
-    os.mkdir("reports")
 
 # The rest of the rows of the tab is pairs title:precis.
 count=0
