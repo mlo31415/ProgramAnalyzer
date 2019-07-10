@@ -1,4 +1,5 @@
 import os
+import sys
 
 #=============================================================================
 # Print the text to a log file open by the main program
@@ -125,7 +126,9 @@ def LogClose():
 
         if g_logErrorFile is not None:
             if 'g_errorsLogged' in globals() and g_errorsLogged > 0:
-                g_logErrorFile.close()
-                osCommandString="notepad.exe "+g_logErrorFileName
-                os.system(osCommandString)
+                if sys.platform == "win32":
+                    g_logErrorFile.close()
+                else:
+                    i=0 # Need a call here for Linux, Max
+                os.system("notepad.exe "+g_logErrorFileName)
         del g_logErrorFile
