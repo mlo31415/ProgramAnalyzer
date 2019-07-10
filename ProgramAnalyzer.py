@@ -390,6 +390,9 @@ for i in range(0, len(peopleCells[firstNonEmptyRow])):
         emailCol=i
     if cell == "response":
         responseCol=i
+if fnameCol is None or lnameCol is None or emailCol is None or responseCol is None:
+    print("Response tab is missing at least one column label.")
+    print("    lebels="+" ".join(peopleCells[firstNonEmptyRow]))
 
 #TODO: Need some sort of error report if the fname, lname, or response is missing
 # We'll combine the first and last names to create a full name like is used elsewhere.
