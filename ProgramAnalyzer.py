@@ -181,6 +181,9 @@ for row in parameterCells:
             startingDay=startingDay[0].upper()+startingDay.lower()[1:]  # Force the capitalization to be right
 # Reorganize the dayList so it starts with our starting day. It's extra-long so that clipping days from the front will still leave a full week.
 gDayList=["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+if startingDay not in gDayList:
+    print("Can't interpret starting day='"+startingDay+"'.  Will use 'Friday'")
+    startingDay="Friday"
 i=gDayList.index(startingDay)
 gDayList=gDayList[i:]
 
