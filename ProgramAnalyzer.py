@@ -13,6 +13,9 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from ScheduleItem import ScheduleItem
 from Item import Item
+from Logger import LogError
+from Logger import LogClose
+
 
 #*************************************************************************************************
 #*************************************************************************************************
@@ -61,7 +64,7 @@ def TextToNumericTime(s: str):
                 day=m.groups()[0]
                 suffix=m.groups()[1]
             else:
-                print("Can't interpret time: '"+s+"'")
+                LogError("Can't interpret time: '"+s+"'")
 
     d=gDayList.index(day)
     h=0
@@ -159,24 +162,24 @@ sheet = service.spreadsheets()
 SPREADSHEET_ID ='1UjHSw-R8dLNFGctUhIQiPr58aAAfBedGznJEN2xBn7o'  # This is the ID of the specific spreadsheet we're reading
 scheduleCells = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range='Schedule!A1:Z1999').execute().get('values', [])     # Read the whole thing.
 if not scheduleCells:
-    print("Can't locate scheduleCells tab in spreadsheet")
+    LogError("Can't locate scheduleCells tab in spreadsheet")
     raise(ValueError, "No scheduleCells found")
 
 precisCells = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range='Precis!A1:Z999').execute().get('values', [])     # Read the whole thing.
 if not precisCells:
-    print("Can't locate precisCells tab in spreadsheet")
+    LogError("Can't locate precisCells tab in spreadsheet")
     raise(ValueError, "No precisCells found")
 precisCells=[p for p in precisCells if len(p) > 0 and "".join(p)[0] != "#"]      # Drop blank lines and lines with a "#" alone in column 1.if not precisCells:
 
 peopleCells = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range='People!A1:Z999').execute().get('values', [])     # Read the whole thing.
 if not peopleCells:
-    print("Can't locate peopleCells tab in spreadsheet")
+    LogError("Can't locate peopleCells tab in spreadsheet")
     raise(ValueError, "No peopleCells found")
 peopleCells=[p for p in peopleCells if len(p) > 0 and "".join(p)[0] != "#"]      # Drop blank lines and lines with a "#" alone in column 1.
 
 parameterCells = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range='Controls!A1:Z999').execute().get('values', [])     # Read the whole thing.
 if not parameterCells:
-    print("Can't locate parameterCells tab in spreadsheet")
+    LogError("Can't locate parameterCells tab in spreadsheet")
     raise(ValueError, "No parameterCells found")
 parameterCells=[p for p in parameterCells if len(p) > 0 and "".join(p)[0] != "#"]      # Drop blank lines and lines with a "#" alone in column 1.
 
@@ -190,7 +193,7 @@ for row in parameterCells:
 # Reorganize the dayList so it starts with our starting day. It's extra-long so that clipping days from the front will still leave a full week.
 gDayList=["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 if startingDay not in gDayList:
-    print("Can't interpret starting day='"+startingDay+"'.  Will use 'Friday'")
+    LogError("Can't interpret starting day='"+startingDay+"'.  Will use 'Friday'")
     startingDay="Friday"
 i=gDayList.index(startingDay)
 gDayList=gDayList[i:]
@@ -211,7 +214,7 @@ for i in range(0, len(scheduleCells[0])):
 gRoomNames=[r.strip() for r in scheduleCells[0]]
 
 if len(gRoomNames) == 0 or len(roomIndexes) == 0:
-    print("Room names line is blank.")
+    LogError("Room names line is blank.")
 
 # Start reading ths spreadsheet and building the participants and items databases (dictionaries)
 gSchedules={}   # A dictionary keyed by a person's name containing a list of (time, room, item, moderator) tuples, each an item that that person is on.
@@ -329,8 +332,8 @@ while rowIndex < len(scheduleCells):
             continue
 
         if timeRow is None:    # Is it a people row that doesn't follow a time row?
-            print("Error reading schedule: Row "+str(rowIndex+1)+" is a people row; we were expecting a time row.")     # +1 because the spreadsheet's row-numbering is 1-based
-            print("   row="+" ".join(row))
+            LogError("Error reading schedule tab: Row "+str(rowIndex+1)+" is a people row; we were expecting a time row.")     # +1 because the spreadsheet's row-numbering is 1-based
+            LogError("   row="+" ".join(row))
             i=0
             rowIndex+=1
 
@@ -391,8 +394,8 @@ for i in range(0, len(peopleCells[firstNonEmptyRow])):
     if cell == "response":
         responseCol=i
 if fnameCol is None or lnameCol is None or emailCol is None or responseCol is None:
-    print("People tab is missing at least one column label.")
-    print("    labels="+" ".join(peopleCells[firstNonEmptyRow]))
+    LogError("People tab is missing at least one column label.")
+    LogError("    labels="+" ".join(peopleCells[firstNonEmptyRow]))
 
 # We'll combine the first and last names to create a full name like is used elsewhere.
 peopleTable={}
@@ -414,8 +417,8 @@ for i in range(firstNonEmptyRow+1, len(peopleCells)):
     elif len(lname) > 0:
         fullname=lname
     if len(fullname.strip()) == 0:
-        print("Name missing from People tab row #"+str(i+1))
-        print("    row="+" ".join(peopleCells[i]))
+        LogError("Name missing from People tab row #"+str(i+1))
+        LogError("    row="+" ".join(peopleCells[i]))
 
     email=""
     if emailCol < len(row):
@@ -763,3 +766,5 @@ for room in gRoomNames:
     SafeDelete(fname)
     if inuse:
         doc.save(fname)
+
+LogClose()
