@@ -203,14 +203,13 @@ for i in range(0, len(scheduleCells[0])):
     if len(scheduleCells[0][i]) > 0:
         roomIndexes.append(i)
 
-# Get the room names which are int he first row
+# Get the room names which are in the first row of the scheduleCells tab
 gRoomNames=[r.strip() for r in scheduleCells[0]]
-
 
 # Start reading ths spreadsheet and building the participants and items databases (dictionaries)
 gSchedules={}   # A dictionary keyed by a person's name containing a list of (time, room, item, moderator) tuples, each an item that that person is on.
 gItems={}       # A dictionary keyed by item name containing a (time, room, people-list, moderator) tuple, where people-list is the list of people on the item
-gTimes=[]       # A list of times in spreadsheet order which should be in sorted order.
+gTimes=[]       # A list of times found in the spreadsheet.
 
 # Add an item with a list of people, and add the item to each of the persons
 def AddItemWithPeople(time: float, roomName: str, itemName: str, plistText: str):
