@@ -1,3 +1,4 @@
+import os
 
 #=============================================================================
 # Print the text to a log file open by the main program
@@ -110,6 +111,7 @@ def LogOpen(logfilename, errorfilename):
     g_logLastHeader=None
 
 
+
 def LogClose():
     if 'g_logFile' in globals():
         global g_logFile
@@ -118,6 +120,12 @@ def LogClose():
 
     if 'g_logErrorFile' in globals():
         global g_logErrorFile
+        global g_errorsLogged
+        global g_logErrorFileName
+
         if g_logErrorFile is not None:
-            g_logErrorFile.close()
+            if 'g_errorsLogged' in globals() and g_errorsLogged > 0:
+                g_logErrorFile.close()
+                osCommandString="notepad.exe "+g_logErrorFileName
+                os.system(osCommandString)
         del g_logErrorFile
