@@ -156,7 +156,6 @@ SPREADSHEET_ID ='1UjHSw-R8dLNFGctUhIQiPr58aAAfBedGznJEN2xBn7o'  # This is the ID
 scheduleCells = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range='Schedule!A1:Z1999').execute().get('values', [])     # Read the whole thing.
 if not scheduleCells:
     raise(ValueError, "No scheduleCells found")
-scheduleCells=[p for p in scheduleCells if len(p) == 0 or (len(p) > 0 and p[0] != "#")]      # Drop lines with a "#" alone in column 1.
 
 precisCells = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range='Precis!A1:Z999').execute().get('values', [])     # Read the whole thing.
 if not precisCells:
@@ -196,9 +195,9 @@ for i in range(0, len(scheduleCells[0])):
     if len(scheduleCells[0][i]) > 0:
         roomIndexes.append(i)
 
-# Drop the room names from the spreadsheet leaving just the schedules
+# Get the room names which are int he first row
 gRoomNames=[r.strip() for r in scheduleCells[0]]
-scheduleCells=scheduleCells[1:]
+
 
 # Start reading ths spreadsheet and building the participants and items databases (dictionaries)
 gSchedules={}   # A dictionary keyed by a person's name containing a list of (time, room, item, moderator) tuples, each an item that that person is on.
@@ -235,8 +234,8 @@ def AddItemWithoutPeople(time: float, roomName: str, itemName: str):
         itemName=itemName+"  {"+roomName+" "+NumericToTextDayTime(time)+"}"
     gItems[itemName]=Item(Name=itemName, Time=time, Room=roomName, People=None, ModName=None)
 
+# Code to process a set of time and people rows.
 def ProcessRows(timeRow, peopleRow):
-
     # Get the time from the timerow and add it to gTimes
     time=TextToNumericTime(timeRow[0])
     if time not in gTimes:
@@ -277,11 +276,17 @@ def ProcessRows(timeRow, peopleRow):
 # When we find a row with data in column 0, we have found a new time.
 # A time row contains items.
 # A time row will normally be followed by a people row containing the participants for those items
-rowIndex=0
+rowIndex=1  # We skip the first row which contains room names
 timeRow=None
 while rowIndex < len(scheduleCells):
     row=[c.strip() for c in scheduleCells[rowIndex]]  # Get the next row as a list of cells. Strip off leading and trailing blanks for each cell.
     if len(row) == 0:   # Ignore empty rows
+        rowIndex+=1
+        continue
+
+    # Skip rows where the first character is a "#"
+    text="".join(row)
+    if text[0] == "#":
         rowIndex+=1
         continue
 
@@ -306,8 +311,9 @@ while rowIndex < len(scheduleCells):
             timeRow=None
             continue
 
-        if timeRow is None and len(row[0]) == 0:    # Is it a people row that doesn't follow a time row?
-            # error
+        if timeRow is None:    # Is it a people row that doesn't follow a time row?
+            print("Error reading schedule: Row "+str(rowIndex+1)+" is a people row; we were expecting a time row.")     # +1 because the spreadsheet's row-numbering is 1-based
+            print("   row="+" ".join(row))
             i=0
             rowIndex+=1
 
