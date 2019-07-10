@@ -303,8 +303,7 @@ while rowIndex < len(scheduleCells):
         continue
 
     # Skip rows where the first character is a "#"
-    text="".join(row)
-    if text[0] == "#":
+    if "".join(row)[0] == "#":
         rowIndex+=1
         continue
 
