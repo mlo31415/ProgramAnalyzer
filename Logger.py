@@ -1,5 +1,8 @@
 import os
 import sys
+import tkinter
+from tkinter import messagebox
+
 
 #=============================================================================
 # Print the text to a log file open by the main program
@@ -128,7 +131,10 @@ def LogClose():
             if 'g_errorsLogged' in globals() and g_errorsLogged > 0:
                 if sys.platform == "win32":
                     g_logErrorFile.close()
+                    os.system("notepad.exe "+g_logErrorFileName)
                 else:
-                    i=0 # Need a call here for Linux, Max
-                os.system("notepad.exe "+g_logErrorFileName)
+                    root=tkinter.Tk()
+                    root.withdraw()
+                    messagebox.showerror("ProgramAnalyzer", "Errors were logged at "+g_logErrorFileName)
+
         del g_logErrorFile
