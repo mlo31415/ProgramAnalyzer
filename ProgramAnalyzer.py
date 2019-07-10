@@ -166,19 +166,19 @@ precisCells = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range='Precis!A1:
 if not precisCells:
     print("Can't locate precisCells tab in spreadsheet")
     raise(ValueError, "No precisCells found")
-precisCells=[p for p in precisCells if len(p) > 0 and p[0] != "#"]      # Drop blank lines and lines with a "#" alone in column 1.if not precisCells:
+precisCells=[p for p in precisCells if len(p) > 0 and "".join(p)[0] != "#"]      # Drop blank lines and lines with a "#" alone in column 1.if not precisCells:
 
 peopleCells = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range='People!A1:Z999').execute().get('values', [])     # Read the whole thing.
 if not peopleCells:
     print("Can't locate peopleCells tab in spreadsheet")
     raise(ValueError, "No peopleCells found")
-peopleCells=[p for p in peopleCells if len(p) > 0 and p[0] != "#"]      # Drop blank lines and lines with a "#" alone in column 1.
+peopleCells=[p for p in peopleCells if len(p) > 0 and "".join(p)[0] != "#"]      # Drop blank lines and lines with a "#" alone in column 1.
 
 parameterCells = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range='Controls!A1:Z999').execute().get('values', [])     # Read the whole thing.
 if not parameterCells:
     print("Can't locate parameterCells tab in spreadsheet")
     raise(ValueError, "No parameterCells found")
-parameterCells=[p for p in parameterCells if len(p) > 0 and p[0] != "#"]      # Drop blank lines and lines with a "#" alone in column 1.
+parameterCells=[p for p in parameterCells if len(p) > 0 and "".join(p)[0] != "#"]      # Drop blank lines and lines with a "#" alone in column 1.
 
 # Read parameters from the Control sheet
 startingDay="Friday"
