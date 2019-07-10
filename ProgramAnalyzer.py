@@ -206,11 +206,15 @@ for i in range(0, len(scheduleCells[0])):
 # Get the room names which are in the first row of the scheduleCells tab
 gRoomNames=[r.strip() for r in scheduleCells[0]]
 
+if len(gRoomNames) == 0 or len(roomIndexes) == 0:
+    print("Room names line is blank.")
+
 # Start reading ths spreadsheet and building the participants and items databases (dictionaries)
 gSchedules={}   # A dictionary keyed by a person's name containing a list of (time, room, item, moderator) tuples, each an item that that person is on.
 gItems={}       # A dictionary keyed by item name containing a (time, room, people-list, moderator) tuple, where people-list is the list of people on the item
 gTimes=[]       # A list of times found in the spreadsheet.
 
+#.......
 # Add an item with a list of people, and add the item to each of the persons
 def AddItemWithPeople(time: float, roomName: str, itemName: str, plistText: str):
     global gSchedules
@@ -234,6 +238,7 @@ def AddItemWithPeople(time: float, roomName: str, itemName: str, plistText: str)
     gItems[itemName]=Item(Name=itemName, Time=time, Room=roomName, People=peopleList, ModName=modName)
 
 
+#.......
 # Add an item with a list of people, and add the item to each of the persons
 def AddItemWithoutPeople(time: float, roomName: str, itemName: str):
     global gItems
@@ -241,6 +246,7 @@ def AddItemWithoutPeople(time: float, roomName: str, itemName: str):
         itemName=itemName+"  {"+roomName+" "+NumericToTextDayTime(time)+"}"
     gItems[itemName]=Item(Name=itemName, Time=time, Room=roomName, People=None, ModName=None)
 
+#.......
 # Code to process a set of time and people rows.
 def ProcessRows(timeRow, peopleRow):
     # Get the time from the timerow and add it to gTimes
@@ -280,6 +286,7 @@ def ProcessRows(timeRow, peopleRow):
                     AddItemWithoutPeople(time, roomName, itemName)
 
 
+# Now process the schedule row by row
 # When we find a row with data in column 0, we have found a new time.
 # A time row contains items.
 # A time row will normally be followed by a people row containing the participants for those items
