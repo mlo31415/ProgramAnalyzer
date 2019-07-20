@@ -82,22 +82,30 @@ def TextToNumericTime(s: str):
     #print("'"+s+"'  --> day="+day+"  hour="+hour+"  minutes="+minutes+"  suffix="+suffix+"   --> d="+str(d)+"  h="+str(h)+"  24*d+h="+(str(24*d+h))+"  --> "+NumericToTextDayTime(24*d+h))
     return 24*d+h
 
+
+def DayNumber(t: float):
+    return math.floor((t-.01)/24)  # Compute the day number. The "-.01" is to force midnight into the preceding day rather than the following day
+
 # Convert a numeric daytime to text
 # The input time is a floating point number of hours since the start of the 1st day of the convention
-def NumericToTextDayTime(f: float):
+def NumericToTextDayTime(t: float):
     global gDayList
-    d=math.floor(f/24)  # Compute the day number
-    return gDayList[int(d)] + " " + NumericToTextTime(f)
+    return gDayList[DayNumber(t)] + " " + NumericToTextTime(t)
+
+
+def NumericTimeToDayHourMinute(t: float):
+    d=DayNumber(t)
+    t=t-24*d
+    isPM=t>12           # AM or PM?
+    if isPM:
+        t=t-12
+    h=math.floor(t)     # Get the hour
+    t=t-h               # What's left is the fractional hour
+    return d, h, t, isPM
 
 
 def NumericToTextTime(f: float):
-    d=math.floor(f/24)  # Compute the day number
-    f=f-24*d
-    isPM=f>12           # AM or PM?
-    if isPM:
-        f=f-12
-    h=math.floor(f)     # Get the hour
-    f=f-h               # What's left is the fractional hour
+    d, h, m, isPM=NumericTimeToDayHourMinute(f)
 
     if h == 12:         # Handle noon and midnight specially
         if isPM:
@@ -105,10 +113,10 @@ def NumericToTextTime(f: float):
         else:
             return "Noon"
 
-    if h == 0 and f != 0:
-        numerictime="12:"+str(math.floor(60*f))     # Handle the special case of times after noon but before 1
+    if h == 0 and m != 0:
+        numerictime="12:"+str(math.floor(60*m))     # Handle the special case of times after noon but before 1
     else:
-        numerictime=str(h) + ("" if f == 0 else ":" + str(math.floor(60*f)))
+        numerictime=str(h) + ("" if m == 0 else ":" + str(math.floor(60*m)))
 
     return numerictime + (" pm" if isPM else " am")
 
@@ -116,8 +124,13 @@ def NumericToTextTime(f: float):
 # Return the name of the day corresponding to a numeric time
 def NumericTimeToDayString(f: float):
     global gDayList
-    d=math.floor(f/24)  # Compute the day number
+    d, h, m, isPM=NumericTimeToDayHourMinute(f)
     return gDayList[int(d)]
+
+# We sort days based on one day ending and the next beginning at 4am -- this puts late-night items with the previous day
+# Note that the return value is used for sorting, but not for dae display
+def NumericTimeToNominalDay(f: float):
+    return NumericTimeToDayString(f-4)
 
 
 def FmtLen(val: list):
@@ -690,12 +703,12 @@ txt.close()
 
 #******
 # Generate web pages, one for each day.
-day=""
+currentday=""
 f=None
 for time in gTimes:
     # We generate a separate report for each day
-    d=NumericTimeToDayString(time)
-    if d != day:
+    sortday=NumericTimeToNominalDay(time)
+    if sortday != currentday:
         # Close the old file, if any
         if f is not None:
             f.write('</font></table>\n')
@@ -705,13 +718,13 @@ for time in gTimes:
             f.close()
             f=None
         # Open the new one
-        day=d
-        fname=os.path.join("reports", "Schedule - "+day+".html")
+        currentday=sortday
+        fname=os.path.join("reports", "Schedule - "+sortday+".html")
         SafeDelete(fname)
         f=open(fname, "w")
         with open("control-WebpageHeader.txt", "r") as f2:
             f.writelines(f2.readlines())
-        f.write("<h2>"+day+"</h2>\n")
+        f.write("<h2>"+sortday+"</h2>\n")
         f.write('<table border="0" cellspacing="0" cellpadding="2">\n')
 
     f.write('<tr><td colspan="3">')
