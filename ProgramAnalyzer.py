@@ -3,23 +3,25 @@ from __future__ import annotations
 from typing import Dict, List, Tuple, Set, Optional
 from dataclasses import dataclass
 
-import pickle
+import json
+import pygsheets
 import os.path
 import difflib
 import docx
 import math
 import re as RegEx
+import ctypes  # An included library with Python install.
 from docx.shared import Pt
 from docx.shared import Inches
 from docx import text
 from docx.text import paragraph
 from googleapiclient.discovery import build
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
+from google.oauth2 import service_account
+
 from ScheduleItem import ScheduleItem
 from Item import Item
-from Logger import LogError
-from Logger import LogClose
+from Logger import LogError, LogClose
+
 
 
 #*************************************************************************************************
@@ -155,42 +157,49 @@ def FmtLen(val: list) -> str:
 if not os.path.exists("reports"):
     os.mkdir("reports")
 
-credentials = None
-# The file token.pickle stores the user's access and refresh tokens, and is
-# created automatically when the authorization flow completes for the first time.
-# Pickle is a scheme for serializing data to disk and retrieving it
-if os.path.exists('token.pickle'):
-    with open('token.pickle', 'rb') as token:
-        credentials = pickle.load(token)
+with open('programanalyzer-1554125255622-815b35923909.json') as source:
+    info = json.load(source)
+credentials = service_account.Credentials.from_service_account_info(info)
 
-# If there are no (valid) credentials available, let the user log in.
-if not credentials or not credentials.valid:
-    if credentials and credentials.expired and credentials.refresh_token:
-        credentials.refresh(Request())
-    else:
-        flow = InstalledAppFlow.from_client_secrets_file('credentials.json', 'https://www.googleapis.com/auth/spreadsheets.readonly')
-        credentials = flow.run_local_server()
-    # Save the credentials for the next run
-    with open('token.pickle', 'wb') as token:
-        pickle.dump(credentials, token)
+client = pygsheets.authorize(service_account_file='programanalyzer-1554125255622-815b35923909.json')
+
+# credentials = None
+# # The file token.pickle stores the user's access and refresh tokens, and is
+# # created automatically when the authorization flow completes for the first time.
+# # Pickle is a scheme for serializing data to disk and retrieving it
+# if os.path.exists('token.pickle'):
+#     with open('token.pickle', 'rb') as token:
+#         credentials = pickle.load(token)
+#
+# # If there are no (valid) credentials available, let the user log in.
+# if not credentials or not credentials.valid:
+#     if credentials and credentials.expired and credentials.refresh_token:
+# #        credentials.refresh(Request())
+#         credentials.refresh(httplib2.Http())
+#     else:
+#         flow = InstalledAppFlow.from_client_secrets_file('credentials.json', 'https://www.googleapis.com/auth/spreadsheets.readonly')
+#         credentials = flow.run_local_server()
+#     # Save the credentials for the next run
+#     with open('token.pickle', 'wb') as token:
+#         pickle.dump(credentials, token)
 
 service = build('sheets', 'v4', credentials=credentials)
 
 # Call the Sheets API to load the various tabs of the spreadsheet
 sheet = service.spreadsheets()
-SPREADSHEET_ID ='1UjHSw-R8dLNFGctUhIQiPr58aAAfBedGznJEN2xBn7o'  # This is the ID of the specific spreadsheet we're reading
-scheduleCells = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range='Schedule!A1:Z1999').execute().get('values', [])     # Read the whole thing.
+SPREADSHEET_ID ='1Vp8EEGaZTW-PZ3zcY287ae_01pXJ80GXEDsaorogZ0Y'  # This is the ID of the specific spreadsheet we're reading
+scheduleCells = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range='2019 Schedule!A1:Z1999').execute().get('values', [])     # Read the whole thing.
 if not scheduleCells:
     LogError("Can't locate scheduleCells tab in spreadsheet")
     raise(ValueError, "No scheduleCells found")
 
-precisCells = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range='Precis!A1:Z999').execute().get('values', [])     # Read the whole thing.
+precisCells = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range='2019 Precis!A1:Z999').execute().get('values', [])     # Read the whole thing.
 if not precisCells:
     LogError("Can't locate precisCells tab in spreadsheet")
     raise(ValueError, "No precisCells found")
 precisCells=[p for p in precisCells if len(p) > 0 and "".join(p)[0] != "#"]      # Drop blank lines and lines with a "#" alone in column 1.if not precisCells:
 
-peopleCells = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range='People!A1:Z999').execute().get('values', [])     # Read the whole thing.
+peopleCells = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range='2019 People!A1:Z999').execute().get('values', [])     # Read the whole thing.
 if not peopleCells:
     LogError("Can't locate peopleCells tab in spreadsheet")
     raise(ValueError, "No peopleCells found")
