@@ -589,7 +589,7 @@ txt=open(fname, "w")
 print("List of non-readings and KKs with fewer than 3 people on them\n\n", file=txt)
 found=False
 for itemname, item in gItems.items():
-    if item.People is not None and len(item.People) >= 3:
+    if len(item.People) >= 3:
         continue
     if item.Name.find("Reading") > -1 or item.Name.find("KK") > -1 or item.Name.find("Kaffe") > -1 or item.Name.find("Autograph") > -1:
         continue
