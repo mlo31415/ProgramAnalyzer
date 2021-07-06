@@ -1,22 +1,16 @@
 # A class to hold the information for one Participant
 
+from typing import List
+
 from dataclasses import dataclass, field
 
 @dataclass(order=False)
 class ScheduleItem:
-    PersonName: str=None          # The person's name
+    PersonName: str=""          # The person's name
     Time: float=None        # A numeric time
-    Room: str=None          # The name of a room
-    ItemName: str=None      # The name of an item
+    Room: str=""          # The name of a room
+    ItemName: str=""      # The name of an item
     IsMod: bool=False       # Is this person the moderator of this item?
-
-
-    def __init__(self, PersonName:str=None, Time:float=None, Room:str=None, ItemName:str=None, IsMod:bool=False):
-        self.PersonName=PersonName
-        self.Time=Time
-        self.Room=Room
-        self.ItemName=ItemName
-        self.IsMod=IsMod
 
     @property
     # Generate the display-name of an item. (Remove any text following the first "{")

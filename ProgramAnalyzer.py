@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import json
-from typing import Dict, List, Tuple, Set, Optional, Union
+from typing import Dict, List, Tuple, Set, Optional
 from dataclasses import dataclass
 
 import pickle
@@ -250,7 +249,7 @@ def AddItemWithPeople(time: float, roomName: str, itemName: str, plistText: str)
     plist=plistText.split(",")  # Get the people as a list
     plist=[p.strip() for p in plist]  # Remove excess spaces
     plist=[p for p in plist if len(p) > 0]
-    modName=None
+    modName=""
     peopleList=[]
     for person in plist:  # For each person listed on this item
         if IsModerator(person):
@@ -271,7 +270,7 @@ def AddItemWithoutPeople(time: float, roomName: str, itemName: str) -> None:
     global gItems
     if itemName in gItems:  # If the item's name is already in use, add a uniquifier of room+day/time
         itemName=itemName+"  {"+roomName+" "+NumericToTextDayTime(time)+"}"
-    gItems[itemName]=Item(Name=itemName, Time=time, Room=roomName, People=None, ModName=None)
+    gItems[itemName]=Item(Name=itemName, Time=time, Room=roomName)
 
 #.......
 # Code to process a set of time and people rows.
@@ -580,7 +579,7 @@ SafeDelete(fname)
 txt=open(fname, "w")
 print("List of number of people scheduled on each item\n\n", file=txt)
 for itemname, item in gItems.items():
-    print(NumericToTextDayTime(item.Time)+" "+item.Name+": "+FmtLen(item.People), file=txt)
+    print(f"{NumericToTextDayTime(item.Time)} {item.Name}: {len(item.People)}", file=txt)
 txt.close()
 
 #******
@@ -595,7 +594,7 @@ for itemname, item in gItems.items():
         continue
     if item.Name.find("Reading") > -1 or item.Name.find("KK") > -1 or item.Name.find("Kaffe") > -1 or item.Name.find("Autograph") > -1:
         continue
-    print(NumericToTextDayTime(item.Time)+" "+item.Name+": "+FmtLen(item.People), file=txt)
+    print(f"{NumericToTextDayTime(item.Time)} {item.Name}: {len(item.People)}", file=txt)
     found=True
 if not found:
     print("None found")
@@ -614,7 +613,7 @@ for itemname, item in gItems.items():
         continue
     if item.ModName is not None:
         continue
-    print(NumericToTextDayTime(item.Time)+" "+item.Name+": "+FmtLen(item.People), file=txt)
+    print(f"{NumericToTextDayTime(item.Time)} {item.Name}: {len(item.People)}", file=txt)
     found=True
 if not found:
     print("None found")
@@ -630,7 +629,7 @@ for itemname, item in gItems.items():
         continue
     if item.Precis is not None and len(item.Precis) > 0:
         continue
-    print(NumericToTextDayTime(item.Time)+" "+item.Name+": "+FmtLen(item.People), file=txt)
+    print("{NumericToTextDayTime(item.Time)} {item.Name}: {len(item.People)}", file=txt)
     found=True
 if not found:
     print("None found")
@@ -696,7 +695,7 @@ for time in gTimes:
                 AppendTextToPara(para, room+": ", italic=True, size=12, indent=0.3)
                 AppendTextToPara(para, item.DisplayName, size=12, indent=0.3)
                 print("   "+room+":  "+item.DisplayName, file=txt)   # Print the room and item name
-                if item.People is not None and len(item.People) > 0:            # And the item's people list
+                if len(item.People) > 0:            # And the item's people list
                     plist=item.DisplayPlist()
                     AppendParaToDoc(doc, plist, size=12, indent=0.6)
                     print("            "+plist, file=txt)
@@ -744,7 +743,7 @@ for time in gTimes:
                 f.write('<tr><td width="40">&nbsp;</td><td colspan="2">')   # Two columns, the first 40 pixes wide and empty
                 f.write('<p><span class="room">' + room +': </span><span class="item">' + item.DisplayName +'</span></p>')
                 f.write('</td></tr>')
-                if item.People is not None and len(item.People) > 0:            # And the item's people list
+                if len(item.People) > 0:            # And the item's people list
                     f.write('<tr><td width="40">&nbsp;</td><td width="40">&nbsp;</td><td width="600">')     # Three columns, the first two 40 pixes wide and empty; the third 600 pixels wide
                     f.write('<p><span class="people">'+item.DisplayPlist()+'</span></p>')
                     f.write('</td></tr>\n')
