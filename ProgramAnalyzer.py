@@ -485,8 +485,8 @@ with open(fname, "w") as txt:
 
         last=ScheduleItem()
         for part in pSched:
-            if part.Time == last:
-                print(f"{personname}: {NumericToTextDayTime(last[0])}: {last[1]} and also {part.Room}", file=txt)
+            if part.Time == last.Time:
+                print(f"{personname}: {NumericToTextDayTime(last.Time)}: {last.Room} and also {part.Room}", file=txt)
                 count+=1
             last=part
     if count == 0:
