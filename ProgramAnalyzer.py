@@ -141,12 +141,6 @@ def NumericTimeToNominalDay(f: float) -> str:
     return NumericTimeToDayString(f-4)
 
 
-def FmtLen(val: list) -> str:
-    if val is None:
-        return "0"
-    return str(len(val))
-
-
 
 #*************************************************************************************************
 #*************************************************************************************************
