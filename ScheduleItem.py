@@ -20,4 +20,10 @@ class ScheduleItem:
             return self.ItemName[:loc-1]
         return self.ItemName
 
+    @property
+    def ModFlag(self) -> str:
+        if self.IsMod:
+            return " (moderator)"
+        return ""
+
 
