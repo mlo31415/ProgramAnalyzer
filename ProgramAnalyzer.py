@@ -1,3 +1,9 @@
+from __future__ import annotations
+
+import json
+from typing import Dict, List, Tuple, Set, Optional, Union
+from dataclasses import dataclass
+
 import pickle
 import os.path
 import difflib
@@ -22,23 +28,24 @@ from Logger import LogClose
 # Miscellaneous helper functions
 
 # Generate the name of a person stripped if any "(M)" or "(m)" flags
-def RemoveModFlag(s: str):
+def RemoveModFlag(s: str) -> str:
     return s.replace("(M)", "").replace("(m)", "").strip()
 
 # Is this person's name flagged as a moderator?
-def IsModerator(s: str):
+def IsModerator(s: str) -> bool:
     return s != RemoveModFlag(s)
 
 # Delete a file, ignoring any errors
 # We do this because of as-yet not understood failures to delete files
-def SafeDelete(fn: str):
+def SafeDelete(fn: str) -> bool:
     try:
         os.remove(fn)
     except:
-        return
+        return False
+    return True
 
 # Convert a text date string to numeric
-def TextToNumericTime(s: str):
+def TextToNumericTime(s: str) -> int:
     global gDayList
     # The date string is of the form Day Hour AM/PM or Day Noon
     day=""
@@ -83,17 +90,17 @@ def TextToNumericTime(s: str):
     return 24*d+h
 
 
-def DayNumber(t: float):
+def DayNumber(t: float) -> int:
     return math.floor((t-.01)/24)  # Compute the day number. The "-.01" is to force midnight into the preceding day rather than the following day
 
 # Convert a numeric daytime to text
 # The input time is a floating point number of hours since the start of the 1st day of the convention
-def NumericToTextDayTime(t: float):
+def NumericToTextDayTime(t: float) -> str:
     global gDayList
     return gDayList[DayNumber(t)] + " " + NumericToTextTime(t)
 
 
-def NumericTimeToDayHourMinute(t: float):
+def NumericTimeToDayHourMinute(t: float) -> Tuple[int, int, float, bool]:
     d=DayNumber(t)
     t=t-24*d
     isPM=t>12           # AM or PM?
@@ -104,7 +111,7 @@ def NumericTimeToDayHourMinute(t: float):
     return d, h, t, isPM
 
 
-def NumericToTextTime(f: float):
+def NumericToTextTime(f: float) -> str:
     d, h, m, isPM=NumericTimeToDayHourMinute(f)
 
     if h == 12:         # Handle noon and midnight specially
@@ -122,18 +129,18 @@ def NumericToTextTime(f: float):
 
 
 # Return the name of the day corresponding to a numeric time
-def NumericTimeToDayString(f: float):
+def NumericTimeToDayString(f: float) -> str:
     global gDayList
     d, h, m, isPM=NumericTimeToDayHourMinute(f)
     return gDayList[int(d)]
 
 # We sort days based on one day ending and the next beginning at 4am -- this puts late-night items with the previous day
 # Note that the return value is used for sorting, but not for dae display
-def NumericTimeToNominalDay(f: float):
+def NumericTimeToNominalDay(f: float) -> str:
     return NumericTimeToDayString(f-4)
 
 
-def FmtLen(val: list):
+def FmtLen(val: list) -> str:
     if val is None:
         return "0"
     return str(len(val))
@@ -216,7 +223,7 @@ gDayList=gDayList[i:]
 # Analyze the Schedule cells
 # The first row of the spreadsheet is the list of rooms.
 # Make a list of room names and room column indexes
-roomIndexes=[]
+roomIndexes: List[int]=[]
 for i in range(0, len(scheduleCells[0])):
     if scheduleCells[0][i] is None:
         break
@@ -224,19 +231,19 @@ for i in range(0, len(scheduleCells[0])):
         roomIndexes.append(i)
 
 # Get the room names which are in the first row of the scheduleCells tab
-gRoomNames=[r.strip() for r in scheduleCells[0]]
+gRoomNames: List[str]=[r.strip() for r in scheduleCells[0]]
 
 if len(gRoomNames) == 0 or len(roomIndexes) == 0:
     LogError("Room names line is blank.")
 
 # Start reading ths spreadsheet and building the participants and items databases (dictionaries)
-gSchedules={}   # A dictionary keyed by a person's name containing a list of (time, room, item, moderator) tuples, each an item that that person is on.
-gItems={}       # A dictionary keyed by item name containing a (time, room, people-list, moderator) tuple, where people-list is the list of people on the item
-gTimes=[]       # A list of times found in the spreadsheet.
+gSchedules: Dict[str, List]={}   # A dictionary keyed by a person's name containing a list of (time, room, item, moderator) tuples, each an item that that person is on.
+gItems: Dict[str, Item]={}       # A dictionary keyed by item name containing an Item (time, room, people-list, moderator), where people-list is the list of people on the item
+gTimes: List=[]       # A list of times found in the spreadsheet.
 
 #.......
 # Add an item with a list of people, and add the item to each of the persons
-def AddItemWithPeople(time: float, roomName: str, itemName: str, plistText: str):
+def AddItemWithPeople(time: float, roomName: str, itemName: str, plistText: str) -> None:
     global gSchedules
     global gItems
 
@@ -260,7 +267,7 @@ def AddItemWithPeople(time: float, roomName: str, itemName: str, plistText: str)
 
 #.......
 # Add an item with a list of people, and add the item to each of the persons
-def AddItemWithoutPeople(time: float, roomName: str, itemName: str):
+def AddItemWithoutPeople(time: float, roomName: str, itemName: str) -> None:
     global gItems
     if itemName in gItems:  # If the item's name is already in use, add a uniquifier of room+day/time
         itemName=itemName+"  {"+roomName+" "+NumericToTextDayTime(time)+"}"
@@ -268,7 +275,7 @@ def AddItemWithoutPeople(time: float, roomName: str, itemName: str):
 
 #.......
 # Code to process a set of time and people rows.
-def ProcessRows(timeRow, peopleRow):
+def ProcessRows(timeRow: List[str], peopleRow: Optional[List[str]]) -> None:
     # Get the time from the timerow and add it to gTimes
     time=TextToNumericTime(timeRow[0])
     if time not in gTimes:
@@ -289,7 +296,7 @@ def ProcessRows(timeRow, peopleRow):
                     # There is much messiness in this.
                     # We look for the [##] in the people list.  If we find it, we divide the people list in half and create two items with separate plists.
                     plistText=peopleRow[roomIndex]
-                    r=RegEx.match("(.*)\[([0-9.]*)\](.*)", plistText)
+                    r=RegEx.match("(.*)\[([0-9.]*)](.*)", plistText)
                     if r is None:
                         AddItemWithPeople(time, roomName, itemName, plistText)
                     else:
@@ -310,8 +317,8 @@ def ProcessRows(timeRow, peopleRow):
 # When we find a row with data in column 0, we have found a new time.
 # A time row contains items.
 # A time row will normally be followed by a people row containing the participants for those items
-rowIndex=1  # We skip the first row which contains room names
-timeRow=None
+rowIndex: int=1  # We skip the first row which contains room names
+timeRow: Optional[List[str]]=None
 while rowIndex < len(scheduleCells):
     row=[c.strip() for c in scheduleCells[rowIndex]]  # Get the next row as a list of cells. Strip off leading and trailing blanks for each cell.
     if len(row) == 0:   # Ignore empty rows
@@ -363,7 +370,7 @@ gTimes.sort()
 precisCells=precisCells[1:]
 
 # The rest of the rows of the tab is pairs title:precis.
-count=0
+count: int=0
 fname=os.path.join("reports", "Diag - precis without items.txt")
 txt=open(fname, "w")
 print("Precis without corresponding items:", file=txt)
