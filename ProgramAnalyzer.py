@@ -596,7 +596,7 @@ for itemname, item in gItems.items():
     print(f"{NumericToTextDayTime(item.Time)} {item.Name}: {len(item.People)}", file=txt)
     found=True
 if not found:
-    print("None found")
+    print("None found", file=txt)
 txt.close()
 
 
@@ -615,7 +615,7 @@ for itemname, item in gItems.items():
     print(f"{NumericToTextDayTime(item.Time)} {item.Name}: {len(item.People)}", file=txt)
     found=True
 if not found:
-    print("None found")
+    print("None found", file=txt)
 txt.close()
 
 fname=os.path.join("reports", "Diag - Items missing a precis.txt")
@@ -631,7 +631,7 @@ for itemname, item in gItems.items():
     print("{NumericToTextDayTime(item.Time)} {item.Name}: {len(item.People)}", file=txt)
     found=True
 if not found:
-    print("None found")
+    print("None found", file=txt)
 txt.close()
 
 #******
