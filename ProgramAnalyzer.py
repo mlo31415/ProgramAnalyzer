@@ -240,7 +240,7 @@ if len(gRoomNames) == 0 or len(roomIndexes) == 0:
     LogError("Room names line is blank.")
 
 # Start reading ths spreadsheet and building the participants and items databases (dictionaries)
-gSchedules: Dict[str, List]={}   # A dictionary keyed by a person's name containing a list of (time, room, item, moderator) tuples, each an item that that person is on.
+gSchedules: Dict[str, List[ScheduleItem]]={}   # A dictionary keyed by a person's name containing a list of (time, room, item, moderator) tuples, each an item that that person is on.
 gItems: Dict[str, Item]={}       # A dictionary keyed by item name containing an Item (time, room, people-list, moderator), where people-list is the list of people on the item
 gTimes: List=[]       # A list of times found in the spreadsheet.
 
@@ -676,25 +676,28 @@ def AppendTextToPara(para: docx.text.paragraph.Paragraph, txt: str, bold: bool=F
     para.paragraph_format.line_spacing=1
     para.paragraph_format.space_after=0
 
-def Popup(s: str):
-    return
-    ctypes.windll.user32.MessageBoxW(0, s, "Your title", 1)
-
-Popup("About to create Document()")
+# def Popup(s: str):
+#     return
+#     ctypes.windll.user32.MessageBoxW(0, s, "Your title", 1)
+#
+# Popup("About to create Document()")
 doc=docx.Document()
-Popup("Document created")
+# Popup("Document created")
 fname=os.path.join("reports", "Pocket program.txt")
 try:
-    Popup("About to try SafeDelete("+fname+")")
+    # Popup("About to try SafeDelete("+fname+")")
     if not SafeDelete(fname):
-        Popup("SafeDelete returned False")
+        pass
+        # Popup("SafeDelete returned False")
 except:
-    Popup("SafeDelete threw exception")
+    pass
+    # Popup("SafeDelete threw exception")
 try:
-    Popup("About to try Open("+fname+")")
+    # Popup("About to try Open("+fname+")")
     txt=open(fname, "w")
 except:
-    Popup("open("+fname+")  threw exception")
+    pass
+    # Popup("open("+fname+")  threw exception")
 
 AppendParaToDoc(doc, "Schedule", bold=True, size=24)
 print("Schedule", file=txt)
@@ -717,10 +720,10 @@ for time in gTimes:
                 if item.Precis is not None:
                     AppendParaToDoc(doc, item.Precis, italic=True, size=12, indent=0.6)
                     print("            "+item.Precis, file=txt)
-Popup("About to create Pocket Program.docx")
+# Popup("About to create Pocket Program.docx")
 fname=os.path.join("reports", "Pocket program.docx")
 doc.save(fname)
-Popup("Pocket Program.docx has been saved")
+# Popup("Pocket Program.docx has been saved")
 txt.close()
 
 
