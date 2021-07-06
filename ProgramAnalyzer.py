@@ -133,7 +133,7 @@ def NumericToTextTime(f: float) -> str:
 # Return the name of the day corresponding to a numeric time
 def NumericTimeToDayString(f: float) -> str:
     global gDayList
-    d, h, m, isPM=NumericTimeToDayHourMinute(f)
+    d, _, _, _=NumericTimeToDayHourMinute(f)
     return gDayList[int(d)]
 
 # We sort days based on one day ending and the next beginning at 4am -- this puts late-night items with the previous day
