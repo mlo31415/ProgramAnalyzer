@@ -258,8 +258,7 @@ def AddItemWithPeople(time: float, roomName: str, itemName: str, plistText: str)
     for person in plist:  # For each person listed on this item
         if IsModerator(person):
             modName=person=RemoveModFlag(person)
-        if person not in gSchedules.keys():  # If this is the first time we've encountered this person, create an empty entry.
-            gSchedules[person]=[]
+        gSchedules.setdefault(person, [])
         gSchedules[person].append(ScheduleItem(PersonName=person, Time=time, Room=roomName, ItemName=itemName, IsMod=(person == modName)))  # And append a tuple with the time, room, item name, and moderator flag
         peopleList.append(person)
     # And add the item with its list of people to the items table.
