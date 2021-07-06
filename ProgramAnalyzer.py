@@ -33,6 +33,7 @@ def RemoveModFlag(s: str) -> str:
     return s.replace("(M)", "").replace("(m)", "").strip()
 
 # Is this person's name flagged as a moderator?
+# Check by seeing if RemoveModFlag() does anything
 def IsModerator(s: str) -> bool:
     return s != RemoveModFlag(s)
 
