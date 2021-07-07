@@ -382,15 +382,19 @@ with open(fname, "w") as txt:
     count=0
     for personname in gSchedules.keys():
         pSched=gSchedules[personname] # pSched is a person's schedule, which is a list of (time, room, item) tuples
-        # Sort pSched by time, then look for duplicate times
+        if len(pSched) < 2:     # If the persons is only on one item, then there can't be a conflict
+            continue
+        # Sort pSched by time
         pSched.sort(key=lambda x: x.Time)
-
-        last=ScheduleItem()
-        for part in pSched:
-            if part.Time == last.Time:
-                print(f"{personname}: {NumericToTextDayTime(last.Time)}: {last.Room} and also {part.Room}", file=txt)
+        # Look for duplicate times
+        prev: ScheduleItem=pSched[0]
+        for item in pSched[1:]:
+            if item.Time == prev.Time:
+                print(f"{personname}: {NumericTime.NumericToTextDayTime(prev.Time)}: {prev.Room} and also {item.Room}", file=txt)
                 count+=1
-            last=part
+            prev=item
+
+    # To make it clear that the test ran, write a message if no conflicts were found.
     if count == 0:
         print("    None found", file=txt)
 
