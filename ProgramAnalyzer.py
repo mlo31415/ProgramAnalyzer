@@ -18,7 +18,7 @@ from google.oauth2 import service_account
 from ScheduleItem import ScheduleItem
 from Item import Item
 from Logger import LogError, LogClose
-
+import NumericTime
 
 
 #*************************************************************************************************
@@ -42,102 +42,6 @@ def SafeDelete(fn: str) -> bool:
     except:
         return False
     return True
-
-# Convert a text date string to numeric
-def TextToNumericTime(s: str) -> int:
-    global gDayList
-    # The date string is of the form Day Hour AM/PM or Day Noon
-    day=""
-    hour=""
-    minutes=""
-    suffix=""
-
-    m=RegEx.match(r"^([A-Za-z]+)\s*([0-9]+)\s*([A-Za-z]+)$", s)     # <day> <hr> <am/pm/noon/etc>
-    if m is not None:
-        day=m.groups()[0]
-        hour=m.groups()[1]
-        suffix=m.groups()[2]
-    else:
-        m=RegEx.match(r"^([A-Za-z]+)\s*([0-9]+):([0-9]+)\s*([A-Za-z]+)$", s)    # <day> <hr>:<min> <am/pm/noon/etc>
-        if m is not None:
-            day=m.groups()[0]
-            hour=m.groups()[1]
-            minutes=m.groups()[2]
-            suffix=m.groups()[3]
-        else:
-            m=RegEx.match(r"^([A-Za-z]+)\s*([A-Za-z]+)$", s)    # <day> <am/pm/noon/etc>
-            if m is not None:
-                day=m.groups()[0]
-                suffix=m.groups()[1]
-            else:
-                LogError("Can't interpret time: '"+s+"'")
-
-    d=gDayList.index(day)
-    h=0
-    if hour != "":
-        h=int(hour)
-    if minutes != "":
-        h=h+int(minutes)/60
-    if suffix.lower() == "pm":
-        h=h+12
-    elif suffix.lower() == "noon":
-        h=12
-    elif suffix.lower() == "midnight":
-        h=24
-
-    #print("'"+s+"'  --> day="+day+"  hour="+hour+"  minutes="+minutes+"  suffix="+suffix+"   --> d="+str(d)+"  h="+str(h)+"  24*d+h="+(str(24*d+h))+"  --> "+NumericToTextDayTime(24*d+h))
-    return 24*d+h
-
-
-def DayNumber(t: float) -> int:
-    return math.floor((t-.01)/24)  # Compute the day number. The "-.01" is to force midnight into the preceding day rather than the following day
-
-# Convert a numeric daytime to text
-# The input time is a floating point number of hours since the start of the 1st day of the convention
-def NumericToTextDayTime(t: float) -> str:
-    global gDayList
-    return gDayList[DayNumber(t)] + " " + NumericToTextTime(t)
-
-
-def NumericTimeToDayHourMinute(t: float) -> Tuple[int, int, float, bool]:
-    d=DayNumber(t)
-    t=t-24*d
-    isPM=t>12           # AM or PM?
-    if isPM:
-        t=t-12
-    h=math.floor(t)     # Get the hour
-    t=t-h               # What's left is the fractional hour
-    return d, h, t, isPM
-
-
-def NumericToTextTime(f: float) -> str:
-    d, h, m, isPM=NumericTimeToDayHourMinute(f)
-
-    if h == 12:         # Handle noon and midnight specially
-        if isPM:
-            return "Midnight"
-        else:
-            return "Noon"
-
-    if h == 0 and m != 0:
-        numerictime="12:"+str(math.floor(60*m))     # Handle the special case of times after noon but before 1
-    else:
-        numerictime=str(h) + ("" if m == 0 else ":" + str(math.floor(60*m)))
-
-    return numerictime + (" pm" if isPM else " am")
-
-
-# Return the name of the day corresponding to a numeric time
-def NumericTimeToDayString(f: float) -> str:
-    global gDayList
-    d, _, _, _=NumericTimeToDayHourMinute(f)
-    return gDayList[int(d)]
-
-# We sort days based on one day ending and the next beginning at 4am -- this puts late-night items with the previous day
-# Note that the return value is used for sorting, but not for dae display
-def NumericTimeToNominalDay(f: float) -> str:
-    return NumericTimeToDayString(f-4)
-
 
 
 #*************************************************************************************************
@@ -211,12 +115,11 @@ for row in parameterCells:
             startingDay=row[1].strip()
             startingDay=startingDay[0].upper()+startingDay.lower()[1:]  # Force the capitalization to be right
 # Reorganize the dayList so it starts with our starting day. It's extra-long so that clipping days from the front will still leave a full week.
-gDayList=["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-if startingDay not in gDayList:
+if startingDay not in NumericTime.gDayList:
     LogError("Can't interpret starting day='"+startingDay+"'.  Will use 'Friday'")
     startingDay="Friday"
-i=gDayList.index(startingDay)
-gDayList=gDayList[i:]
+i=NumericTime.gDayList.index(startingDay)
+gDayList=NumericTime.gDayList[i:]
 
 # We're done with reading the spreadsheet. Now analyze the data.
 #******
@@ -260,7 +163,7 @@ def AddItemWithPeople(time: float, roomName: str, itemName: str, plistText: str)
         peopleList.append(person)
     # And add the item with its list of people to the items table.
     if itemName in gItems:  # If the item's name is already in use, add a uniquifier of room+day/time
-        itemName=itemName+"  {"+roomName+" "+NumericToTextDayTime(time)+"}"
+        itemName=itemName+"  {"+roomName+" "+NumericTime.NumericToTextDayTime(time)+"}"
     gItems[itemName]=Item(Name=itemName, Time=time, Room=roomName, People=peopleList, ModName=modName)
 
 
@@ -269,14 +172,14 @@ def AddItemWithPeople(time: float, roomName: str, itemName: str, plistText: str)
 def AddItemWithoutPeople(time: float, roomName: str, itemName: str) -> None:
     global gItems
     if itemName in gItems:  # If the item's name is already in use, add a uniquifier of room+day/time
-        itemName=itemName+"  {"+roomName+" "+NumericToTextDayTime(time)+"}"
+        itemName=itemName+"  {"+roomName+" "+NumericTime.NumericToTextDayTime(time)+"}"
     gItems[itemName]=Item(Name=itemName, Time=time, Room=roomName)
 
 #.......
 # Code to process a set of time and people rows.
 def ProcessRows(timeRow: List[str], peopleRow: Optional[List[str]]) -> None:
     # Get the time from the timerow and add it to gTimes
-    time=TextToNumericTime(timeRow[0])
+    time=NumericTime.TextToNumericTime(timeRow[0])
     if time not in gTimes:
         gTimes.append(time)     # We want to allow duplicate time rows, just-in-case
 
@@ -532,7 +435,7 @@ with open(fname, "w") as txt:
     for personname in sortedallpartlist:
         print("\n"+personname, file=txt)
         for schedItem in gSchedules[personname]:
-            print(f"    {NumericToTextDayTime(schedItem.Time)}: {schedItem.DisplayName} [{schedItem.Room}] {schedItem.ModFlag}", file=txt)
+            print(f"    {NumericTime.NumericToTextDayTime(schedItem.Time)}: {schedItem.DisplayName} [{schedItem.Room}] {schedItem.ModFlag}", file=txt)
 
 #*******
 # Print the Items with people by time report
@@ -545,7 +448,7 @@ with open(fname, "w") as txt:
             # Now search for the program item and people list for this slot
             for itemName, item in gItems.items():
                 if item.Time == time and item.Room == room:
-                    print(f"{NumericToTextDayTime(time)}, {room}: {itemName}   {item.DisplayPlist()}", file=txt)
+                    print(f"{NumericTime.NumericToTextDayTime(time)}, {room}: {itemName}   {item.DisplayPlist()}", file=txt)
                     if item.Precis is not None:
                         print("     "+item.Precis, file=txt)
 
@@ -560,7 +463,7 @@ for personname in sortedallpartlist:
     print("\n\n********************************************", file=txt)
     print(personname, file=txt)
     for schedItem in gSchedules[personname]:
-        print(f"\n{NumericToTextDayTime(schedItem.Time)}: {schedItem.DisplayName} [{schedItem.Room}] {schedItem.ModFlag}", file=txt)
+        print(f"\n{NumericTime.NumericToTextDayTime(schedItem.Time)}: {schedItem.DisplayName} [{schedItem.Room}] {schedItem.ModFlag}", file=txt)
         item=gItems[schedItem.ItemName]
         print("Participants: "+item.DisplayPlist(), file=txt)
         if item.Precis is not None:
@@ -575,7 +478,7 @@ SafeDelete(fname)
 txt=open(fname, "w")
 print("List of number of people scheduled on each item\n\n", file=txt)
 for itemname, item in gItems.items():
-    print(f"{NumericToTextDayTime(item.Time)} {item.Name}: {len(item.People)}", file=txt)
+    print(f"{NumericTime.NumericToTextDayTime(item.Time)} {item.Name}: {len(item.People)}", file=txt)
 txt.close()
 
 #******
@@ -590,7 +493,7 @@ for itemname, item in gItems.items():
         continue
     if item.Name.find("Reading") > -1 or item.Name.find("KK") > -1 or item.Name.find("Kaffe") > -1 or item.Name.find("Autograph") > -1:
         continue
-    print(f"{NumericToTextDayTime(item.Time)} {item.Name}: {len(item.People)}", file=txt)
+    print(f"{NumericTime.NumericToTextDayTime(item.Time)} {item.Name}: {len(item.People)}", file=txt)
     found=True
 if not found:
     print("None found", file=txt)
@@ -609,7 +512,7 @@ for itemname, item in gItems.items():
         continue
     if item.ModName is not None:
         continue
-    print(f"{NumericToTextDayTime(item.Time)} {item.Name}: {len(item.People)}", file=txt)
+    print(f"{NumericTime.NumericToTextDayTime(item.Time)} {item.Name}: {len(item.People)}", file=txt)
     found=True
 if not found:
     print("None found", file=txt)
@@ -625,7 +528,7 @@ for itemname, item in gItems.items():
         continue
     if item.Precis is not None and len(item.Precis) > 0:
         continue
-    print("{NumericToTextDayTime(item.Time)} {item.Name}: {len(item.People)}", file=txt)
+    print(f"{NumericTime.NumericToTextDayTime(item.Time)} {item.Name}: {len(item.People)}", file=txt)
     found=True
 if not found:
     print("None found", file=txt)
@@ -700,8 +603,8 @@ AppendParaToDoc(doc, "Schedule", bold=True, size=24)
 print("Schedule", file=txt)
 for time in gTimes:
     AppendParaToDoc(doc, "")
-    AppendParaToDoc(doc, NumericToTextDayTime(time), bold=True)
-    print("\n"+NumericToTextDayTime(time), file=txt)
+    AppendParaToDoc(doc, NumericTime.NumericToTextDayTime(time), bold=True)
+    print("\n"+NumericTime.NumericToTextDayTime(time), file=txt)
     for room in gRoomNames:
         # Now search for the program item and people list for this slot
         for itemName, item in gItems.items():
@@ -730,7 +633,7 @@ currentday=""
 f=None
 for time in gTimes:
     # We generate a separate report for each day
-    sortday=NumericTimeToNominalDay(time)
+    sortday=NumericTime.NumericTimeToNominalDay(time)
     if sortday != currentday:
         # Close the old file, if any
         if f is not None:
@@ -795,7 +698,7 @@ for room in gRoomNames:
                 inuse=True
                 AppendParaToDoc(doc, "")    # Skip a line
                 para=doc.add_paragraph()
-                AppendTextToPara(para, NumericToTextDayTime(item.Time)+":  ", bold=True)   # Add the time in bold followed by the item's title
+                AppendTextToPara(para, NumericTime.NumericToTextDayTime(item.Time)+":  ", bold=True)   # Add the time in bold followed by the item's title
                 AppendTextToPara(para, item.DisplayName)
                 AppendParaToDoc(doc, item.DisplayPlist(), italic=True, indent=0.5)        # Then, on a new line, the people list in italic
     fname=os.path.join(path, room.replace("/", "-")+".docx")
