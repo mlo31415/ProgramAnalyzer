@@ -239,7 +239,7 @@ if len(gRoomNames) == 0 or len(roomIndexes) == 0:
 # Start reading ths spreadsheet and building the participants and items databases (dictionaries)
 gSchedules: Dict[str, List[ScheduleItem]]={}   # A dictionary keyed by a person's name containing a list of (time, room, item, moderator) tuples, each an item that that person is on.
 gItems: Dict[str, Item]={}       # A dictionary keyed by item name containing an Item (time, room, people-list, moderator), where people-list is the list of people on the item
-gTimes: List=[]       # A list of times found in the spreadsheet.
+gTimes: List[float]=[]       # A list of times found in the spreadsheet.
 
 #.......
 # Add an item with a list of people, and add the item to each of the persons
@@ -251,7 +251,7 @@ def AddItemWithPeople(time: float, roomName: str, itemName: str, plistText: str)
     plist=[p.strip() for p in plist]  # Remove excess spaces
     plist=[p for p in plist if len(p) > 0]
     modName=""
-    peopleList=[]
+    peopleList: List[str]=[]
     for person in plist:  # For each person listed on this item
         if IsModerator(person):
             modName=person=RemoveModFlag(person)
@@ -416,7 +416,7 @@ if fnameCol is None or lnameCol is None or emailCol is None or responseCol is No
     LogError("    labels="+" ".join(peopleCells[firstNonEmptyRow]))
 
 # We'll combine the first and last names to create a full name like is used elsewhere.
-peopleTable={}
+peopleTable: Dict[str, Tuple[str, str]]={}
 for i in range(firstNonEmptyRow+1, len(peopleCells)):
     if len(peopleCells) == 0:   # Skip empty rows
         continue
@@ -496,7 +496,7 @@ with open(fname, "w") as txt:
 names=set()
 names.update(gSchedules.keys())
 names.update(peopleTable.keys())
-similarNames=[]
+similarNames: List[Tuple[str, str, float]]=[]
 for p1 in names:
     for p2 in names:
         if p1 < p2:
