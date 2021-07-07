@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 @dataclass(order=False)
 class ScheduleItem:
     PersonName: str=""          # The person's name
-    Time: float=None        # A numeric time
+    Time: float=-1        # A numeric time
     Room: str=""          # The name of a room
     ItemName: str=""      # The name of an item
     IsMod: bool=False       # Is this person the moderator of this item?
