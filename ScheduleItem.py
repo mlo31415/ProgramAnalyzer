@@ -1,7 +1,5 @@
 # A class to hold the information for one Participant
 
-from typing import List
-
 from dataclasses import dataclass, field
 
 @dataclass(order=False)
