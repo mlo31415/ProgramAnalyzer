@@ -751,22 +751,22 @@ for time in gTimes:
         f.write('<table border="0" cellspacing="0" cellpadding="2">\n')
 
     f.write('<tr><td colspan="3">')
-    f.write('<p class="time">' + NumericToTextTime(time) + '</p>')
+    f.write(f'<p class="time">{NumericTime.NumericToTextTime(time)}</p>')
     f.write('</td></tr>\n')
     for room in gRoomNames:
         # Now search for the program item and people list for this slot
         for itemName, item in gItems.items():
             if item.Time == time and item.Room == room:
                 f.write('<tr><td width="40">&nbsp;</td><td colspan="2">')   # Two columns, the first 40 pixes wide and empty
-                f.write('<p><span class="room">' + room +': </span><span class="item">' + item.DisplayName +'</span></p>')
+                f.write(f'<p><span class="room">{room}: </span><span class="item">{item.DisplayName}</span></p>')
                 f.write('</td></tr>')
                 if len(item.People) > 0:            # And the item's people list
                     f.write('<tr><td width="40">&nbsp;</td><td width="40">&nbsp;</td><td width="600">')     # Three columns, the first two 40 pixes wide and empty; the third 600 pixels wide
-                    f.write('<p><span class="people">'+item.DisplayPlist()+'</span></p>')
+                    f.write(f'<p><span class="people">{item.DisplayPlist()}</span></p>')
                     f.write('</td></tr>\n')
                 if item.Precis is not None:
                     f.write('<tr><td width="40">&nbsp;</td><td width="40">&nbsp;</td><td width="600">')     # Same
-                    f.write('<p><span class="precis">'+item.Precis+'</span></p>')
+                    f.write(f'<p><span class="precis">{item.Precis}</span></p>')
                     f.write('</td></tr>\n')
 if f is not None:
     # Read and append the footer
