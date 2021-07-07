@@ -1,16 +1,13 @@
 from __future__ import annotations
 
-from typing import Dict, List, Tuple, Set, Optional
-from dataclasses import dataclass
+from typing import Dict, List, Tuple, Optional
 
 import json
 import pygsheets
 import os.path
 import difflib
 import docx
-import math
 import re as RegEx
-import ctypes  # An included library with Python install.
 from docx.shared import Pt
 from docx.shared import Inches
 from docx import text
