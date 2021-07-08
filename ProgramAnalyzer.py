@@ -7,6 +7,7 @@ import pygsheets
 import os.path
 import difflib
 import docx
+import wx
 import re as RegEx
 from docx.shared import Pt
 from docx.shared import Inches
@@ -14,6 +15,8 @@ from docx import text
 from docx.text import paragraph
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
+
+from HelpersPackage import PyiResourcePath
 
 from ScheduleItem import ScheduleItem
 from Item import Item
@@ -645,8 +648,12 @@ for time in gTimes:
         if f is not None:
             f.write('</font></table>\n')
             # Read and append the footer
-            with open("control-WebpageFooter.txt", "r") as f2:
-                f.writelines(f2.readlines())
+            try:
+                with open(PyiResourcePath("control-WebpageFooter.txt")) as f2:
+                    f.writelines(f2.readlines())
+            except:
+                wx.App(False)
+                wx.MessageBox("Can't read 'control-WebpageFooter.txt'")
             f.close()
             f=None
         # Open the new one
@@ -654,8 +661,12 @@ for time in gTimes:
         fname=os.path.join("reports", "Schedule - "+sortday+".html")
         SafeDelete(fname)
         f=open(fname, "w")
-        with open("control-WebpageHeader.txt", "r") as f2:
-            f.writelines(f2.readlines())
+        try:
+            with open(PyiResourcePath("control-WebpageHeader.txt")) as f2:
+                f.writelines(f2.readlines())
+        except:
+            wx.App(False)
+            wx.MessageBox("Can't read 'control-WebpageHeader.txt'")
         f.write("<h2>"+sortday+"</h2>\n")
         f.write('<table border="0" cellspacing="0" cellpadding="2">\n')
 
@@ -680,8 +691,12 @@ for time in gTimes:
 if f is not None:
     # Read and append the footer
     f.write('</table>\n')
-    with open("control-WebpageFooter.txt", "r") as f2:
-        f.writelines(f2.readlines())
+    try:
+        with open(PyiResourcePath("control-WebpageFooter.txt")) as f2:
+            f.writelines(f2.readlines())
+    except:
+        wx.App(False)
+        wx.MessageBox("Can't read 'control-WebpageFooter.txt'")
     f.close()
 
 
