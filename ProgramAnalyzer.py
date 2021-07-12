@@ -61,11 +61,11 @@ if not os.path.exists("reports"):
 
 with open('programanalyzer-1554125255622-815b35923909.json') as source:
     info = json.load(source)
-    Log("json read")
+    Log("Json read")
 credentials = service_account.Credentials.from_service_account_info(info)
 
 client = pygsheets.authorize(service_account_file='programanalyzer-1554125255622-815b35923909.json')
-Log("pygsheets suthorizes")
+Log("Pygsheets authorized")
 
 # credentials = None
 # # The file token.pickle stores the user's access and refresh tokens, and is
@@ -88,7 +88,7 @@ Log("pygsheets suthorizes")
 #         pickle.dump(credentials, token)
 
 service = build('sheets', 'v4', credentials=credentials)
-Log("service established")
+Log("Service established")
 
 # Call the Sheets API to load the various tabs of the spreadsheet
 sheet = service.spreadsheets()
