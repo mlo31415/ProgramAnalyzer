@@ -1,0 +1,75 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>Confluence 2019</title>
+
+<!-- External stylesheet reference -->
+<!--
+<head>
+<link rel="stylesheet" type="text/css" href="nameOfStylesheet.css">
+</head>
+-->
+
+<!-- Internal stylesheet -->
+<style>
+
+body {
+  font-family: Calibri, sans-serif;
+  color: black;
+}
+
+h1 {
+  font-size: 18pt;
+  font-weight: bold;
+  color: green;
+}
+
+h2 {
+  font-size: 18pt;
+  font-weight: bold;
+  color: blue;
+}
+
+table {
+  background-color: Azure;
+}
+
+p {
+  font-size: 12pt;
+  font-style: normal;
+}
+
+.important {
+  color: red;
+}
+.room {
+  font-style: italic;
+}
+
+.time {
+  font-size: 14pt;
+  font-weight: bold;
+}
+
+.item {
+  font-weight: bold;
+}
+
+.precis {
+  font-size: 10pt;
+  font-style: italic;
+}
+</style>
+
+</head>
+
+<body style='font-family="sans-serif"'>
+
+<h1>DRAFT Program for Confluence 2019</h1>
+<p class="intro">Sheraton Pittsburgh Airport</p>
+<p class="important">˜July 26-28, 2019</p>
+<p>&nbsp;</p>
+
+
