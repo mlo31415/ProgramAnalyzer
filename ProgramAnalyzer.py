@@ -648,6 +648,8 @@ currentday=""
 f=None
 for time in gTimes:
     # We generate a separate report for each day
+    # The times are sorted in ascending order.
+    # We will let the act of the time flipping over to a new day create the new file
     sortday=NumericTime.NumericTimeToNominalDay(time)
     if sortday != currentday:
         # Close the old file, if any
@@ -663,7 +665,7 @@ for time in gTimes:
                 LogError("Can't read 'control-WebpageFooter.txt' (1)")
             f.close()
             f=None
-        # Open the new one
+        # And open the new file
         currentday=sortday
         fname=os.path.join("reports", "Schedule - "+sortday+".html")
         SafeDelete(fname)
