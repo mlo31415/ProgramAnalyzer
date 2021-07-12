@@ -672,11 +672,14 @@ for time in gTimes:
         f=open(fname, "w")
         try:
             with open(PyiResourcePath("control-WebpageHeader.txt")) as f2:
-                f.writelines(f2.readlines())
+                try:
+                    f.writelines(f2.readlines())
+                except:
+                    LogError("Failure copying 'control-WebpageHeader.txt'")
         except:
             # wx.App(False)
             # wx.MessageBox("Can't read 'control-WebpageHeader.txt'")
-            LogError("Can't read 'control-WebpageHeader.txt'")
+            LogError("Can't open 'control-WebpageHeader.txt'")
         f.write("<h2>"+sortday+"</h2>\n")
         f.write('<table border="0" cellspacing="0" cellpadding="2">\n')
 
