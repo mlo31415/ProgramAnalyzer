@@ -7,7 +7,7 @@ import pygsheets
 import os.path
 import difflib
 import docx
-import wx
+#import wx
 import re as RegEx
 from docx.shared import Pt
 from docx.shared import Inches
@@ -20,7 +20,7 @@ from HelpersPackage import PyiResourcePath
 
 from ScheduleItem import ScheduleItem
 from Item import Item
-from Logger import LogError, LogClose
+from Logger import LogClose, LogError, Log
 import NumericTime
 
 
@@ -52,15 +52,20 @@ def SafeDelete(fn: str) -> bool:
 # MAIN
 # Read and analyze the spreadsheet
 
+Log("Started")
+
 # Create the reports subfolder if none exists
 if not os.path.exists("reports"):
     os.mkdir("reports")
+    Log("Reports directory created")
 
 with open('programanalyzer-1554125255622-815b35923909.json') as source:
     info = json.load(source)
+    Log("json read")
 credentials = service_account.Credentials.from_service_account_info(info)
 
 client = pygsheets.authorize(service_account_file='programanalyzer-1554125255622-815b35923909.json')
+Log("pygsheets suthorizes")
 
 # credentials = None
 # # The file token.pickle stores the user's access and refresh tokens, and is
@@ -83,6 +88,7 @@ client = pygsheets.authorize(service_account_file='programanalyzer-1554125255622
 #         pickle.dump(credentials, token)
 
 service = build('sheets', 'v4', credentials=credentials)
+Log("service established")
 
 # Call the Sheets API to load the various tabs of the spreadsheet
 sheet = service.spreadsheets()
@@ -652,8 +658,9 @@ for time in gTimes:
                 with open(PyiResourcePath("control-WebpageFooter.txt")) as f2:
                     f.writelines(f2.readlines())
             except:
-                wx.App(False)
-                wx.MessageBox("Can't read 'control-WebpageFooter.txt'")
+                # wx.App(False)
+                # wx.MessageBox("Can't read 'control-WebpageFooter.txt'")
+                LogError("Can't read 'control-WebpageFooter.txt' (1)")
             f.close()
             f=None
         # Open the new one
@@ -665,8 +672,9 @@ for time in gTimes:
             with open(PyiResourcePath("control-WebpageHeader.txt")) as f2:
                 f.writelines(f2.readlines())
         except:
-            wx.App(False)
-            wx.MessageBox("Can't read 'control-WebpageHeader.txt'")
+            # wx.App(False)
+            # wx.MessageBox("Can't read 'control-WebpageHeader.txt'")
+            LogError("Can't read 'control-WebpageHeader.txt'")
         f.write("<h2>"+sortday+"</h2>\n")
         f.write('<table border="0" cellspacing="0" cellpadding="2">\n')
 
@@ -695,8 +703,9 @@ if f is not None:
         with open(PyiResourcePath("control-WebpageFooter.txt")) as f2:
             f.writelines(f2.readlines())
     except:
-        wx.App(False)
-        wx.MessageBox("Can't read 'control-WebpageFooter.txt'")
+        # wx.App(False)
+        # wx.MessageBox("Can't read 'control-WebpageFooter.txt'")
+        LogError("Can't read 'control-WebpageFooter.txt' (2)")
     f.close()
 
 
@@ -727,4 +736,5 @@ for room in gRoomNames:
     if inuse:
         doc.save(fname)
 
+Log("Done.")
 LogClose()
