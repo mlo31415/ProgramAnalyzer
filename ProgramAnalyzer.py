@@ -17,7 +17,7 @@ from docx.text import paragraph
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
 
-from HelpersPackage import PyiResourcePath
+from HelpersPackage import PyiResourcePath, ReadList, MessageBox
 
 from ScheduleItem import ScheduleItem
 from Item import Item
@@ -55,12 +55,21 @@ def SafeDelete(fn: str) -> bool:
 
 Log("Started")
 
+lst=ReadList('credentials.txt')
+if lst is None:
+    MessageBox("Can't read credentials.txt")
+    exit(999)
+if len(lst) == 0:
+    MessageBox("credentials.txt is empty")
+    exit(999)
+Log("credentials.txt read")
+
 # Create the reports subfolder if none exists
 if not os.path.exists("reports"):
     os.mkdir("reports")
     Log("Reports directory created")
 
-with open('programanalyzer-1554125255622-815b35923909.json') as source:
+with open(lst[0]) as source:
     info = json.load(source)
     Log("Json read")
 credentials = service_account.Credentials.from_service_account_info(info)
