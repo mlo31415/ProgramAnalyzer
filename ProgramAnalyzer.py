@@ -8,7 +8,7 @@ import pygsheets
 import os.path
 import difflib
 import docx
-#import wx
+import wx
 import re as RegEx
 from docx.shared import Pt
 from docx.shared import Inches
@@ -58,7 +58,21 @@ Log("Started")
 lst=ReadList('credentials.txt')
 if lst is None:
     MessageBox("Can't read credentials.txt")
-    exit(999)
+    app=wx.App()
+    frame=wx.Frame(None, -1, 'win.py')
+    frame.SetSize(0, 0, 200, 50) #SetDimensions(0, 0, 200, 50)
+    openFileDialog=wx.FileDialog(frame, "Open", "", "", "*.json", wx.FD_OPEN|wx.FD_FILE_MUST_EXIST)
+    ret=openFileDialog.ShowModal()
+    if ret == wx.ID_CANCEL:
+        exit(999)
+    lst=[openFileDialog.GetPath()]
+    openFileDialog.Destroy()
+    Log(f"{lst[0]} selected")
+
+with open(lst[0]) as source:
+    info=json.load(source)
+    Log("Json read")
+
 if len(lst) == 0:
     MessageBox("credentials.txt is empty")
     exit(999)
@@ -69,9 +83,7 @@ if not os.path.exists("reports"):
     os.mkdir("reports")
     Log("Reports directory created")
 
-with open(lst[0]) as source:
-    info = json.load(source)
-    Log("Json read")
+
 credentials = service_account.Credentials.from_service_account_info(info)
 
 client = pygsheets.authorize(service_account_file='programanalyzer-1554125255622-815b35923909.json')
