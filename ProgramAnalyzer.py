@@ -2,6 +2,7 @@ from __future__ import annotations
 # Comment for Jim
 
 from typing import Dict, List, Tuple, Optional
+from collections import defaultdict
 
 import json
 import pygsheets
@@ -171,7 +172,7 @@ if len(gRoomNames) == 0 or len(roomIndexes) == 0:
     LogError("Room names line is blank.")
 
 # Start reading ths spreadsheet and building the participants and items databases (dictionaries)
-gSchedules: Dict[str, List[ScheduleItem]]={}    # A dictionary keyed by a person's name containing a ScheduleItem list
+gSchedules: Dict[str, List[ScheduleItem]]=defaultdict(list)  # A dictionary keyed by a person's name containing a ScheduleItem list
                                                 # ScheduleItem is the (time, room, item, moderator) tuples, of an item that that person is on.
                                                 # Note that time and room are redundant and could be pulled out of the Items dictionary
 gItems: Dict[str, Item]={}       # A dictionary keyed by item name containing an Item (time, room, people-list, moderator), where people-list is the list of people on the item
@@ -191,7 +192,6 @@ def AddItemWithPeople(time: float, roomName: str, itemName: str, plistText: str)
     for person in plist:  # For each person listed on this item
         if IsModerator(person):
             modName=person=RemoveModFlag(person)
-        gSchedules.setdefault(person, [])
         gSchedules[person].append(ScheduleItem(PersonName=person, Time=time, Room=roomName, ItemName=itemName, IsMod=(person == modName)))  # And append a tuple with the time, room, item name, and moderator flag
         peopleList.append(person)
     # And add the item with its list of people to the items table.
