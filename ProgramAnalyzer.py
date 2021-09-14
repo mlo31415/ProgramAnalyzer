@@ -18,7 +18,7 @@ from docx.text import paragraph
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
 
-from HelpersPackage import PyiResourcePath, ReadList, MessageBox
+from HelpersPackage import PyiResourcePath, ReadListAsDict, MessageBox
 
 from ScheduleItem import ScheduleItem
 from Item import Item
@@ -56,26 +56,34 @@ def SafeDelete(fn: str) -> bool:
 
 Log("Started")
 
-lst=ReadList('credentials.txt')
-if lst is None:
-    MessageBox("Can't read credentials.txt")
+
+parms=ReadListAsDict('parameters.txt')
+if len(parms) == 0:
+    MessageBox("Can't open paramaters.txt")
     app=wx.App()
     frame=wx.Frame(None, -1, 'win.py')
     frame.SetSize(0, 0, 200, 50) #SetDimensions(0, 0, 200, 50)
-    openFileDialog=wx.FileDialog(frame, "Open", "", "", "*.json", wx.FD_OPEN|wx.FD_FILE_MUST_EXIST)
-    ret=openFileDialog.ShowModal()
-    if ret == wx.ID_CANCEL:
+    with wx.FileDialog(frame, "Open", "", "", "*.txt", wx.FD_OPEN|wx.FD_FILE_MUST_EXIST) as openFileDialog:
+        ret=openFileDialog.ShowModal()
+        if ret == wx.ID_CANCEL:
+            exit(999)
+        lst=openFileDialog.GetPath()
+    Log(f"{lst} selected")
+    parms=ReadListAsDict(lst)
+    if len(parms) == 0:
+        LogClose()
         exit(999)
-    lst=[openFileDialog.GetPath()]
-    openFileDialog.Destroy()
-    Log(f"{lst[0]} selected")
 
-with open(lst[0]) as source:
+if len(parms["credentials"]) == 0:
+    MessageBox("parameters.txt does not designate a credentials file")
+    exit(999)
+
+with open(parms["credentials"]) as source:
     info=json.load(source)
     Log("Json read")
 
-if len(lst) == 0:
-    MessageBox("credentials.txt is empty")
+if info is None:
+    MessageBox("credentials file is empty")
     exit(999)
 Log("credentials.txt read")
 
