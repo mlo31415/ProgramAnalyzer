@@ -22,7 +22,7 @@ from HelpersPackage import PyiResourcePath, ReadList, MessageBox
 
 from ScheduleItem import ScheduleItem
 from Item import Item
-from Logger import LogClose, LogError, Log
+from Log import Log, LogClose, LogError
 import NumericTime
 
 

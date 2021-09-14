@@ -3,7 +3,7 @@ from typing import Tuple
 import re
 import math
 
-from Logger import LogError
+from Log import LogError
 
 
 gDayList=["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
