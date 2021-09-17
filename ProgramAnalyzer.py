@@ -69,32 +69,10 @@ def main():
         Log("Reports directory created")
 
     credentials=service_account.Credentials.from_service_account_info(info)
-
-    client=pygsheets.authorize(service_account_file='programanalyzer-1554125255622-815b35923909.json')
-    Log("Pygsheets authorized")
-
-    # credentials = None
-    # # The file token.pickle stores the user's access and refresh tokens, and is
-    # # created automatically when the authorization flow completes for the first time.
-    # # Pickle is a scheme for serializing data to disk and retrieving it
-    # if os.path.exists('token.pickle'):
-    #     with open('token.pickle', 'rb') as token:
-    #         credentials = pickle.load(token)
-    #
-    # # If there are no (valid) credentials available, let the user log in.
-    # if not credentials or not credentials.valid:
-    #     if credentials and credentials.expired and credentials.refresh_token:
-    # #        credentials.refresh(Request())
-    #         credentials.refresh(httplib2.Http())
-    #     else:
-    #         flow = InstalledAppFlow.from_client_secrets_file('credentials.json', 'https://www.googleapis.com/auth/spreadsheets.readonly')
-    #         credentials = flow.run_local_server()
-    #     # Save the credentials for the next run
-    #     with open('token.pickle', 'wb') as token:
-    #         pickle.dump(credentials, token)
+    Log("Credentials established", Flush=True)
 
     service=build('sheets', 'v4', credentials=credentials)
-    Log("Service established")
+    Log("Service established", Flush=True)
 
     # Call the Sheets API to load the various tabs of the spreadsheet
     sheet=service.spreadsheets()
