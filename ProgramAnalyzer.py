@@ -14,8 +14,10 @@ from docx.shared import Pt
 from docx.shared import Inches
 from docx import text
 from docx.text import paragraph
+
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
+from googleapiclient.errors import HttpError
 
 from HelpersPackage import PyiResourcePath, ReadListAsDict, MessageBox
 
@@ -35,7 +37,7 @@ def main():
 
     parms=ReadListAsDict('parameters.txt')
     if len(parms) == 0:
-        MessageBox("Can't open paramaters.txt")
+        MessageBox("Can't open parameters.txt")
         app=wx.App()
         frame=wx.Frame(None, -1, 'win.py')
         frame.SetSize(0, 0, 200, 50)  # SetDimensions(0, 0, 200, 50)
@@ -59,7 +61,7 @@ def main():
         Log("Json read")
 
     if info is None:
-        MessageBox("credentials file is empty")
+        MessageBox("Json file is empty")
         exit(999)
     Log("credentials.txt read")
 
@@ -76,10 +78,17 @@ def main():
 
     # Call the Sheets API to load the various tabs of the spreadsheet
     sheet=service.spreadsheets()
-    SPREADSHEET_ID='1Vp8EEGaZTW-PZ3zcY287ae_01pXJ80GXEDsaorogZ0Y'  # This is the ID of the specific spreadsheet we're reading
-    scheduleCells=sheet.values().get(spreadsheetId=SPREADSHEET_ID, range='2019 Schedule!A1:Z1999').execute().get('values', [])  # Read the whole thing.
+    if len(parms["SheetID"]) == 0:
+        MessageBox("parameters.txt does not designate a SheetID")
+        exit(999)
+    SPREADSHEET_ID=parms["SheetID"]  # This is the ID of the specific spreadsheet we're reading
+    try:
+        scheduleCells=sheet.values().get(spreadsheetId=SPREADSHEET_ID, range='2019 Schedule!A1:Z1999').execute().get('values', [])  # Read the whole thing.
+    except HttpError as e:
+        LogError("Can't locate scheduleCells tab in spreadsheet. Is the supplied SheetID wrong?")
+        exit(999)
     if not scheduleCells:
-        LogError("Can't locate scheduleCells tab in spreadsheet")
+        LogError("Can't locate scheduleCells tab in spreadsheet. Is the supplied SheetID wrong?")
         raise (ValueError, "No scheduleCells found")
 
     precisCells=sheet.values().get(spreadsheetId=SPREADSHEET_ID, range='2019 Precis!A1:Z999').execute().get('values', [])  # Read the whole thing.
