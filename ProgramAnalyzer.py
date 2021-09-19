@@ -79,37 +79,16 @@ def main():
     Log("Service established", Flush=True)
 
     # Call the Sheets API to load the various tabs of the spreadsheet
-    sheet=service.spreadsheets()
+    googleSheets=service.spreadsheets()
     if len(parms["SheetID"]) == 0:
         MessageBox("parameters.txt does not designate a SheetID")
         exit(999)
     SPREADSHEET_ID=parms["SheetID"]  # This is the ID of the specific spreadsheet we're reading
-    try:
-        scheduleCells=sheet.values().get(spreadsheetId=SPREADSHEET_ID, range='2019 Schedule!A1:Z1999').execute().get('values', [])  # Read the whole thing.
-    except HttpError as e:
-        LogError("Can't locate scheduleCells tab in spreadsheet. Is the supplied SheetID wrong?")
-        exit(999)
-    if not scheduleCells:
-        LogError("Can't locate scheduleCells tab in spreadsheet. Is the supplied SheetID wrong?")
-        raise (ValueError, "No scheduleCells found")
 
-    precisCells=sheet.values().get(spreadsheetId=SPREADSHEET_ID, range='2019 Precis!A1:Z999').execute().get('values', [])  # Read the whole thing.
-    if not precisCells:
-        LogError("Can't locate precisCells tab in spreadsheet")
-        raise (ValueError, "No precisCells found")
-    precisCells=[p for p in precisCells if len(p) > 0 and "".join(p)[0] != "#"]  # Drop blank lines and lines with a "#" alone in column 1.if not precisCells:
-
-    peopleCells=sheet.values().get(spreadsheetId=SPREADSHEET_ID, range='2019 People!A1:Z999').execute().get('values', [])  # Read the whole thing.
-    if not peopleCells:
-        LogError("Can't locate peopleCells tab in spreadsheet")
-        raise (ValueError, "No peopleCells found")
-    peopleCells=[p for p in peopleCells if len(p) > 0 and "".join(p)[0] != "#"]  # Drop blank lines and lines with a "#" alone in column 1.
-
-    parameterCells=sheet.values().get(spreadsheetId=SPREADSHEET_ID, range='Controls!A1:Z999').execute().get('values', [])  # Read the whole thing.
-    if not parameterCells:
-        LogError("Can't locate parameterCells tab in spreadsheet")
-        raise (ValueError, "No parameterCells found")
-    parameterCells=[p for p in parameterCells if len(p) > 0 and "".join(p)[0] != "#"]  # Drop blank lines and lines with a "#" alone in column 1.
+    scheduleCells=ReadSheetFromTab(googleSheets, SPREADSHEET_ID, parms, "ScheduleTab")
+    precisCells=ReadSheetFromTab(googleSheets, SPREADSHEET_ID, parms, "PrecisTab")
+    peopleCells=ReadSheetFromTab(googleSheets, SPREADSHEET_ID, parms, "PeopleTab")
+    parameterCells=ReadSheetFromTab(googleSheets, SPREADSHEET_ID, parms, "ControlTab")
 
     # Read parameters from the Control sheet
     startingDay="Friday"
@@ -684,10 +663,31 @@ def main():
     LogClose()
 
 
-
 #*************************************************************************************************
 #*************************************************************************************************
 # Miscellaneous helper functions
+
+# Read the contents of a spreadsheet tab into
+def ReadSheetFromTab(sheet, spreadSheetID, parms: Dict[str, str], parmname: str) -> List[str]:
+
+    if parmname not in parms.keys():
+        LogError(f"Parameter {parmname} not found in parameters.txt")
+        return []
+
+    tabname=parms[parmname]
+    try:
+        cells=sheet.values().get(spreadsheetId=spreadSheetID, range=f'{tabname}!A1:Z999').execute().get('values', [])  # Read the whole thing.
+    except HttpError as e:
+        LogError(f"Can't locate {tabname} tab in spreadsheet. Is the supplied SheetID wrong?")
+        exit(999)
+
+    if not cells:
+        LogError(f"Can't locate {tabname} tab in spreadsheet")
+        raise (ValueError, "No precisCells found")
+
+    return [p for p in cells if len(p) > 0 and "".join(p)[0] != "#"]  # Drop blank lines and lines with a "#" alone in column 1.if not precisCells:
+
+
 
 # Generate the name of a person stripped if any "(M)" or "(m)" flags
 def RemoveModFlag(s: str) -> str:
