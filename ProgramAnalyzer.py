@@ -66,9 +66,11 @@ def main():
     Log("credentials.txt read")
 
     # Create the reports subfolder if none exists
-    if not os.path.exists("reports"):
-        os.mkdir("reports")
-        Log("Reports directory created")
+    parms.setdefault("reportdir", "Reports")
+    reportsdir=parms["reportsdir"]
+    if not os.path.exists(reportsdir):
+        os.mkdir(reportsdir)
+        Log(f"Reports directory {reportsdir} created ")
 
     credentials=service_account.Credentials.from_service_account_info(info)
     Log("Credentials established", Flush=True)
@@ -246,7 +248,7 @@ def main():
 
     # The rest of the rows of the tab is pairs title:precis.
     count: int=0
-    fname=os.path.join("reports", "Diag - precis without items.txt")
+    fname=os.path.join(reportsdir, "Diag - precis without items.txt")
     with open(fname, "w") as txt:
         print("Precis without corresponding items:", file=txt)
         for row in precisCells:
@@ -332,7 +334,7 @@ def main():
 
     #******
     # Check for people in the schedule who are not in the people tab
-    fname=os.path.join("reports", "Diag - People in schedule without email.txt")
+    fname=os.path.join( reportsdir, "Diag - People in schedule without email.txt")
     with open(fname, "w") as txt:
         print("People who are scheduled but lack email address:", file=txt)
         print("(Note that these may be due to spelling differences, use of initials, etc.)", file=txt)
@@ -347,7 +349,7 @@ def main():
 
     #******
     # Check for people who are scheduled opposite themselves
-    fname=os.path.join("reports", "Diag - People scheduled against themselves.txt")
+    fname=os.path.join( reportsdir, "Diag - People scheduled against themselves.txt")
     with open(fname, "w") as txt:
         print("People who are scheduled to be in two places at the same time", file=txt)
         count=0
@@ -385,7 +387,7 @@ def main():
                     similarNames.append((p1, p2, rat))
     similarNames.sort(key=lambda x: x[2], reverse=True)
 
-    fname=os.path.join("reports", "Diag - Disturbingly similar names.txt")
+    fname=os.path.join( reportsdir, "Diag - Disturbingly similar names.txt")
     SafeDelete(fname)
     if len(similarNames) > 0:
         txt=open(fname, "w")
@@ -406,7 +408,7 @@ def main():
     # Print the People with items by time report
     # Get a list of the program participants (the keys of the  participants dictionary) sorted by the last token in the name (which will usually be the last name)
     sortedallpartlist=sorted(gSchedules.keys(), key=lambda x: x.split(" ")[-1])
-    fname=os.path.join("reports", "People with items by time.txt")
+    fname=os.path.join( reportsdir, "People with items by time.txt")
     SafeDelete(fname)
     with open(fname, "w") as txt:
         for personname in sortedallpartlist:
@@ -417,7 +419,7 @@ def main():
     #*******
     # Print the Items with people by time report
     # Get a list of the program participants (the keys of the  participants dictionary) sorted by the last token in the name (which will usually be the last name)
-    fname=os.path.join("reports", "Items with people by time.txt")
+    fname=os.path.join( reportsdir, "Items with people by time.txt")
     SafeDelete(fname)
     with open(fname, "w") as txt:
         for time in gTimes:
@@ -433,7 +435,7 @@ def main():
     #*******
     # Print the program participant's schedule report
     # Get a list of the program participants (the keys of the  participants dictionary) sorted by the last token in the name (which will usually be the last name)
-    fname=os.path.join("reports", "Program participant schedules.txt")
+    fname=os.path.join( reportsdir, "Program participant schedules.txt")
     SafeDelete(fname)
     txt=open(fname, "w")
     for personname in sortedallpartlist:
@@ -450,7 +452,7 @@ def main():
 
     #******
     # Report on the number of people/item
-    fname=os.path.join("reports", "Items' people counts.txt")
+    fname=os.path.join( reportsdir, "Items' people counts.txt")
     SafeDelete(fname)
     txt=open(fname, "w")
     print("List of number of people scheduled on each item\n\n", file=txt)
@@ -460,7 +462,7 @@ def main():
 
     #******
     # Flag items with a suspiciously small number of people on them
-    fname=os.path.join("reports", "Diag - Items with unexpectedly low number of participants.txt")
+    fname=os.path.join( reportsdir, "Diag - Items with unexpectedly low number of participants.txt")
     SafeDelete(fname)
     txt=open(fname, "w")
     print("List of non-readings and KKs with fewer than 3 people on them\n\n", file=txt)
@@ -479,7 +481,7 @@ def main():
 
     #******
     # Flag items missing a moderator or a precis
-    fname=os.path.join("reports", "Diag - Items missing a moderator.txt")
+    fname=os.path.join( reportsdir, "Diag - Items missing a moderator.txt")
     SafeDelete(fname)
     txt=open(fname, "w")
     print("List of non-readings and KKs with no moderator\n\n", file=txt)
@@ -495,7 +497,7 @@ def main():
         print("None found", file=txt)
     txt.close()
 
-    fname=os.path.join("reports", "Diag - Items missing a precis.txt")
+    fname=os.path.join( reportsdir, "Diag - Items missing a precis.txt")
     SafeDelete(fname)
     txt=open(fname, "w")
     print("List of non-readings and KKs with no precis\n\n", file=txt)
@@ -514,7 +516,7 @@ def main():
     #******
     # Report on the number of items/person
     # Include all people in the people tab, even those with no items
-    fname=os.path.join("reports", "Peoples' item counts.txt")
+    fname=os.path.join( reportsdir, "Peoples' item counts.txt")
     SafeDelete(fname)
     txt=open(fname, "w")
     print("List of number of items each person is scheduled on\n\n", file=txt)
@@ -534,7 +536,7 @@ def main():
     # Popup("About to create Document()")
     doc=docx.Document()
     # Popup("Document created")
-    fname=os.path.join("reports", "Pocket program.txt")
+    fname=os.path.join( reportsdir, "Pocket program.txt")
     try:
         # Popup("About to try SafeDelete("+fname+")")
         if not SafeDelete(fname):
@@ -572,7 +574,7 @@ def main():
                         AppendParaToDoc(doc, item.Precis, italic=True, size=12, indent=0.6)
                         print("            "+item.Precis, file=txt)
     # Popup("About to create Pocket Program.docx")
-    fname=os.path.join("reports", "Pocket program.docx")
+    fname=os.path.join( reportsdir, "Pocket program.docx")
     doc.save(fname)
     # Popup("Pocket Program.docx has been saved")
     txt.close()
@@ -603,7 +605,7 @@ def main():
                 f=None
             # And open the new file
             currentday=sortday
-            fname=os.path.join("reports", "Schedule - "+sortday+".html")
+            fname=os.path.join( reportsdir, "Schedule - "+sortday+".html")
             SafeDelete(fname)
             f=open(fname, "w")
             try:
@@ -653,7 +655,7 @@ def main():
     #******
     # Do the room signs.  They'll go in reports/rooms/<name>.docx
     # Create the roomsigns subfolder if none exists
-    path=os.path.join("reports", "roomsigns")
+    path=os.path.join( reportsdir, "roomsigns")
     if not os.path.exists(path):
         os.mkdir(path)
     for room in gRoomNames:
@@ -677,6 +679,7 @@ def main():
         if inuse:
             doc.save(fname)
 
+    Log(f"Reports generated in directory '{reportsdir}'")
     Log("Done.")
     LogClose()
 
