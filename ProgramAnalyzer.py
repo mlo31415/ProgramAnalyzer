@@ -102,7 +102,7 @@ def main():
         LogError("Can't interpret starting day='"+startingDay+"'.  Will use 'Friday'")
         startingDay="Friday"
     i=NumericTime.gDayList.index(startingDay)
-    gDayList=NumericTime.gDayList[i:]
+    NumericTime.gDayList=NumericTime.gDayList[i:]
 
     # We're done with reading the spreadsheet. Now analyze the data.
     # ******
