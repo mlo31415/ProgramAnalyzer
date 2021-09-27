@@ -327,6 +327,20 @@ def main():
 
 
     #******
+    # Check for people in the schedule whose response in not 'y'
+    fname=os.path.join( reportsdir, "Diag - People in schedule and in People but whose response in not 'y'.txt")
+    with open(fname, "w") as txt:
+        print("People who are scheduled and in People but whose response in not 'y':", file=txt)
+        count=0
+        for personname in gSchedules.keys():
+            if personname in peopleTable.keys():
+                if peopleTable[personname][1] != 'y':
+                    count+=1
+                    print(f"   {personname} has a response of {peopleTable[personname][1]}", file=txt)
+        if count == 0:
+            print("    None found", file=txt)
+
+    #******
     # Check for people who are scheduled opposite themselves
     fname=os.path.join( reportsdir, "Diag - People scheduled against themselves.txt")
     with open(fname, "w") as txt:
