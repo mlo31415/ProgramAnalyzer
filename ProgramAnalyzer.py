@@ -234,11 +234,14 @@ def main():
             row=[r.strip() for r in row]    # Get rid of leading and trailing blanks
             if len(row[0]) > 0 and len(row[1]) > 0: # If both the item name and the precis exist, store them in the precis table.
                 itemname=row[0]
-                if itemname not in gItems.keys():
+                found=False
+                for iname in gItems:
+                    if iname == itemname:
+                        gItems[itemname].Precis=row[1]
+                        found=True
+                if not found:
                     count+=1
                     print("   "+itemname, file=txt)
-                else:
-                    gItems[itemname].Precis=row[1]
         if count == 0:
             print("    None found", file=txt)
 
