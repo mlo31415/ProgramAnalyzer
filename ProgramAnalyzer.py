@@ -563,7 +563,7 @@ def main():
     print("List of number of items each person is scheduled on\n\n", file=txt)
     for personname in peopleTable:
         if personname in gSchedules.keys():
-            print(f"{personname}: {len(gSchedules[personname])}"+("" if peopleTable[personname][1] == "y" else " not confirmed"), file=txt)
+            print(f"{personname}: {len(gSchedules[personname])}{'' if peopleTable[personname][1] == 'y' else ' not confirmed'}", file=txt)
         else:
             if peopleTable[personname][1] == "y":
                 print(personname+": coming, but not scheduled", file=txt)
