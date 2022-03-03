@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from typing import Dict, List, Tuple, Optional
+from typing import Optional
 from collections import defaultdict
 
 import json
-import pygsheets
 import os.path
 import difflib
 import docx
@@ -109,7 +108,7 @@ def main():
     # Analyze the Schedule cells
     # The first row of the spreadsheet is the list of rooms.
     # Make a list of room names and room column indexes
-    roomIndexes: List[int]=[]
+    roomIndexes: list[int]=[]
     for i in range(0, len(scheduleCells[0])):
         if scheduleCells[0][i] is None:
             break
@@ -117,21 +116,21 @@ def main():
             roomIndexes.append(i)
 
     # Get the room names which are in the first row of the scheduleCells tab
-    gRoomNames: List[str]=[r.strip() for r in scheduleCells[0]]
+    gRoomNames: list[str]=[r.strip() for r in scheduleCells[0]]
 
     if len(gRoomNames) == 0 or len(roomIndexes) == 0:
         LogError("Room names line is blank.")
 
     # Start reading ths spreadsheet and building the participants and items databases (dictionaries)
-    gSchedules: Dict[str, List[ScheduleItem]]=defaultdict(list)  # A dictionary keyed by a person's name containing a ScheduleItem list
+    gSchedules: dict[str, list[ScheduleItem]]=defaultdict(list)  # A dictionary keyed by a person's name containing a ScheduleItem list
     # ScheduleItem is the (time, room, item, moderator) tuples, of an item that that person is on.
     # Note that time and room are redundant and could be pulled out of the Items dictionary
-    gItems: Dict[str, Item]={}  # A dictionary keyed by item name containing an Item (time, room, people-list, moderator), where people-list is the list of people on the item
-    gTimes: List[float]=[]  # A list of times found in the spreadsheet.
+    gItems: dict[str, Item]={}  # A dictionary keyed by item name containing an Item (time, room, people-list, moderator), where people-list is the list of people on the item
+    gTimes: list[float]=[]  # A list of times found in the spreadsheet.
 
     # .......
     # Code to process a set of time and people rows.
-    def ProcessRows(timeRow: List[str], peopleRow: Optional[List[str]]) -> None:
+    def ProcessRows(timeRow: list[str], peopleRow: Optional[list[str]]) -> None:
         # Get the time from the timerow and add it to gTimes
         time=NumericTime.TextToNumericTime(timeRow[0])
         if time not in gTimes:
@@ -174,7 +173,7 @@ def main():
     # A time row contains items.
     # A time row will normally be followed by a people row containing the participants for those items
     rowIndex: int=1  # We skip the first row which contains room names
-    timeRow: Optional[List[str]]=None
+    timeRow: Optional[list[str]]=None
     while rowIndex < len(scheduleCells):
         row=[c.strip() for c in scheduleCells[rowIndex]]  # Get the next row as a list of cells. Strip off leading and trailing blanks for each cell.
         if len(row) == 0:   # Ignore empty rows
@@ -276,7 +275,7 @@ def main():
         LogError("    labels="+" ".join(peopleCells[firstNonEmptyRow]))
 
     # We'll combine the first and last names to create a full name like is used elsewhere.
-    peopleTable: Dict[str, Tuple[str, str]]={}
+    peopleTable: dict[str, tuple[str, str]]={}
     for i in range(firstNonEmptyRow+1, len(peopleCells)):
         if len(peopleCells) == 0:   # Skip empty rows
             continue
@@ -397,7 +396,7 @@ def main():
     names=set()
     names.update(gSchedules.keys())
     names.update(peopleTable.keys())
-    similarNames: List[Tuple[str, str, float]]=[]
+    similarNames: list[tuple[str, str, float]]=[]
     for p1 in names:
         for p2 in names:
             if p1 < p2:
@@ -708,7 +707,7 @@ def main():
 # Miscellaneous helper functions
 
 # Read the contents of a spreadsheet tab into
-def ReadSheetFromTab(sheet, spreadSheetID, parms: Dict[str, str], parmname: str) -> List[str]:
+def ReadSheetFromTab(sheet, spreadSheetID, parms: dict[str, str], parmname: str) -> list[str]:
 
     if parmname not in parms.keys():
         LogError(f"Parameter {parmname} not found in parameters.txt")
@@ -750,13 +749,13 @@ def SafeDelete(fn: str) -> bool:
 
 #.......
 # Add an item with a list of people to the gItems dict, and add the item to each of the persons who are on it
-def AddItemWithPeople(gItems: Dict[str, Item], gSchedules: Dict[str, List[ScheduleItem]], time: float, roomName: str, itemName: str, plistText: str) -> None:
+def AddItemWithPeople(gItems: dict[str, Item], gSchedules: dict[str, list[ScheduleItem]], time: float, roomName: str, itemName: str, plistText: str) -> None:
 
     plist=plistText.split(",")  # Get the people as a list
     plist=[p.strip() for p in plist]  # Remove excess spaces
     plist=[p for p in plist if len(p) > 0]
     modName=""
-    peopleList: List[str]=[]
+    peopleList: list[str]=[]
     for person in plist:  # For each person listed on this item
         if IsModerator(person):
             modName=person=RemoveModFlag(person)
@@ -770,7 +769,7 @@ def AddItemWithPeople(gItems: Dict[str, Item], gSchedules: Dict[str, List[Schedu
 
 #.......
 # Add an item with a list of people, and add the item to each of the persons
-def AddItemWithoutPeople(gItems: Dict[str, Item], time: float, roomName: str, itemName: str) -> None:
+def AddItemWithoutPeople(gItems: dict[str, Item], time: float, roomName: str, itemName: str) -> None:
     if itemName in gItems:  # If the item's name is already in use, add a uniquifier of room+day/time
         itemName=itemName+"  {"+roomName+" "+NumericTime.NumericToTextDayTime(time)+"}"
     gItems[itemName]=Item(Name=itemName, Time=time, Room=roomName)
