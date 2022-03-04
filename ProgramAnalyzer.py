@@ -487,7 +487,7 @@ def main():
             print(f"<participants>{item.DisplayPlist()}</participants>", file=txt)
             if item.Precis is not None:
                 print(f"<precis>{item.Precis}</precis>", file=txt)
-            print(f"</item>/n", file=txt)
+            print(f"</item>\n", file=txt)
         print("</person>", file=txt)
     txt.close()
 
