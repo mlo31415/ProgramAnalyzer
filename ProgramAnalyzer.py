@@ -741,6 +741,7 @@ def ReadSheetFromTab(sheet, spreadSheetID, parms: dict[str, str], parmname: str)
 
     # Convert the generic name of the tab to the specific name to be used this year
     tabname=parms[parmname]
+    cells=[]
     try:
         cells=sheet.values().get(spreadsheetId=spreadSheetID, range=f'{tabname}!A1:Z999').execute().get('values', [])  # Read the whole thing.
     except HttpError as e:
