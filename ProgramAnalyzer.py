@@ -733,7 +733,7 @@ def main():
 # Miscellaneous helper functions
 
 # Read the contents of a spreadsheet tab into
-def ReadSheetFromTab(sheet, spreadSheetID, parms: dict[str, str], parmname: str) -> list[str]:
+def ReadSheetFromTab(sheet, spreadSheetID, parms: dict[str, str], parmname: str) -> list[list[str]]:
 
     if parmname not in parms.keys():
         LogError(f"Parameter {parmname} not found in parameters.txt")
