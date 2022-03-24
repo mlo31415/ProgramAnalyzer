@@ -34,6 +34,8 @@ def main():
 
     Log("Started")
 
+    # Read the parameters.
+    # This includes the names of the specific tabs to be used.
     parms=ReadListAsDict('parameters.txt')
     if len(parms) == 0:
         MessageBox("Can't open parameters.txt")
@@ -737,6 +739,7 @@ def ReadSheetFromTab(sheet, spreadSheetID, parms: dict[str, str], parmname: str)
         LogError(f"Parameter {parmname} not found in parameters.txt")
         return []
 
+    # Convert the generic name of the tab to the specific name to be used this year
     tabname=parms[parmname]
     try:
         cells=sheet.values().get(spreadsheetId=spreadSheetID, range=f'{tabname}!A1:Z999').execute().get('values', [])  # Read the whole thing.
