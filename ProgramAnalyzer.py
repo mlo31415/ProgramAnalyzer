@@ -471,27 +471,41 @@ def main():
 
 
 
-    #*******
+    # *******
     # Print the program participant's schedule report
     # Get a list of the program participants (the keys of the  participants dictionary) sorted by the last token in the name (which will usually be the last name)
-    fname=os.path.join( reportsdir, "Program participant schedules markup.txt")
+    fname=os.path.join(reportsdir, "Program participant schedules.xml")
     SafeDelete(fname)
-    txt=open(fname, "w")
-    for personname in sortedallpartlist:
-        print(f"<person><fullname>{personname}</fullname>", file=txt)
-        email=peopleTable.get(personname, "")
-        if email != "":
-            email=email[0]
-        print(f"<email>{email}</email>", file=txt)
-        for schedItem in gSchedules[personname]:
-            print(f"<item><title>{NumericTime.NumericToTextDayTime(schedItem.Time)}: {schedItem.DisplayName} [{schedItem.Room}] {schedItem.ModFlag}</title>", file=txt)
-            item=gItems[schedItem.ItemName]
-            print(f"<participants>{item.DisplayPlist()}</participants>", file=txt)
-            if item.Precis is not None:
-                print(f"<precis>{item.Precis}</precis>", file=txt)
-            print(f"</item>\n", file=txt)
-        print("</person>", file=txt)
-    txt.close()
+    with open(fname, "w") as xml:
+        for personname in sortedallpartlist:
+            print(f"<person><fullname>{personname}</fullname>", file=xml)
+            email=peopleTable.get(personname, "")
+            if email != "":
+                email=email[0]
+            print(f"<email>{email}</email>", file=xml)
+            for schedItem in gSchedules[personname]:
+                print(f"<item><title>{NumericTime.NumericToTextDayTime(schedItem.Time)}: {schedItem.DisplayName} [{schedItem.Room}] {schedItem.ModFlag}</title>", file=xml)
+                item=gItems[schedItem.ItemName]
+                print(f"<participants>{item.DisplayPlist()}</participants>", file=xml)
+                if item.Precis is not None:
+                    print(f"<precis>{item.Precis}</precis>", file=xml)
+                print(f"</item>\n", file=xml)
+            print("</person>", file=xml)
+
+
+    #*******
+    # Put out the entire People table in pseudo-XML format
+    fname=os.path.join( reportsdir, "Program participants.xml")
+    SafeDelete(fname)
+    with open(fname, "w") as xml:
+        # The first row contains the column headers
+        headers=peopleCells[0]
+        peopleCells=peopleCells[1:]
+        for row in peopleCells:
+            xml.writelines(f"<person>")
+            for col, cell in enumerate(row):
+                xml.writelines(f"<{headers[col]}>{cell}</{headers[col]}>")
+            xml.writelines("</person>\n")
 
 
     #******
