@@ -262,8 +262,8 @@ def main():
     lnameCol=None
     emailCol=None
     responseCol=None
-    for i in range(0, len(peopleCells[firstNonEmptyRow])):
-        cell=peopleCells[firstNonEmptyRow][i].lower()
+    for i, cell in enumerate(peopleCells[firstNonEmptyRow]):
+        cell=cell.lower()
         if cell == "fname":
             fnameCol=i
         if cell == "lname":
