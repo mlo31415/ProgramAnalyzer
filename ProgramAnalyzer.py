@@ -288,7 +288,7 @@ def main():
         lname=""
         if lnameCol < len(row):
             lname=row[lnameCol]
-        fullname=None
+        fullname=""
         if len(fname) > 0 and len(lname) > 0:   # Gotta handle Ctein!
             fullname=fname+" "+lname
         elif len(fname) > 0:
