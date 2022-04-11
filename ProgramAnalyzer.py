@@ -85,7 +85,6 @@ def main():
         MessageBox("parameters.txt does not designate a SheetID")
         exit(999)
     SPREADSHEET_ID=parms["SheetID"]  # This is the ID of the specific spreadsheet we're reading
-
     scheduleCells=ReadSheetFromTab(googleSheets, SPREADSHEET_ID, parms, "ScheduleTab")
     precisCells=ReadSheetFromTab(googleSheets, SPREADSHEET_ID, parms, "PrecisTab")
     peopleCells=ReadSheetFromTab(googleSheets, SPREADSHEET_ID, parms, "PeopleTab")
@@ -478,7 +477,7 @@ def main():
     SafeDelete(fname)
     with open(fname, "w") as xml:
         for personname in sortedallpartlist:
-            print(f"<person><fullname>{personname}</fullname>", file=xml)
+            print(f"<person><full name>{personname}</full name>", file=xml)
             email=peopleTable.get(personname, "")
             if email != "":
                 email=email[0]
