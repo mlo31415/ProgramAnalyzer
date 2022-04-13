@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Optional
 from collections import defaultdict
+from dataclasses import dataclass
 
 import json
 import os.path
@@ -278,8 +279,14 @@ def main():
         LogError("People tab is missing at least one column label.")
         LogError("    labels="+" ".join(peopleCells[firstNonEmptyRow]))
 
-    # We'll combine the first and last names to create a full name like is used elsewhere.
-    peopleTable: dict[str, tuple[str, str]]={}
+    @dataclass
+    class Person:
+        Email: str=""
+        RespondedYes: bool=False
+
+
+    # We'll use the "full name" or, failing that, combine the first and last names to create a full name like is used elsewhere.
+    peopleTable: defaultdict[str, Person]=defaultdict(Person)
     for i in range(firstNonEmptyRow+1, len(peopleCells)):
         if len(peopleCells) == 0:   # Skip empty rows
             continue
@@ -315,7 +322,7 @@ def main():
             response=row[responseCol]
 
         if fullname != "":
-            peopleTable[fullname]=email, response.lower()       # Store the email and response as a tuple in the entry indexed by the full name
+            peopleTable[fullname]=Person(email, response.lower() == "y")       # Store the email and response as a tuple in the entry indexed by the full name
 
 
     #*************************************************************************************************
@@ -346,9 +353,9 @@ def main():
         count=0
         for personname in gSchedules.keys():
             if personname in peopleTable.keys():
-                if peopleTable[personname][1] != 'y':
+                if peopleTable[personname].RespondedYes:
                     count+=1
-                    print(f"   {personname} has a response of {peopleTable[personname][1]}", file=txt)
+                    print(f"   {personname} has a response of {peopleTable[personname].RespondedYes}", file=txt)
         if count == 0:
             print("    None found", file=txt)
 
@@ -360,7 +367,7 @@ def main():
         print("People who are scheduled and in People but whose response is 'y' but who are not scheduled:", file=txt)
         count=0
         for personname in peopleTable.keys():
-            if peopleTable[personname][1] == 'y':
+            if peopleTable[personname].RespondedYes:
                 found=False
                 for item in gSchedules.values():
                     for x in item:
@@ -487,10 +494,7 @@ def main():
     with open(fname, "w") as xml:
         for personname in sortedallpartlist:
             print(f"<person><full name>{personname}</full name>", file=xml)
-            email=peopleTable.get(personname, "")
-            if email != "":
-                email=email[0]
-            print(f"<email>{email}</email>", file=xml)
+            print(f"<email>{peopleTable[personname].Email}</email>", file=xml)
             for schedItem in gSchedules[personname]:
                 print(f"<item><title>{NumericTime.NumericToTextDayTime(schedItem.Time)}: {schedItem.DisplayName} [{schedItem.Room}] {schedItem.ModFlag}</title>", file=xml)
                 item=gItems[schedItem.ItemName]
@@ -588,9 +592,9 @@ def main():
     print("List of number of items each person is scheduled on\n\n", file=txt)
     for personname in peopleTable:
         if personname in gSchedules.keys():
-            print(f"{personname}: {len(gSchedules[personname])}{'' if peopleTable[personname][1] == 'y' else ' not confirmed'}", file=txt)
+            print(f"{personname}: {len(gSchedules[personname])}{'' if peopleTable[personname].RespondedYes else ' not confirmed'}", file=txt)
         else:
-            if peopleTable[personname][1] == "y":
+            if peopleTable[personname].RespondedYes:
                 print(personname+": coming, but not scheduled", file=txt)
     txt.close()
 
