@@ -442,11 +442,11 @@ def main():
     #*******
     # Print the People with items by time report
     # Get a list of the program participants (the keys of the  participants dictionary) sorted by the last token in the name (which will usually be the last name)
-    sortedallpartlist=sorted(gSchedules.keys(), key=lambda x: x.split(" ")[-1])
+    sortedAllParticipantList=sorted(gSchedules.keys(), key=lambda x: x.split(" ")[-1])
     fname=os.path.join( reportsdir, "People with items by time.txt")
     SafeDelete(fname)
     with open(fname, "w") as txt:
-        for personname in sortedallpartlist:
+        for personname in sortedAllParticipantList:
             print("\n"+personname, file=txt)
             for schedItem in gSchedules[personname]:
                 print(f"    {NumericTime.NumericToTextDayTime(schedItem.Time)}: {schedItem.DisplayName} [{schedItem.Room}] {schedItem.ModFlag}", file=txt)
@@ -473,7 +473,7 @@ def main():
     fname=os.path.join( reportsdir, "Program participant schedules.txt")
     SafeDelete(fname)
     txt=open(fname, "w")
-    for personname in sortedallpartlist:
+    for personname in sortedAllParticipantList:
         print("\n\n********************************************", file=txt)
         print(personname, file=txt)
         for schedItem in gSchedules[personname]:
@@ -492,7 +492,7 @@ def main():
     fname=os.path.join(reportsdir, "Program participant schedules.xml")
     SafeDelete(fname)
     with open(fname, "w") as xml:
-        for personname in sortedallpartlist:
+        for personname in sortedAllParticipantList:
             print(f"<person><full name>{personname}</full name>", file=xml)
             print(f"<email>{peopleTable[personname].Email}</email>", file=xml)
             for schedItem in gSchedules[personname]:
