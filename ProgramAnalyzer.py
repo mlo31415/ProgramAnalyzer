@@ -257,21 +257,24 @@ def main():
         firstNonEmptyRow+=1
 
     # The first non-empty row is column labels.  Read them and identify the Fname, Lname, Email, and Response columns
-    fnameCol=None
-    lnameCol=None
-    emailCol=None
-    responseCol=None
+    fnameCol=-1
+    lnameCol=-1
+    emailCol=-1
+    responseCol=-1
+    fullnameCol=-1
     for i, cell in enumerate(peopleCells[firstNonEmptyRow]):
         cell=cell.lower()
         if cell == "fname":
             fnameCol=i
         if cell == "lname":
             lnameCol=i
+        if cell == "full name":
+            fullnameCol=i
         if cell == "email":
             emailCol=i
         if cell == "response":
             responseCol=i
-    if fnameCol is None or lnameCol is None or emailCol is None or responseCol is None:
+    if fnameCol == -1 or lnameCol == -1 or emailCol == -1 or responseCol == -1 or fullnameCol == -1:
         LogError("People tab is missing at least one column label.")
         LogError("    labels="+" ".join(peopleCells[firstNonEmptyRow]))
 
@@ -281,31 +284,37 @@ def main():
         if len(peopleCells) == 0:   # Skip empty rows
             continue
         row=[r.strip() for r in peopleCells[i]]    # Get rid of leading and trailing blanks in each cell
-        fname=""
-        if fnameCol < len(row):
-            fname=row[fnameCol]
-        lname=""
-        if lnameCol < len(row):
-            lname=row[lnameCol]
+
         fullname=""
-        if len(fname) > 0 and len(lname) > 0:   # Gotta handle Ctein!
-            fullname=fname+" "+lname
-        elif len(fname) > 0:
-            fullname=fname
-        elif len(lname) > 0:
-            fullname=lname
+        if fullnameCol >= 0 and fullnameCol < len(row):
+            fullname=row[fullnameCol]
+
+        if fullname == "":
+            fname=""
+            if fnameCol >= 0 and fnameCol < len(row):
+                fname=row[fnameCol]
+            lname=""
+            if lnameCol >= 0 and lnameCol < len(row):
+                lname=row[lnameCol]
+            if len(fname) > 0 and len(lname) > 0:   # Gotta handle Ctein!
+                fullname=fname+" "+lname
+            elif len(fname) > 0:
+                fullname=fname
+            elif len(lname) > 0:
+                fullname=lname
+
         if len(fullname.strip()) == 0:
             LogError("Name missing from People tab row #"+str(i+1))
             LogError("    row="+" ".join(peopleCells[i]))
 
         email=""
-        if emailCol < len(row):
+        if emailCol >= 0 and emailCol < len(row):
             email=row[emailCol]
         response=""
-        if responseCol < len(row):
+        if responseCol >= 0 and responseCol < len(row):
             response=row[responseCol]
 
-        if fullname is not None:
+        if fullname != "":
             peopleTable[fullname]=email, response.lower()       # Store the email and response as a tuple in the entry indexed by the full name
 
 
