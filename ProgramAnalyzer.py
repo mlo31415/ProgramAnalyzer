@@ -7,9 +7,9 @@ from dataclasses import dataclass
 import json
 import os.path
 import difflib
-import docx
 import wx
 import re as RegEx
+import docx
 from docx.shared import Pt
 from docx.shared import Inches
 from docx import text
@@ -19,7 +19,7 @@ from googleapiclient.discovery import build
 from google.oauth2 import service_account
 from googleapiclient.errors import HttpError
 
-from HelpersPackage import PyiResourcePath, ReadListAsDict, MessageBox
+from HelpersPackage import PyiResourcePath, ParmDict, ReadListAsParmDict, MessageBox
 
 from ScheduleItem import ScheduleItem
 from Item import Item
@@ -37,9 +37,9 @@ def main():
 
     # Read the parameters.
     # This includes the names of the specific tabs to be used.
-    parms=ReadListAsDict('parameters.txt')
-    if len(parms) == 0:
-        MessageBox("Can't open parameters.txt")
+    parms=ReadListAsParmDict('parameters.txt')
+    if parms is None or len(parms) == 0:
+        MessageBox(f"Can't open/read {os.getcwd()}/parameters.txt")
         app=wx.App()
         frame=wx.Frame(None, -1, 'win.py')
         frame.SetSize(0, 0, 200, 50)  # SetDimensions(0, 0, 200, 50)
@@ -49,12 +49,11 @@ def main():
                 exit(999)
             lst=openFileDialog.GetPath()
         Log(f"{lst} selected")
-        parms=ReadListAsDict(lst)
-        if len(parms) == 0:
-            LogClose()
+        parms=ReadListAsParmDict(lst)
+        if not parms or len(parms) == 0:
             exit(999)
 
-    if len(parms["credentials"]) == 0:
+    if not parms["credentials"]:
         MessageBox("parameters.txt does not designate a credentials file")
         exit(999)
 
@@ -68,11 +67,10 @@ def main():
     Log("credentials.txt read")
 
     # Create the reports subfolder if none exists
-    parms.setdefault("reportdir", "Reports")
-    reportsdir=parms["reportsdir"]
+    reportsdir=parms["reportsdir", "Reports"]
     if not os.path.exists(reportsdir):
         os.mkdir(reportsdir)
-        Log(f"Reports directory {reportsdir} created ")
+        Log(f"Reports directory {os.getcwd()}/{reportsdir} created ")
 
     credentials=service_account.Credentials.from_service_account_info(info)
     Log("Credentials established", Flush=True)
@@ -82,7 +80,7 @@ def main():
 
     # Call the Sheets API to load the various tabs of the spreadsheet
     googleSheets=service.spreadsheets()
-    if len(parms["SheetID"]) == 0:
+    if not parms["SheetID"]:
         MessageBox("parameters.txt does not designate a SheetID")
         exit(999)
     SPREADSHEET_ID=parms["SheetID"]  # This is the ID of the specific spreadsheet we're reading
@@ -759,23 +757,22 @@ def main():
 # Miscellaneous helper functions
 
 # Read the contents of a spreadsheet tab into
-def ReadSheetFromTab(sheet, spreadSheetID, parms: dict[str, str], parmname: str) -> list[list[str]]:
-
-    if parmname not in parms.keys():
-        LogError(f"Parameter {parmname} not found in parameters.txt")
-        return []
+def ReadSheetFromTab(sheet, spreadSheetID, parms: ParmDict, parmname: str) -> list[list[str]]:
 
     # Convert the generic name of the tab to the specific name to be used this year
     tabname=parms[parmname]
+    if not tabname:
+        LogError(f"ReadSheetFromTab: Parameter {parmname} not found in parameters.txt")
+        return []
     cells=[]
     try:
         cells=sheet.values().get(spreadsheetId=spreadSheetID, range=f'{tabname}!A1:Z999').execute().get('values', [])  # Read the whole thing.
     except HttpError as e:
-        LogError(f"Can't locate {tabname} tab in spreadsheet. Is the supplied SheetID wrong?")
+        LogError(f"ReadSheetFromTab: Can't locate {tabname} tab in spreadsheet. Is the supplied SheetID wrong?")
         exit(999)
 
     if not cells:
-        LogError(f"Can't locate {tabname} tab in spreadsheet")
+        LogError(f"ReadSheetFromTab: Can't locate {tabname} tab in spreadsheet")
         raise (ValueError, "No precisCells found")
 
     return [p for p in cells if len(p) > 0 and "".join(p)[0] != "#"]  # Drop blank lines and lines with a "#" alone in column 1.if not precisCells:
