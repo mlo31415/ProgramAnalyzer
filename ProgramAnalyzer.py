@@ -19,7 +19,7 @@ from googleapiclient.discovery import build
 from google.oauth2 import service_account
 from googleapiclient.errors import HttpError
 
-from HelpersPackage import PyiResourcePath, ParmDict, ReadListAsParmDict, MessageBox
+from HelpersPackage import PyiResourcePath, ParmDict, ReadListAsParmDict, MessageLog
 
 from ScheduleItem import ScheduleItem
 from Item import Item
@@ -39,22 +39,11 @@ def main():
     # This includes the names of the specific tabs to be used.
     parms=ReadListAsParmDict('parameters.txt')
     if parms is None or len(parms) == 0:
-        MessageBox(f"Can't open/read {os.getcwd()}/parameters.txt")
-        app=wx.App()
-        frame=wx.Frame(None, -1, 'win.py')
-        frame.SetSize(0, 0, 200, 50)  # SetDimensions(0, 0, 200, 50)
-        with wx.FileDialog(frame, "Open", "", "", "*.txt", wx.FD_OPEN|wx.FD_FILE_MUST_EXIST) as openFileDialog:
-            ret=openFileDialog.ShowModal()
-            if ret == wx.ID_CANCEL:
-                exit(999)
-            lst=openFileDialog.GetPath()
-        Log(f"{lst} selected")
-        parms=ReadListAsParmDict(lst)
-        if not parms or len(parms) == 0:
-            exit(999)
+        MessageLog(f"Can't open/read {os.getcwd()}/parameters.txt\nProgramAnalyzer terminated.")
+        exit(999)
 
     if not parms["credentials"]:
-        MessageBox("parameters.txt does not designate a credentials file")
+        MessageLog("parameters.txt does not designate a credentials file.\nProgramAnalyzer terminated.")
         exit(999)
 
     with open(parms["credentials"]) as source:
@@ -62,7 +51,7 @@ def main():
         Log("Json read")
 
     if info is None:
-        MessageBox("Json file is empty")
+        MessageLog("Json file is empty")
         exit(999)
     Log("credentials.txt read")
 
@@ -81,7 +70,7 @@ def main():
     # Call the Sheets API to load the various tabs of the spreadsheet
     googleSheets=service.spreadsheets()
     if not parms["SheetID"]:
-        MessageBox("parameters.txt does not designate a SheetID")
+        MessageLog("parameters.txt does not designate a SheetID")
         exit(999)
     SPREADSHEET_ID=parms["SheetID"]  # This is the ID of the specific spreadsheet we're reading
     scheduleCells=ReadSheetFromTab(googleSheets, SPREADSHEET_ID, parms, "ScheduleTab")
@@ -666,9 +655,7 @@ def main():
                     with open(PyiResourcePath("control-WebpageFooter.txt")) as f2:
                         f.writelines(f2.readlines())
                 except:
-                    # wx.App(False)
-                    # wx.MessageBox("Can't read 'control-WebpageFooter.txt'")
-                    LogError("Can't read 'control-WebpageFooter.txt' (1)")
+                    MessageLog("Can't read 'control-WebpageFooter.txt' (1)")
                 f.close()
                 f=None
             # And open the new file
@@ -683,9 +670,7 @@ def main():
                     except:
                         LogError("Failure copying 'control-WebpageHeader.txt'")
             except:
-                # wx.App(False)
-                # wx.MessageBox("Can't read 'control-WebpageHeader.txt'")
-                LogError("Can't open 'control-WebpageHeader.txt'")
+                MessageLog("Can't open 'control-WebpageHeader.txt'")
             f.write("<h2>"+sortday+"</h2>\n")
             f.write('<table border="0" cellspacing="0" cellpadding="2">\n')
 
@@ -714,9 +699,7 @@ def main():
             with open(PyiResourcePath("control-WebpageFooter.txt")) as f2:
                 f.writelines(f2.readlines())
         except:
-            # wx.App(False)
-            # wx.MessageBox("Can't read 'control-WebpageFooter.txt'")
-            LogError("Can't read 'control-WebpageFooter.txt' (2)")
+            MessageLog("Can't read 'control-WebpageFooter.txt' (2)")
         f.close()
 
 
