@@ -220,7 +220,7 @@ def main():
         print("Precis without corresponding items:", file=xml)
         for row in precisCells:
             row=[r.strip() for r in row]    # Get rid of leading and trailing blanks
-            if len(row[0]) > 0 and len(row[1]) > 0: # If both the item name and the precis exist, store them in the precis table.
+            if len(row) > 1 and len(row[0]) > 0 and len(row[1]) > 0: # If both the item name and the precis exist, store them in the precis table.
                 itemname=row[0]
                 found=False
                 for iname in gItems:
