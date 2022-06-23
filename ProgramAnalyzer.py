@@ -450,7 +450,7 @@ def main():
                 for itemName, item in gItems.items():
                     if item.Time == time and item.Room == room:
                         print(f"{NumericTime.NumericToTextDayTime(time)}, {room}: {itemName}   {item.DisplayPlist()}", file=txt)
-                        if item.Precis is not None:
+                        if item.Precis is not None and item.Precis != "":
                             print("     "+item.Precis, file=txt)
 
 
@@ -467,7 +467,7 @@ def main():
             print(f"\n{NumericTime.NumericToTextDayTime(schedItem.Time)}: {schedItem.DisplayName} [{schedItem.Room}] {schedItem.ModFlag}", file=txt)
             item=gItems[schedItem.ItemName]
             print("Participants: "+item.DisplayPlist(), file=txt)
-            if item.Precis is not None:
+            if item.Precis is not None and item.Precis != "":
                 print("Precis: "+item.Precis, file=txt)
     txt.close()
 
@@ -486,7 +486,7 @@ def main():
                 print(f"<item><title>{NumericTime.NumericToTextDayTime(schedItem.Time)}: {schedItem.DisplayName} [{schedItem.Room}] {schedItem.ModFlag}</title>", file=xml)
                 item=gItems[schedItem.ItemName]
                 print(f"<participants>{item.DisplayPlist()}</participants>", file=xml)
-                if item.Precis is not None:
+                if item.Precis is not None and item.Precis != "":
                     print(f"<precis>{item.Precis}</precis>", file=xml)
                 print(f"</item>\n", file=xml)
             print("</person>", file=xml)
@@ -546,7 +546,7 @@ def main():
     for itemname, item in gItems.items():
         if item.Name.find("Reading") > -1 or item.Name.find("KK") > -1 or item.Name.find("Kaffe") > -1 or item.Name.find("Autograph") > -1:
             continue
-        if item.ModName is not None:
+        if item.ModName != "":
             continue
         print(f"{NumericTime.NumericToTextDayTime(item.Time)} {item.Name}: {len(item.People)}", file=txt)
         found=True
@@ -627,7 +627,7 @@ def main():
                         plist=item.DisplayPlist()
                         AppendParaToDoc(doc, plist, size=12, indent=0.6)
                         print("            "+plist, file=txt)
-                    if item.Precis is not None:
+                    if item.Precis is not None and item.Precis != "":
                         AppendParaToDoc(doc, item.Precis, italic=True, size=12, indent=0.6)
                         print("            "+item.Precis, file=txt)
     # Popup("About to create Pocket Program.docx")
@@ -688,7 +688,7 @@ def main():
                         f.write('<tr><td width="40">&nbsp;</td><td width="40">&nbsp;</td><td width="600">')     # Three columns, the first two 40 pixes wide and empty; the third 600 pixels wide
                         f.write(f'<p><span class="people">{item.DisplayPlist()}</span></p>')
                         f.write('</td></tr>\n')
-                    if item.Precis is not None:
+                    if item.Precis is not None and item.Precis != "":
                         f.write('<tr><td width="40">&nbsp;</td><td width="40">&nbsp;</td><td width="600">')     # Same
                         f.write(f'<p><span class="precis">{item.Precis}</span></p>')
                         f.write('</td></tr>\n')
