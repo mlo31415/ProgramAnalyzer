@@ -3,6 +3,8 @@ from __future__ import annotations
 from typing import List
 from dataclasses import dataclass, field
 
+from HelpersPackage import ParmDict
+
 # A class to hold the information for one Participant
 
 @dataclass(order=False)
@@ -13,6 +15,8 @@ class Item:
     People: List[str]=field(default_factory=list)       # A list of the names of people on the item
     ModName: str=""       # The name of the moderator of the item
     Precis: str=""        # The item's precis
+    parms: ParmDict=field(default_factory=lambda: ParmDict(CaseInsensitiveCompare=True))    # Parameters associated with this item
+
 
     # Generate the display text of a list of people
     def DisplayPlist(self):
