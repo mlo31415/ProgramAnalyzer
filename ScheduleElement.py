@@ -3,7 +3,7 @@
 from dataclasses import dataclass, field
 
 @dataclass(order=False)
-class ScheduleItem:
+class ScheduleElement:
     PersonName: str=""          # The person's name
     Time: float=-1        # A numeric time
     Room: str=""          # The name of a room

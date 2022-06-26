@@ -21,7 +21,7 @@ from googleapiclient.errors import HttpError
 
 from HelpersPackage import PyiResourcePath, ParmDict, ReadListAsParmDict, MessageLog
 
-from ScheduleItem import ScheduleItem
+from ScheduleElement import ScheduleElement
 from Item import Item
 from Log import Log, LogClose, LogError
 import NumericTime
@@ -111,8 +111,8 @@ def main():
         LogError("Room names line is blank.")
 
     # Start reading ths spreadsheet and building the participants and items databases (dictionaries)
-    gSchedules: dict[str, list[ScheduleItem]]=defaultdict(list)  # A dictionary keyed by a person's name containing a ScheduleItem list
-    # ScheduleItem is the (time, room, item, moderator) tuples, of an item that that person is on.
+    gSchedules: dict[str, list[ScheduleElement]]=defaultdict(list)  # A dictionary keyed by a person's name containing a ScheduleElement list
+    # ScheduleElement is the (time, room, item, moderator) tuples, of an item that that person is on.
     # Note that time and room are redundant and could be pulled out of the Items dictionary
     gItems: dict[str, Item]={}  # A dictionary keyed by item name containing an Item (time, room, people-list, moderator), where people-list is the list of people on the item
     gTimes: list[float]=[]  # A list of times found in the spreadsheet.
@@ -382,7 +382,7 @@ def main():
             # Sort pSched by time
             pSched.sort(key=lambda x: x.Time)
             # Look for duplicate times
-            prev: ScheduleItem=pSched[0]
+            prev: ScheduleElement=pSched[0]
             for item in pSched[1:]:
                 if item.Time == prev.Time:
                     print(f"{personname}: {NumericTime.NumericToTextDayTime(prev.Time)}: {prev.Room} and also {item.Room}", file=txt)
@@ -435,8 +435,9 @@ def main():
     with open(fname, "w") as txt:
         for personname in sortedAllParticipantList:
             print("\n"+personname, file=txt)
-            for schedItem in gSchedules[personname]:
-                print(f"    {NumericTime.NumericToTextDayTime(schedItem.Time)}: {schedItem.DisplayName} [{schedItem.Room}] {schedItem.ModFlag}", file=txt)
+            for schedElement in gSchedules[personname]:
+                if len(schedElement.DisplayName) > 0:
+                    print(f"    {NumericTime.NumericToTextDayTime(schedElement.Time)}: {schedElement.DisplayName} [{schedElement.Room}] {schedElement.ModFlag}", file=txt)
 
     #*******
     # Print the Items with people by time report
@@ -463,12 +464,13 @@ def main():
     for personname in sortedAllParticipantList:
         print("\n\n********************************************", file=txt)
         print(personname, file=txt)
-        for schedItem in gSchedules[personname]:
-            print(f"\n{NumericTime.NumericToTextDayTime(schedItem.Time)}: {schedItem.DisplayName} [{schedItem.Room}] {schedItem.ModFlag}", file=txt)
-            item=gItems[schedItem.ItemName]
-            print("Participants: "+item.DisplayPlist(), file=txt)
-            if item.Precis is not None and item.Precis != "":
-                print("Precis: "+item.Precis, file=txt)
+        for schedElement in gSchedules[personname]:
+            if len(schedElement.DisplayName) > 0:
+                print(f"\n{NumericTime.NumericToTextDayTime(schedElement.Time)}: {schedElement.DisplayName} [{schedElement.Room}] {schedElement.ModFlag}", file=txt)
+                item=gItems[schedElement.ItemName]
+                print("Participants: "+item.DisplayPlist(), file=txt)
+                if item.Precis is not None and item.Precis != "":
+                    print("Precis: "+item.Precis, file=txt)
     txt.close()
 
 
@@ -482,13 +484,14 @@ def main():
         for personname in sortedAllParticipantList:
             print(f"<person><full name>{personname}</full name>", file=xml)
             print(f"<email>{peopleTable[personname].Email}</email>", file=xml)
-            for schedItem in gSchedules[personname]:
-                print(f"<item><title>{NumericTime.NumericToTextDayTime(schedItem.Time)}: {schedItem.DisplayName} [{schedItem.Room}] {schedItem.ModFlag}</title>", file=xml)
-                item=gItems[schedItem.ItemName]
-                print(f"<participants>{item.DisplayPlist()}</participants>", file=xml)
-                if item.Precis is not None and item.Precis != "":
-                    print(f"<precis>{item.Precis}</precis>", file=xml)
-                print(f"</item>\n", file=xml)
+            for schedElement in gSchedules[personname]:
+                if len(schedElement.DisplayName) > 0:
+                    print(f"<item><title>{NumericTime.NumericToTextDayTime(schedElement.Time)}: {schedElement.DisplayName} [{schedElement.Room}] {schedElement.ModFlag}</title>", file=xml)
+                    item=gItems[schedElement.ItemName]
+                    print(f"<participants>{item.DisplayPlist()}</participants>", file=xml)
+                    if item.Precis is not None and item.Precis != "":
+                        print(f"<precis>{item.Precis}</precis>", file=xml)
+                    print(f"</item>\n", file=xml)
             print("</person>", file=xml)
 
 
@@ -783,7 +786,7 @@ def SafeDelete(fn: str) -> bool:
 
 #.......
 # Add an item with a list of people to the gItems dict, and add the item to each of the persons who are on it
-def AddItemWithPeople(gItems: dict[str, Item], gSchedules: dict[str, list[ScheduleItem]], time: float, roomName: str, itemName: str, plistText: str) -> None:
+def AddItemWithPeople(gItems: dict[str, Item], gSchedules: dict[str, list[ScheduleElement]], time: float, roomName: str, itemName: str, plistText: str) -> None:
 
     plist=plistText.split(",")  # Get the people as a list
     plist=[p.strip() for p in plist]  # Remove excess spaces
@@ -793,7 +796,7 @@ def AddItemWithPeople(gItems: dict[str, Item], gSchedules: dict[str, list[Schedu
     for person in plist:  # For each person listed on this item
         if IsModerator(person):
             modName=person=RemoveModFlag(person)
-        gSchedules[person].append(ScheduleItem(PersonName=person, Time=time, Room=roomName, ItemName=itemName, IsMod=(person == modName)))  # And append a tuple with the time, room, item name, and moderator flag
+        gSchedules[person].append(ScheduleElement(PersonName=person, Time=time, Room=roomName, ItemName=itemName, IsMod=(person == modName)))  # And append a tuple with the time, room, item name, and moderator flag
         peopleList.append(person)
     # And add the item with its list of people to the items table.
     if itemName in gItems:  # If the item's name is already in use, add a uniquifier of room+day/time
