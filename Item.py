@@ -27,8 +27,15 @@ class Item:
 
     @property
     # Generate the display-name of an item. (Remove any text following the first "{")
+    # " Text " --> "Text"
+    # " Text {stuff} " --> "Text"
+    # "  {stuff} " --> ""
     def DisplayName(self):
-        loc=self.Name.find("{")
-        if loc > 0:
-            return self.Name[:loc-1]
-        return self.Name
+        name=self.Name.strip()
+        loc=name.find("{")
+        if loc == -1:   # Curly bracket not found, return the whole thing
+            return name
+        if loc == 0:    # Everything in the line is after the curley bracket, return empty string
+            return ""
+        # Return stuff up to the curly bracket
+        return name[:loc-1].strip()
