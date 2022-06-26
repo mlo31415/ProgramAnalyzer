@@ -12,11 +12,18 @@ class ScheduleElement:
 
     @property
     # Generate the display-name of an item. (Remove any text following the first "{")
+    # " Text " --> "Text"
+    # " Text {stuff} " --> "Text"
+    # "  {stuff} " --> ""
     def DisplayName(self):
-        loc=self.ItemName.find("{")
-        if loc > 0:
-            return self.ItemName[:loc-1]
-        return self.ItemName
+        name=self.ItemName.strip()
+        loc=name.find("{")
+        if loc == -1:   # Curly bracket not found, return the whole thing
+            return name
+        if loc == 0:    # Everything in the line is after the curley bracket, return empty string
+            return ""
+        # Return stuff up to the curly bracket
+        return name[:loc-1].strip()
 
     @property
     def ModFlag(self) -> str:
