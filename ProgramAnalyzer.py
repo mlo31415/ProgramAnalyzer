@@ -7,7 +7,6 @@ from dataclasses import dataclass
 import json
 import os.path
 import difflib
-import wx
 import re as RegEx
 import docx
 from docx.shared import Pt
