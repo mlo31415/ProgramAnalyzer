@@ -622,17 +622,18 @@ def main():
             # Now search for the program item and people list for this slot
             for itemName, item in gItems.items():
                 if item.Time == time and item.Room == room:
-                    para=doc.add_paragraph()
-                    AppendTextToPara(para, room+": ", italic=True, size=12, indent=0.3)
-                    AppendTextToPara(para, item.DisplayName, size=12, indent=0.3)
-                    print(f"   {room}:  {item.DisplayName}", file=txt)   # Print the room and item name
-                    if len(item.People) > 0:            # And the item's people list
-                        plist=item.DisplayPlist()
-                        AppendParaToDoc(doc, plist, size=12, indent=0.6)
-                        print("            "+plist, file=txt)
-                    if item.Precis is not None and item.Precis != "":
-                        AppendParaToDoc(doc, item.Precis, italic=True, size=12, indent=0.6)
-                        print("            "+item.Precis, file=txt)
+                    if len(item.DisplayName) > 0:
+                        para=doc.add_paragraph()
+                        AppendTextToPara(para, room+": ", italic=True, size=12, indent=0.3)
+                        AppendTextToPara(para, item.DisplayName, size=12, indent=0.3)
+                        print(f"   {room}:  {item.DisplayName}", file=txt)   # Print the room and item name
+                        if len(item.People) > 0:            # And the item's people list
+                            plist=item.DisplayPlist()
+                            AppendParaToDoc(doc, plist, size=12, indent=0.6)
+                            print("            "+plist, file=txt)
+                        if item.Precis is not None and item.Precis != "":
+                            AppendParaToDoc(doc, item.Precis, italic=True, size=12, indent=0.6)
+                            print("            "+item.Precis, file=txt)
     # Popup("About to create Pocket Program.docx")
     fname=os.path.join( reportsdir, "Pocket program.docx")
     doc.save(fname)
@@ -683,18 +684,19 @@ def main():
         for room in gRoomNames:
             # Now search for the program item and people list for this slot
             for itemName, item in gItems.items():
-                if item.Time == time and item.Room == room:
-                    f.write('<tr><td width="40">&nbsp;</td><td colspan="2">')   # Two columns, the first 40 pixes wide and empty
-                    f.write(f'<p><span class="room">{room}: </span><span class="item">{item.DisplayName}</span></p>')
-                    f.write('</td></tr>')
-                    if len(item.People) > 0:            # And the item's people list
-                        f.write('<tr><td width="40">&nbsp;</td><td width="40">&nbsp;</td><td width="600">')     # Three columns, the first two 40 pixes wide and empty; the third 600 pixels wide
-                        f.write(f'<p><span class="people">{item.DisplayPlist()}</span></p>')
-                        f.write('</td></tr>\n')
-                    if item.Precis is not None and item.Precis != "":
-                        f.write('<tr><td width="40">&nbsp;</td><td width="40">&nbsp;</td><td width="600">')     # Same
-                        f.write(f'<p><span class="precis">{item.Precis}</span></p>')
-                        f.write('</td></tr>\n')
+                if len(item.DisplayName) > 0:
+                    if item.Time == time and item.Room == room:
+                        f.write('<tr><td width="40">&nbsp;</td><td colspan="2">')   # Two columns, the first 40 pixes wide and empty
+                        f.write(f'<p><span class="room">{room}: </span><span class="item">{item.DisplayName}</span></p>')
+                        f.write('</td></tr>')
+                        if len(item.People) > 0:            # And the item's people list
+                            f.write('<tr><td width="40">&nbsp;</td><td width="40">&nbsp;</td><td width="600">')     # Three columns, the first two 40 pixes wide and empty; the third 600 pixels wide
+                            f.write(f'<p><span class="people">{item.DisplayPlist()}</span></p>')
+                            f.write('</td></tr>\n')
+                        if item.Precis is not None and item.Precis != "":
+                            f.write('<tr><td width="40">&nbsp;</td><td width="40">&nbsp;</td><td width="600">')     # Same
+                            f.write(f'<p><span class="precis">{item.Precis}</span></p>')
+                            f.write('</td></tr>\n')
     if f is not None:
         # Read and append the footer
         f.write('</table>\n')
@@ -721,13 +723,14 @@ def main():
         for time in gTimes:
             for itemName in gItems.keys():
                 item=gItems[itemName]
-                if item.Time == time and item.Room == room:
-                    inuse=True
-                    AppendParaToDoc(doc, "")    # Skip a line
-                    para=doc.add_paragraph()
-                    AppendTextToPara(para, NumericTime.NumericToTextDayTime(item.Time)+":  ", bold=True)   # Add the time in bold followed by the item's title
-                    AppendTextToPara(para, item.DisplayName)
-                    AppendParaToDoc(doc, item.DisplayPlist(), italic=True, indent=0.5)        # Then, on a new line, the people list in italic
+                if len(item.DisplayName) > 0:
+                    if item.Time == time and item.Room == room:
+                        inuse=True
+                        AppendParaToDoc(doc, "")    # Skip a line
+                        para=doc.add_paragraph()
+                        AppendTextToPara(para, NumericTime.NumericToTextDayTime(item.Time)+":  ", bold=True)   # Add the time in bold followed by the item's title
+                        AppendTextToPara(para, item.DisplayName)
+                        AppendParaToDoc(doc, item.DisplayPlist(), italic=True, indent=0.5)        # Then, on a new line, the people list in italic
         fname=os.path.join(path, room.replace("/", "-")+".docx")
         SafeDelete(fname)
         if inuse:
