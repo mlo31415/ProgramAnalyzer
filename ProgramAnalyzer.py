@@ -525,14 +525,15 @@ def main():
     print("List of non-readings, non-KKs, and non-solo items with fewer than 3 people on them\n\n", file=txt)
     found=False
     for itemname, item in gItems.items():
-        if len(item.People) >= 3:
-            continue
-        if item.Name.find("Reading") > -1 or item.Name.find("KK") > -1 or item.Name.find("Kaffe") > -1 or item.Name.find("Autograph") > -1:
-            continue
-        if item.Parms["solo"]:
-            continue
-        print(f"{NumericTime.NumericToTextDayTime(item.Time)} {item.Name}: {len(item.People)}", file=txt)
-        found=True
+        if item.Name:
+            if len(item.People) >= 3:
+                continue
+            if item.Name.find("Reading") > -1 or item.Name.find("KK") > -1 or item.Name.find("Kaffe") > -1 or item.Name.find("Autograph") > -1:
+                continue
+            if item.Parms["solo"]:
+                continue
+            print(f"{NumericTime.NumericToTextDayTime(item.Time)} {item.Name}: {len(item.People)}", file=txt)
+            found=True
     if not found:
         print("None found", file=txt)
     txt.close()
