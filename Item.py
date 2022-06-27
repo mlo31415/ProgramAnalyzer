@@ -9,7 +9,7 @@ class Item:
         self.Room: str=Room
         if People is None:
             People=[]
-        self.People: list[str]=People   # gPeople keys=full names
+        self.People: list[str]=People   # List of keys of People on this item
         self.ModName: str=ModName
         self.Precis: str=Precis
         if Parms is None:
