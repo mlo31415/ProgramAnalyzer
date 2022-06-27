@@ -25,7 +25,7 @@ class Item:
     def ItemText(self) -> str:
         return self._ItemText
     @ItemText.setter
-    # We take the entire item cel contents and parse it into its pieces.
+    # We take the entire item cell contents and parse it into its pieces.
     def ItemText(self, val: str):
         # Save the whole item text in _ItenText
         self._ItemText=val
