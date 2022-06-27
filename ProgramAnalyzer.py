@@ -801,7 +801,7 @@ def AddItemWithPeople(gItems: dict[str, Item], gSchedules: dict[str, list[Schedu
     # And add the item with its list of people to the items table.
     if itemName in gItems:  # If the item's name is already in use, add a uniquifier of room+day/time
         itemName=itemName+"  {"+roomName+" "+NumericTime.NumericToTextDayTime(time)+"}"
-    gItems[itemName]=Item(Name=itemName, Time=time, Room=roomName, People=peopleList, ModName=modName)
+    gItems[itemName]=Item(ItemText=itemName, Time=time, Room=roomName, People=peopleList, ModName=modName)
 
 
 #.......
@@ -809,7 +809,7 @@ def AddItemWithPeople(gItems: dict[str, Item], gSchedules: dict[str, list[Schedu
 def AddItemWithoutPeople(gItems: dict[str, Item], time: float, roomName: str, itemName: str) -> None:
     if itemName in gItems:  # If the item's name is already in use, add a uniquifier of room+day/time
         itemName=itemName+"  {"+roomName+" "+NumericTime.NumericToTextDayTime(time)+"}"
-    gItems[itemName]=Item(Name=itemName, Time=time, Room=roomName)
+    gItems[itemName]=Item(ItemText=itemName, Time=time, Room=roomName)
 
 
 #******
