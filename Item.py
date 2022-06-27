@@ -7,12 +7,16 @@ from HelpersPackage import ParmDict, SearchAndReplace
 # A class to hold the information for one Participant
 
 class Item:
-    def __init__(self, ItemText: str="", Time: float=0.0, Room: str="", People: List[str]=[], ModName: str="", Precis: str="", Parms: ParmDict=ParmDict(CaseInsensitiveCompare=True)):
+    def __init__(self, ItemText: str="", Time: float=0.0, Room: str="", People: List[str]=None, ModName: str="", Precis: str="", Parms: ParmDict=None):
         self.Time: float=Time
         self.Room: str=Room
+        if People is None:
+            People=[]
         self.People: list[str]=People
         self.ModName: str=ModName
         self.Precis: str=Precis
+        if Parms is None:
+            Parms=ParmDict(CaseInsensitiveCompare=True)
         self.Parms: ParmDict=Parms
         self.ItemText=ItemText  # This must be last as it relies on the rest of the object haveing been initialized
 
