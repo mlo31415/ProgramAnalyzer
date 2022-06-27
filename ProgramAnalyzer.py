@@ -522,12 +522,14 @@ def main():
     fname=os.path.join( reportsdir, "Diag - Items with unexpectedly low number of participants.txt")
     SafeDelete(fname)
     txt=open(fname, "w")
-    print("List of non-readings and KKs with fewer than 3 people on them\n\n", file=txt)
+    print("List of non-readings, non-KKs, and non-solo items with fewer than 3 people on them\n\n", file=txt)
     found=False
     for itemname, item in gItems.items():
         if len(item.People) >= 3:
             continue
         if item.Name.find("Reading") > -1 or item.Name.find("KK") > -1 or item.Name.find("Kaffe") > -1 or item.Name.find("Autograph") > -1:
+            continue
+        if item.Parms["solo"]:
             continue
         print(f"{NumericTime.NumericToTextDayTime(item.Time)} {item.Name}: {len(item.People)}", file=txt)
         found=True
