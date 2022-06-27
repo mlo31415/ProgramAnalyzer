@@ -138,10 +138,9 @@ def main():
                         # Robert A. Heinlein, [0.5] John W. Campbell puts RAH on the hour and JWC a half-hour later.
                         # There is much messiness in this.
                         # We look for the [##] in the people list.  If we find it, we divide the people list in half and create two items with separate plists.
-                        plistText=peopleRow[roomIndex]
-                        r=RegEx.match("(.*)\[([0-9.]*)](.*)", plistText)
+                        r=RegEx.match("(.*)\[([0-9.]*)](.*)", peopleRow[roomIndex])
                         if r is None:
-                            AddItemWithPeople(gItems, gSchedules, time, roomName, itemName, plistText)
+                            AddItemWithPeople(gItems, gSchedules, time, roomName, itemName, peopleRow[roomIndex])
                         else:
                             plist1=r.groups()[0].strip()
                             deltaT=r.groups()[1].strip()
