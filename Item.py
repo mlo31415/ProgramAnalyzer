@@ -2,15 +2,14 @@ from __future__ import annotations
 
 from HelpersPackage import ParmDict, SearchAndReplace
 
-# A class to hold the information for one Participant
-
+# A class to hold the information for one Item
 class Item:
     def __init__(self, ItemText: str="", Time: float=0.0, Room: str="", People: list[str]=None, ModName: str="", Precis: str="", Parms: ParmDict=None):
         self.Time: float=Time
         self.Room: str=Room
         if People is None:
             People=[]
-        self.People: list[str]=People
+        self.People: list[str]=People   # gPeople keys=full names
         self.ModName: str=ModName
         self.Precis: str=Precis
         if Parms is None:
