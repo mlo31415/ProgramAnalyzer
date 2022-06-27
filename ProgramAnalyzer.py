@@ -115,7 +115,8 @@ def main():
     # Note that time and room are redundant and could be pulled out of the Items dictionary
     gItems: dict[str, Item]={}  # A dictionary keyed by item name containing an Item (time, room, people-list, moderator), where people-list is the list of people on the item
     gTimes: list[float]=[]  # A list of times found in the spreadsheet.
-    gPersons: dict[str, Person]={}  # A dict of Persons keyed by the people key (full name)
+    gPersons: defaultdict[str, Person]=defaultdict(Person)   # A dict of Persons keyed by the people key (full name)
+
 
     # .......
     # Code to process a set of time and people rows.
@@ -266,7 +267,6 @@ def main():
 
 
     # We'll use the "full name" or, failing that, combine the first and last names to create a full name like is used elsewhere.
-    gPerson: defaultdict[str, Person]=defaultdict(Person)
     for i in range(firstNonEmptyRow+1, len(peopleCells)):
         if len(peopleCells) == 0:   # Skip empty rows
             continue
@@ -302,7 +302,7 @@ def main():
             response=row[responseCol]
 
         if fullname != "":
-            gPerson[fullname]=Person(email, response)       # Store the email and response as a tuple in the entry indexed by the full name
+            gPersons[fullname]=Person(email, response)       # Store the email and response as a tuple in the entry indexed by the full name
 
 
     #*************************************************************************************************
@@ -318,7 +318,7 @@ def main():
         print("(Note that these may be due to spelling differences, use of initials, etc.)", file=txt)
         count=0
         for personname in gSchedules.keys():
-            if personname not in gPerson.keys():
+            if personname not in gPersons.keys():
                 count+=1
                 print("   "+personname, file=txt)
         if count == 0:
@@ -332,10 +332,10 @@ def main():
         print("People who are scheduled and in People but whose response is not 'y':", file=txt)
         count=0
         for personname in gSchedules.keys():
-            if personname in gPerson.keys():
-                if not gPerson[personname].RespondedYes:
+            if personname in gPersons.keys():
+                if not gPersons[personname].RespondedYes:
                     count+=1
-                    print(f"   {personname} has a response of '{gPerson[personname].Response}'", file=txt)
+                    print(f"   {personname} has a response of '{gPersons[personname].Response}'", file=txt)
         if count == 0:
             print("    None found", file=txt)
 
@@ -346,8 +346,8 @@ def main():
     with open(fname, "w") as txt:
         print("People who are scheduled and in People but whose response is 'y' but who are not scheduled:", file=txt)
         count=0
-        for personname in gPerson.keys():
-            if gPerson[personname].RespondedYes:
+        for personname in gPersons.keys():
+            if gPersons[personname].RespondedYes:
                 found=False
                 for item in gSchedules.values():
                     for x in item:
@@ -392,7 +392,7 @@ def main():
     # First we make up a list of all names that appear in any tab
     names=set()
     names.update(gSchedules.keys())
-    names.update(gPerson.keys())
+    names.update(gPersons.keys())
     similarNames: list[tuple[str, str, float]]=[]
     for p1 in names:
         for p2 in names:
@@ -476,7 +476,7 @@ def main():
     with open(fname, "w") as xml:
         for personname in sortedAllParticipantList:
             print(f"<person><full name>{personname}</full name>", file=xml)
-            print(f"<email>{gPerson[personname].Email}</email>", file=xml)
+            print(f"<email>{gPersons[personname].Email}</email>", file=xml)
             for schedElement in gSchedules[personname]:
                 if len(schedElement.DisplayName) > 0:
                     print(f"<item><title>{NumericTime.NumericToTextDayTime(schedElement.Time)}: {schedElement.DisplayName} [{schedElement.Room}] {schedElement.ModFlag}</title>", file=xml)
@@ -576,11 +576,11 @@ def main():
     SafeDelete(fname)
     txt=open(fname, "w")
     print("List of number of items each person is scheduled on\n\n", file=txt)
-    for personname in gPerson:
+    for personname in gPersons:
         if personname in gSchedules.keys():
-            print(f"{personname}: {len(gSchedules[personname])}{'' if gPerson[personname].RespondedYes else ' not confirmed'}", file=txt)
+            print(f"{personname}: {len(gSchedules[personname])}{'' if gPersons[personname].RespondedYes else ' not confirmed'}", file=txt)
         else:
-            if gPerson[personname].RespondedYes:
+            if gPersons[personname].RespondedYes:
                 print(personname+": coming, but not scheduled", file=txt)
     txt.close()
 
