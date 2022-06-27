@@ -43,9 +43,10 @@ class Item:
                 return
 
         # Look for keywords, remove them and save them
-        lst, val=SearchAndReplace("<.*?>", val, "")
+        lst, val=SearchAndReplace("(<.*?>)", val, "")
         val=val.strip()
         for l in lst:
+            l=l.strip("<>").strip()
             if ":" in l:
                 loc=l.find(":")
                 self.Parms[l[:loc]]=l[loc:]
