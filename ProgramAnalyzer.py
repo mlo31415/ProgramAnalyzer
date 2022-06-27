@@ -110,7 +110,7 @@ def main():
         LogError("Room names line is blank.")
 
     # Start reading ths spreadsheet and building the participants and items databases (dictionaries)
-    gSchedules: dict[str, list[ScheduleElement]]=defaultdict(list)  # A dictionary keyed by a person's name containing a ScheduleElement list
+    gPeople: dict[str, list[ScheduleElement]]=defaultdict(list)  # A dictionary keyed by a person's name containing a ScheduleElement list
     # ScheduleElement is the (time, room, item, moderator) tuples, of an item that that person is on.
     # Note that time and room are redundant and could be pulled out of the Items dictionary
     gItems: dict[str, Item]={}  # A dictionary keyed by item name containing an Item (time, room, people-list, moderator), where people-list is the list of people on the item
@@ -140,17 +140,17 @@ def main():
                         # We look for the [##] in the people list.  If we find it, we divide the people list in half and create two items with separate plists.
                         r=RegEx.match("(.*)\[([0-9.]*)](.*)", peopleRow[roomIndex])
                         if r is None:
-                            AddItemWithPeople(gItems, gSchedules, time, roomName, itemName, peopleRow[roomIndex])
+                            AddItemWithPeople(gItems, gPeople, time, roomName, itemName, peopleRow[roomIndex])
                         else:
                             plist1=r.groups()[0].strip()
                             deltaT=r.groups()[1].strip()
                             plist2=r.groups()[2].strip()
-                            AddItemWithPeople(gItems, gSchedules, time, roomName, itemName, plist1)
+                            AddItemWithPeople(gItems, gPeople, time, roomName, itemName, plist1)
                             newTime=time+float(deltaT)
                             if newTime not in gTimes:
                                 gTimes.append(newTime)
                             # This second instance will need to have a distinct item name, so add {#2} to the item name
-                            AddItemWithPeople(gItems, gSchedules, newTime, roomName, itemName+" {#2}", plist2)
+                            AddItemWithPeople(gItems, gPeople, newTime, roomName, itemName+" {#2}", plist2)
                     else:  # We have an item with no people on it.
                         AddItemWithoutPeople(gItems, time, roomName, itemName)
 
@@ -321,7 +321,7 @@ def main():
         print("People who are scheduled but not in People:", file=txt)
         print("(Note that these may be due to spelling differences, use of initials, etc.)", file=txt)
         count=0
-        for personname in gSchedules.keys():
+        for personname in gPeople.keys():
             if personname not in peopleTable.keys():
                 count+=1
                 print("   "+personname, file=txt)
@@ -335,7 +335,7 @@ def main():
     with open(fname, "w") as txt:
         print("People who are scheduled and in People but whose response is not 'y':", file=txt)
         count=0
-        for personname in gSchedules.keys():
+        for personname in gPeople.keys():
             if personname in peopleTable.keys():
                 if peopleTable[personname].RespondedYes:
                     count+=1
@@ -353,7 +353,7 @@ def main():
         for personname in peopleTable.keys():
             if peopleTable[personname].RespondedYes:
                 found=False
-                for item in gSchedules.values():
+                for item in gPeople.values():
                     for x in item:
                         if personname == x.PersonName:
                             found=True
@@ -372,8 +372,8 @@ def main():
     with open(fname, "w") as txt:
         print("People who are scheduled to be in two places at the same time", file=txt)
         count=0
-        for personname in gSchedules.keys():
-            pSched=gSchedules[personname] # pSched is a person's schedule, which is a list of (time, room, item) tuples
+        for personname in gPeople.keys():
+            pSched=gPeople[personname] # pSched is a person's schedule, which is a list of (time, room, item) tuples
             if len(pSched) < 2:     # If the persons is only on one item, then there can't be a conflict
                 continue
             # Sort pSched by time
@@ -395,7 +395,7 @@ def main():
     # Now look for similar name pairs
     # First we make up a list of all names that appear in any tab
     names=set()
-    names.update(gSchedules.keys())
+    names.update(gPeople.keys())
     names.update(peopleTable.keys())
     similarNames: list[tuple[str, str, float]]=[]
     for p1 in names:
@@ -426,13 +426,13 @@ def main():
     #*******
     # Print the People with items by time report
     # Get a list of the program participants (the keys of the  participants dictionary) sorted by the last token in the name (which will usually be the last name)
-    sortedAllParticipantList=sorted(gSchedules.keys(), key=lambda x: x.split(" ")[-1])
+    sortedAllParticipantList=sorted(gPeople.keys(), key=lambda x: x.split(" ")[-1])
     fname=os.path.join( reportsdir, "People with items by time.txt")
     SafeDelete(fname)
     with open(fname, "w") as txt:
         for personname in sortedAllParticipantList:
             print("\n"+personname, file=txt)
-            for schedElement in gSchedules[personname]:
+            for schedElement in gPeople[personname]:
                 if len(schedElement.DisplayName) > 0:
                     print(f"    {NumericTime.NumericToTextDayTime(schedElement.Time)}: {schedElement.DisplayName} [{schedElement.Room}] {schedElement.ModFlag}", file=txt)
 
@@ -461,7 +461,7 @@ def main():
     for personname in sortedAllParticipantList:
         print("\n\n********************************************", file=txt)
         print(personname, file=txt)
-        for schedElement in gSchedules[personname]:
+        for schedElement in gPeople[personname]:
             if len(schedElement.DisplayName) > 0:
                 print(f"\n{NumericTime.NumericToTextDayTime(schedElement.Time)}: {schedElement.DisplayName} [{schedElement.Room}] {schedElement.ModFlag}", file=txt)
                 item=gItems[schedElement.ItemName]
@@ -481,7 +481,7 @@ def main():
         for personname in sortedAllParticipantList:
             print(f"<person><full name>{personname}</full name>", file=xml)
             print(f"<email>{peopleTable[personname].Email}</email>", file=xml)
-            for schedElement in gSchedules[personname]:
+            for schedElement in gPeople[personname]:
                 if len(schedElement.DisplayName) > 0:
                     print(f"<item><title>{NumericTime.NumericToTextDayTime(schedElement.Time)}: {schedElement.DisplayName} [{schedElement.Room}] {schedElement.ModFlag}</title>", file=xml)
                     item=gItems[schedElement.ItemName]
@@ -581,8 +581,8 @@ def main():
     txt=open(fname, "w")
     print("List of number of items each person is scheduled on\n\n", file=txt)
     for personname in peopleTable:
-        if personname in gSchedules.keys():
-            print(f"{personname}: {len(gSchedules[personname])}{'' if peopleTable[personname].RespondedYes else ' not confirmed'}", file=txt)
+        if personname in gPeople.keys():
+            print(f"{personname}: {len(gPeople[personname])}{'' if peopleTable[personname].RespondedYes else ' not confirmed'}", file=txt)
         else:
             if peopleTable[personname].RespondedYes:
                 print(personname+": coming, but not scheduled", file=txt)
@@ -789,7 +789,7 @@ def SafeDelete(fn: str) -> bool:
 
 #.......
 # Add an item with a list of people to the gItems dict, and add the item to each of the persons who are on it
-def AddItemWithPeople(gItems: dict[str, Item], gSchedules: dict[str, list[ScheduleElement]], time: float, roomName: str, itemName: str, plistText: str) -> None:
+def AddItemWithPeople(gItems: dict[str, Item], gPeople: dict[str, list[ScheduleElement]], time: float, roomName: str, itemName: str, plistText: str) -> None:
 
     plist=plistText.split(",")  # Get the people as a list
     plist=[p.strip() for p in plist]  # Remove excess spaces
@@ -799,7 +799,7 @@ def AddItemWithPeople(gItems: dict[str, Item], gSchedules: dict[str, list[Schedu
     for person in plist:  # For each person listed on this item
         if IsModerator(person):
             modName=person=RemoveModFlag(person)
-        gSchedules[person].append(ScheduleElement(PersonName=person, Time=time, Room=roomName, ItemName=itemName, IsMod=(person == modName)))  # And append a tuple with the time, room, item name, and moderator flag
+        gPeople[person].append(ScheduleElement(PersonName=person, Time=time, Room=roomName, ItemName=itemName, IsMod=(person == modName)))  # And append a tuple with the time, room, item name, and moderator flag
         peopleList.append(person)
     # And add the item with its list of people to the items table.
     if itemName in gItems:  # If the item's name is already in use, add a uniquifier of room+day/time
