@@ -754,7 +754,7 @@ def ReadSheetFromTab(sheet, spreadSheetID, parms: ParmDict, parmname: str) -> li
     cells=[]
     try:
         cells=sheet.values().get(spreadsheetId=spreadSheetID, range=f'{tabname}!A1:Z999').execute().get('values', [])  # Read the whole thing.
-    except HttpError as e:
+    except HttpError:
         LogError(f"ReadSheetFromTab: Can't locate {tabname} tab in spreadsheet. Is the supplied SheetID wrong?")
         exit(999)
 
