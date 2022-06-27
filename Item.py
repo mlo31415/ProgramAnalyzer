@@ -3,19 +3,58 @@ from __future__ import annotations
 from typing import List
 from dataclasses import dataclass, field
 
-from HelpersPackage import ParmDict
+from HelpersPackage import ParmDict, SearchAndReplace
 
 # A class to hold the information for one Participant
 
-@dataclass(order=False)
 class Item:
-    Name: str=""          # The item's name
-    Time: float=None        # A numeric time
-    Room: str=""          # The name of a room
-    People: List[str]=field(default_factory=list)       # A list of the names of people on the item
-    ModName: str=""       # The name of the moderator of the item
-    Precis: str=""        # The item's precis
-    parms: ParmDict=field(default_factory=lambda: ParmDict(CaseInsensitiveCompare=True))    # Parameters associated with this item
+    def __init__(self, ItemText: str="", Time: float=0.0, Room: str="", People: List[str]=[], ModName: str="", Precis: str="", Parms: ParmDict=ParmDict(CaseInsensitiveCompare=True)):
+        self.Time: float=Time
+        self.Room: str=Room
+        self.People: list[str]=People
+        self.ModName: str=ModName
+        self.Precis: str=Precis
+        self.Parms: ParmDict=Parms
+        self.ItemText=ItemText  # This must be last as it relies on the rest of the object haveing been initialized
+
+
+    @property
+    def ItemText(self) -> str:
+        return self._ItemText
+    @ItemText.setter
+    # We take the entire item cel contents and parse it into its pieces.
+    def ItemText(self, val: str):
+        # Save the whole item text in _ItenText
+        self._ItemText=val
+        # Initialize the rest to empty strings
+        self._Name: str=""
+        self._ItemText: str=""
+        self._Comment=""
+
+        # Strip off the comment
+        if "#" in val:
+            loc=val.find("#")
+            self._Comment=val[loc:]
+            val=val[:loc].strip()
+            if len(val) == 0:
+                return
+
+        # Look for keywords, remove them and save them
+        lst, val=SearchAndReplace("<.*?>", val, "")
+        val=val.strip()
+        for l in lst:
+            if ":" in l:
+                loc=l.find(":")
+                self.Parms[l[:loc]]=l[loc:]
+            else:
+                self.Parms[l]="True"
+
+        # And save the name
+        self._Name=val.strip()
+
+    @property
+    def Name(self) -> str:
+        return self._Name
 
 
     # Generate the display text of a list of people
@@ -24,6 +63,7 @@ class Item:
         for person in self.People:
             s=s+(", " if len(s) > 0 else "")+person+(" (M)" if person == self.ModName else "")
         return s
+
 
     @property
     # Generate the display-name of an item. (Remove any text following the first "{")
