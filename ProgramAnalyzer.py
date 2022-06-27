@@ -196,7 +196,6 @@ def main():
             if timeRow is None:    # Is it a people row that doesn't follow a time row?
                 LogError("Error reading schedule tab: Row "+str(rowIndex+1)+" is a people row; we were expecting a time row.")     # +1 because the spreadsheet's row-numbering is 1-based
                 LogError("   row="+" ".join(row))
-                i=0
                 rowIndex+=1
 
     if timeRow is not None:
