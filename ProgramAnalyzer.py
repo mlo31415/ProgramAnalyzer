@@ -103,12 +103,6 @@ def main():
         if len(scheduleCells[0][i]) > 0:
             roomIndexes.append(i)
 
-    # Get the room names which are in the first row of the scheduleCells tab
-    gRoomNames: list[str]=[r.strip() for r in scheduleCells[0]]
-
-    if len(gRoomNames) == 0 or len(roomIndexes) == 0:
-        LogError("Room names line is blank.")
-
     # Start reading ths spreadsheet and building the participants and items databases (dictionaries)
     gSchedules: dict[str, list[ScheduleElement]]=defaultdict(list)  # A dictionary keyed by a person's name containing a ScheduleElement list
     # ScheduleElement is the (time, room, item, moderator) tuples, of an item that that person is on.
@@ -117,6 +111,9 @@ def main():
     gTimes: list[float]=[]  # A list of times found in the spreadsheet.
     gPersons: defaultdict[str, Person]=defaultdict(Person)   # A dict of Persons keyed by the people key (full name)
 
+    gRoomNames: list[str]=[r.strip() for r in scheduleCells[0]] # Get the room names which are in the first row of the scheduleCells tab
+    if len(gRoomNames) == 0 or len(roomIndexes) == 0:
+        LogError("Room names line is blank.")
 
     # .......
     # Code to process a set of time and people rows.
