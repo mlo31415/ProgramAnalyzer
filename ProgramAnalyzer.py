@@ -213,8 +213,8 @@ def main():
     # The rest of the rows of the tab is pairs title:precis.
     count: int=0
     fname=os.path.join(reportsdir, "Diag - precis without items.txt")
-    with open(fname, "w") as xml:
-        print("Precis without corresponding items:", file=xml)
+    with open(fname, "w") as f:
+        print("Precis without corresponding items:", file=f)
         for row in precisCells:
             row=[r.strip() for r in row]    # Get rid of leading and trailing blanks
             if len(row) > 1 and len(row[0]) > 0 and len(row[1]) > 0: # If both the item name and the precis exist, store them in the precis table.
@@ -226,9 +226,9 @@ def main():
                         found=True
                 if not found:
                     count+=1
-                    print("   "+itemname, file=xml)
+                    print("   "+itemname, file=f)
         if count == 0:
-            print("    None found", file=xml)
+            print("    None found", file=f)
 
     #******
     # Analyze the People cells
