@@ -22,6 +22,7 @@ from HelpersPackage import PyiResourcePath, ParmDict, ReadListAsParmDict, Messag
 
 from ScheduleElement import ScheduleElement
 from Item import Item
+from Person import Person
 from Log import Log, LogClose, LogError
 import NumericTime
 
@@ -262,11 +263,6 @@ def main():
     if fnameCol == -1 or lnameCol == -1 or emailCol == -1 or responseCol == -1 or fullnameCol == -1:
         LogError("People tab is missing at least one column label.")
         LogError("    labels="+" ".join(peopleCells[firstNonEmptyRow]))
-
-    @dataclass
-    class Person:
-        Email: str=""
-        RespondedYes: bool=False
 
 
     # We'll use the "full name" or, failing that, combine the first and last names to create a full name like is used elsewhere.
