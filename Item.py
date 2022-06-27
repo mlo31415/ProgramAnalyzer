@@ -18,7 +18,7 @@ class Item:
         if Parms is None:
             Parms=ParmDict(CaseInsensitiveCompare=True)
         self.Parms: ParmDict=Parms
-        self.ItemText=ItemText  # This must be last as it relies on the rest of the object haveing been initialized
+        self.ItemText=ItemText  # This must be last as it relies on the rest of the object having been initialized
 
 
     @property
