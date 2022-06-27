@@ -278,15 +278,15 @@ def main():
         row=[r.strip() for r in peopleCells[i]]    # Get rid of leading and trailing blanks in each cell
 
         fullname=""
-        if fullnameCol >= 0 and fullnameCol < len(row):
+        if 0 <= fullnameCol < len(row):
             fullname=row[fullnameCol]
 
         if fullname == "":
             fname=""
-            if fnameCol >= 0 and fnameCol < len(row):
+            if 0 <= fnameCol < len(row):
                 fname=row[fnameCol]
             lname=""
-            if lnameCol >= 0 and lnameCol < len(row):
+            if 0 <= lnameCol < len(row):
                 lname=row[lnameCol]
             if len(fname) > 0 and len(lname) > 0:   # Gotta handle Ctein!
                 fullname=fname+" "+lname
@@ -300,10 +300,10 @@ def main():
             LogError("    row="+" ".join(peopleCells[i]))
 
         email=""
-        if emailCol >= 0 and emailCol < len(row):
+        if 0 <= emailCol < len(row):
             email=row[emailCol]
         response=""
-        if responseCol >= 0 and responseCol < len(row):
+        if 0 <= responseCol < len(row):
             response=row[responseCol]
 
         if fullname != "":
