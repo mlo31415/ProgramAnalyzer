@@ -785,9 +785,8 @@ def SafeDelete(fn: str) -> bool:
 # Add an item with a list of people to the gItems dict, and add the item to each of the persons who are on it
 def AddItemWithPeople(gItems: dict[str, Item], gSchedules: dict[str, list[ScheduleElement]], time: float, roomName: str, itemName: str, plistText: str) -> None:
 
-    plist=plistText.split(",")  # Get the people as a list
-    plist=[p.strip() for p in plist]  # Remove excess spaces
-    plist=[p for p in plist if len(p) > 0]
+    plist=[p.strip() for p in plistText.split(",") ]    # Get the people as a list with excess spaces removed
+    plist=[p for p in plist if len(p) > 0]              # Ignore empty entries
     modName=""
     peopleList: list[str]=[]
     for person in plist:  # For each person listed on this item
