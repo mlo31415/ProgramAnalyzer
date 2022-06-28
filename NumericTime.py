@@ -10,6 +10,8 @@ gDayList=["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Sat
 
 # Convert a text date string to numeric
 def TextToNumericTime(s: str) -> int:
+    s=s.strip()
+
     # The date string is of the form Day Hour AM/PM or Day Noon
     day=""
     hour=""
