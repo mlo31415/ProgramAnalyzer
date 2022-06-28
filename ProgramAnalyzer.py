@@ -102,6 +102,11 @@ def main():
             break
         if len(scheduleCells[0][i]) > 0:
             roomIndexes.append(i)
+    # Extract a list of room names
+    gRoomNames: list[str]=[r.strip() for r in scheduleCells[0]] # Get the room names which are in the first row of the scheduleCells tab
+    if len(gRoomNames) == 0 or len(roomIndexes) == 0:
+        LogError("Room names line (1st row of the schedule tab) is blank.")
+        return
 
     # Start reading ths spreadsheet and building the participants and items databases (dictionaries)
     gSchedules: dict[str, list[ScheduleElement]]=defaultdict(list)  # A dictionary keyed by a person's name containing a ScheduleElement list
@@ -111,13 +116,56 @@ def main():
     gTimes: list[float]=[]  # A list of times found in the spreadsheet.
     gPersons: defaultdict[str, Person]=defaultdict(Person)   # A dict of Persons keyed by the people key (full name)
 
-    gRoomNames: list[str]=[r.strip() for r in scheduleCells[0]] # Get the room names which are in the first row of the scheduleCells tab
-    if len(gRoomNames) == 0 or len(roomIndexes) == 0:
-        LogError("Room names line is blank.")
 
-    # .......
-    # Code to process a set of time and people rows.
-    def ProcessRows(timeRow: list[str], peopleRow: Optional[list[str]]) -> None:
+    # Now process the schedule, row by row
+    # When we find a row with data in column 0, we have found a new time. This is a time row.
+    # A time row contains items.
+    # A time row will normally be followed by a people row containing the participants for those items.
+    # A people row does *not* have content in column 0.
+
+    # The rows for a particular time con be a single row or two rows, in which case the 2nd row contains the people scheduled on that item.
+    # Rows that are blank or start with a # as the 1st character of column 0 are ignored
+    # Compress out the room row and the ignored rows
+    cleanedSchedualCells=[]
+    rowIndex=1  # The first row contains the room names and we've already processed them.
+    while rowIndex < len(scheduleCells):
+        row=scheduleCells[rowIndex]
+        if len(row) == 0:  # Ignore empty rows
+            rowIndex+=1
+            continue
+        # Skip rows where the first character in the row is a "#"
+        s="".join([r.strip() for r in row])
+        if s[0] == "#":
+            rowIndex+=1
+            continue
+        cleanedSchedualCells.append(row)
+        rowIndex+=1
+
+    # Now we have just the schedule rows.  They are of two types:
+    #       A time row, which contains a time in colum 0
+    #       A people row which follows a time row and has column 0 empty
+    # Process them
+    rowIndex=0
+    while rowIndex < len(cleanedSchedualCells):
+        # The first row must be a time row.
+        row=cleanedSchedualCells[rowIndex]
+        if len(row[0]) == 0:     # Time rows have content in the 1st column. Is it a time row?
+            LogError("Error reading schedule tab: The row below is a people row; we were expecting a time row:")
+            LogError("       row="+" ".join(row))
+            rowIndex+=1
+            continue
+        timeRow=row
+        rowIndex+=1
+
+        # Possibly followed by a people row
+        peopleRow=None
+        if rowIndex < len(cleanedSchedualCells):
+            row=cleanedSchedualCells[rowIndex]   # Peak ahead to the next row
+            if len(row[0]) == 0:
+                # We found a people row
+                peopleRow=row
+                rowIndex+=1
+
         # Get the time from the timerow and add it to gTimes
         time=NumericTime.TextToNumericTime(timeRow[0])
         if time not in gTimes:
@@ -153,52 +201,6 @@ def main():
                     else:  # We have an item with no people on it.
                         AddItemWithoutPeople(gItems, time, roomName, itemName)
 
-
-    # Now process the schedule row by row
-    # When we find a row with data in column 0, we have found a new time.
-    # A time row contains items.
-    # A time row will normally be followed by a people row containing the participants for those items
-    rowIndex: int=1  # We skip the first row which contains room names
-    timeRow: Optional[list[str]]=None
-    while rowIndex < len(scheduleCells):
-        row=[c.strip() for c in scheduleCells[rowIndex]]  # Get the next row as a list of cells. Strip off leading and trailing blanks for each cell.
-        if len(row) == 0:   # Ignore empty rows
-            rowIndex+=1
-            continue
-
-        # Skip rows where the first character is a "#"
-        if "".join(row)[0] == "#":
-            rowIndex+=1
-            continue
-
-        # We have a non-empty row. It can be a time row or a people row.
-        if len(row[0]) > 0:     # Is it a time row?
-            if timeRow is None:     # Is it a time row without a pending time row?
-                # Save it and go to the next row
-                timeRow=row
-                rowIndex+=1
-                continue
-
-            if timeRow is not None: # If it's a time row, and we already have a time row, then that first time row has no people.  Process the first row, save the second and move on.
-                # Process time row without people row
-                ProcessRows(timeRow, None)
-                timeRow=row
-                rowIndex+=1
-                continue
-        else:   # Then it must be a people row
-            if timeRow is not None:      # Is it a people row following a time row?
-                ProcessRows(timeRow, row)
-                rowIndex+=1
-                timeRow=None
-                continue
-
-            if timeRow is None:    # Is it a people row that doesn't follow a time row?
-                LogError("Error reading schedule tab: Row "+str(rowIndex+1)+" is a people row; we were expecting a time row.")     # +1 because the spreadsheet's row-numbering is 1-based
-                LogError("   row="+" ".join(row))
-                rowIndex+=1
-
-    if timeRow is not None:
-        ProcessRows(timeRow, None)
 
     # Make sure times are sorted into ascending order.
     # The simple sort works because the times are stored as numeric hours since start of first day.
