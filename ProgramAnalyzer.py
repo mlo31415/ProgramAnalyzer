@@ -10,12 +10,12 @@ from docx.shared import Pt
 from docx.shared import Inches
 from docx import text
 from docx.text import paragraph
-
+import numpy as np
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
 from googleapiclient.errors import HttpError
 
-from HelpersPackage import PyiResourcePath, ParmDict, ReadListAsParmDict, MessageLog
+from HelpersPackage import PyiResourcePath, ParmDict, ReadListAsParmDict, MessageLog, SquareUpMatrix
 
 from ScheduleElement import ScheduleElement
 from Item import Item
@@ -91,28 +91,12 @@ def main():
 
     # We're done with reading the spreadsheet. Now analyze the data.
     # ******
-    # Analyze the Schedule cells
-    # The first row of the spreadsheet is the list of rooms.
-    # Make a list of room names and room column indexes
-    roomIndexes: list[int]=[]       # List of all column indexes that contain room names.  These are the columns that contain schedules
-    for i in range(0, len(scheduleCells[0])):
-        if scheduleCells[0][i] is None:
-            break
-        if len(scheduleCells[0][i]) > 0:
-            roomIndexes.append(i)
-    # Extract a list of room names
-    gRoomNames: list[str]=[r.strip() for r in scheduleCells[0]] # Get the room names which are in the first row of the scheduleCells tab
-    if len(gRoomNames) == 0 or len(roomIndexes) == 0:
-        LogError("Room names line (1st row of the schedule tab) is blank.")
-        return
-
     # Start reading ths spreadsheet and building the participants and items databases (dictionaries)
-    gSchedules: dict[str, list[ScheduleElement]]=defaultdict(list)  # A dictionary keyed by a person's name containing a ScheduleElement list
-    # ScheduleElement is the (time, room, item, moderator) tuples, of an item that that person is on.
     # Note that time and room are redundant and could be pulled out of the Items dictionary
     gItems: dict[str, Item]={}  # A dictionary keyed by item name containing an Item (time, room, people-list, moderator), where people-list is the list of people on the item
     gTimes: list[float]=[]  # A list of times found in the spreadsheet.
     gPersons: defaultdict[str, Person]=defaultdict(Person)   # A dict of Persons keyed by the people key (full name)
+    gRoomNames: list[str]=[]    # The list of room names corresponding to the columns in gItems
 
 
     # Now process the schedule, row by row
@@ -123,8 +107,8 @@ def main():
 
     # The rows for a particular time con be a single row or two rows, in which case the 2nd row contains the people scheduled on that item.
     # Rows that are blank or start with a # as the 1st character of column 0 are ignored
-    # Compress out the room row and the ignored rows
-    cleanedSchedualCells=[]
+    # Compress out the ignored rows
+    cleanedSchedualCells: list[list[str]]=[]
     rowIndex=1  # The first row contains the room names and we've already processed them.
     while rowIndex < len(scheduleCells):
         row=scheduleCells[rowIndex]
@@ -139,6 +123,25 @@ def main():
         cleanedSchedualCells.append(row)
         rowIndex+=1
 
+    cleanedSchedualCells=SquareUpMatrix(cleanedSchedualCells)
+
+    # Now compress out non-room and non-time columns
+    # This will leave one time column on the left followed by all the room columns
+    # We will drop columns even if they have something in them if they are not headed by a room name
+    # We wprk in the transposed cleanedSchedualCells, since it's much easier to delete rows than columns
+    temp=np.array(cleanedSchedualCells).T.tolist()  # Use numpy to transpose the array
+    cleanedSchedualCells=temp[0:]    # Copy over the time row
+    for row in temp[1:]:
+        if len(row[0].strip()) > 0:     # Copy over any rows with text in the first cell
+            cleanedSchedualCells.append(row)
+    cleanedSchedualCells=np.array(cleanedSchedualCells).T.tolist()  # And transpose it back
+
+    # Copy the room names to gRoomNames
+    gRoomNames=[r.strip() for r in scheduleCells[0]] # Get the room names which are in the first row of the scheduleCells tab
+    if len(gRoomNames) == 0:
+        LogError("Room names line (1st row of the schedule tab) is blank.")
+        return
+
     # Now we have just the schedule rows.  They are of two types:
     #       A time row, which contains a time in colum 0
     #       A people row which follows a time row and has column 0 empty
@@ -152,53 +155,64 @@ def main():
             LogError("       row="+" ".join(row))
             rowIndex+=1
             continue
-        timeRow=row
+        rowFirst=row
         rowIndex+=1
 
         # Possibly followed by a people row
-        peopleRow=None
+        rowSecond=None
         if rowIndex < len(cleanedSchedualCells):
             row=cleanedSchedualCells[rowIndex]   # Peak ahead to the next row
             if len(row[0]) == 0:
                 # We found a people row
-                peopleRow=row
+                rowSecond=row
                 rowIndex+=1
 
-        # Get the time from the timerow and add it to gTimes
-        time=NumericTime.TextToNumericTime(timeRow[0])
+        # Get the time from rowFirst and add it to gTimes
+        time=NumericTime.TextToNumericTime(rowFirst[0])
         if time not in gTimes:
             gTimes.append(time)  # We want to allow duplicate time rows, just-in-case
 
         # Looking at the rest of the row, there may be text in one or more of the room columns
-        for roomIndex in roomIndexes:
-            roomName=gRoomNames[roomIndex]
-            if roomIndex < len(timeRow):  # Trailing empty cells have been truncated, so better check.
-                if len(timeRow[roomIndex]) > 0:  # So does the cell itself contain text?
-                    # This has to be an item name since it's a cell containing text in a row that starts with a time and in a column that starts with a room
-                    itemName=timeRow[roomIndex]
+        for col, roomName in enumerate(gRoomNames):
+            if col == 0:    # Time is in col 0, so we don't want to look at that
+                continue
 
-                    # Does a row indexed by peopleRowIndex exist in the spreadsheet? Does it have enough columns? Does it have anything in the correct column?
-                    if peopleRow is not None and len(peopleRow) > roomIndex and len(peopleRow[roomIndex]) > 0:
-                        # We indicate items which go for an hour, but have some people in one part and some in another using a special notation in the people list.
-                        # Robert A. Heinlein, [0.5] John W. Campbell puts RAH on the hour and JWC a half-hour later.
-                        # There is much messiness in this.
-                        # We look for the [##] in the people list.  If we find it, we divide the people list in half and create two items with separate plists.
-                        r=RegEx.match("(.*)\[([0-9.]*)](.*)", peopleRow[roomIndex])
-                        if r is None:
-                            AddItemWithPeople(gItems, gSchedules, time, roomName, itemName, peopleRow[roomIndex])
-                        else:
-                            plist1=r.groups()[0].strip()
-                            deltaT=r.groups()[1].strip()
-                            plist2=r.groups()[2].strip()
-                            AddItemWithPeople(gItems, gSchedules, time, roomName, itemName, plist1)
-                            newTime=time+float(deltaT)
-                            if newTime not in gTimes:
-                                gTimes.append(newTime)
-                            # This second instance will need to have a distinct item name, so add {#2} to the item name
-                            AddItemWithPeople(gItems, gSchedules, newTime, roomName, itemName+" {#2}", plist2)
-                    else:  # We have an item with no people on it.
-                        AddItemWithoutPeople(gItems, time, roomName, itemName)
+            # This has to be an item name since it's a cell containing text in a row that starts with a time and in a column that starts with a room
+            itemName=rowFirst[col]
+            if len(itemName) > 0:  # Not all rooms contain items at all times, so check that the cell contains text?
 
+                # Does a row indexed by peopleRowIndex exist in the spreadsheet? Does it have enough columns? Does it have anything in the correct column?
+                if rowSecond is not None and len(rowSecond[col]) > 0:
+                    # We indicate items which go for an hour, but have some people in one part and some in another using a special notation in the people list.
+                    # Robert A. Heinlein, [0.5] John W. Campbell puts RAH on the hour and JWC a half-hour later.
+                    # There is much messiness in this.
+                    # We look for the [##] in the people list.  If we find it, we divide the people list in half and create two items with separate plists.
+                    r=RegEx.match("(.*)\[([0-9.]*)](.*)", rowSecond[col])
+                    if r is None:
+                        AddItemWithPeople(gItems, time, roomName, itemName, rowSecond[col])
+                    else:
+                        plist1=r.groups()[0].strip()
+                        deltaT=r.groups()[1].strip()
+                        plist2=r.groups()[2].strip()
+                        AddItemWithPeople(gItems, time, roomName, itemName, plist1)
+                        newTime=time+float(deltaT)
+                        if newTime not in gTimes:
+                            gTimes.append(newTime)
+                        # This second instance will need to have a distinct item name, so add {#2} to the item name
+                        AddItemWithPeople(gItems, newTime, roomName, itemName+" {#2}", plist2)
+                else:  # We have an item with no people on it.
+                    AddItemWithoutPeople(gItems, time, roomName, itemName)
+
+
+    # Extract information from Items, etc., to be used to process schedules
+    gSchedules: dict[str, list[ScheduleElement]]=defaultdict(list)  # A dictionary keyed by a person's name containing a ScheduleElement list
+    # ScheduleElement is the (time, room, item, moderator) tuples, of an item that that person is on.
+
+    for item in gItems.values():
+        for personName in item.People:  # For each person listed on this item
+            if IsModerator(personName):
+                modName=RemoveModFlag(personName)
+            gSchedules[personName].append(ScheduleElement(PersonName=personName, Time=item.Time, Room=item.Room, ItemName=item.Name, IsMod=(personName == personName)))  # And append a tuple with the time, room, item name, and moderator flag
 
     # Make sure times are sorted into ascending order.
     # The simple sort works because the times are stored as numeric hours since start of first day.
@@ -462,7 +476,6 @@ def main():
                 if item.Precis is not None and item.Precis != "":
                     print("Precis: "+item.Precis, file=txt)
     txt.close()
-
 
 
     # *******
@@ -780,10 +793,9 @@ def SafeDelete(fn: str) -> bool:
         return False
     return True
 
-
 #.......
 # Add an item with a list of people to the gItems dict, and add the item to each of the persons who are on it
-def AddItemWithPeople(gItems: dict[str, Item], gSchedules: dict[str, list[ScheduleElement]], time: float, roomName: str, itemName: str, plistText: str) -> None:
+def AddItemWithPeople(gItems: dict[str, Item], time: float, roomName: str, itemName: str, plistText: str) -> None:
 
     plist=[p.strip() for p in plistText.split(",") ]    # Get the people as a list with excess spaces removed
     plist=[p for p in plist if len(p) > 0]              # Ignore empty entries
@@ -792,12 +804,12 @@ def AddItemWithPeople(gItems: dict[str, Item], gSchedules: dict[str, list[Schedu
     for person in plist:  # For each person listed on this item
         if IsModerator(person):
             modName=person=RemoveModFlag(person)
-        gSchedules[person].append(ScheduleElement(PersonName=person, Time=time, Room=roomName, ItemName=itemName, IsMod=(person == modName)))  # And append a tuple with the time, room, item name, and moderator flag
         peopleList.append(person)
     # And add the item with its list of people to the items table.
     if itemName in gItems:  # If the item's name is already in use, add a uniquifier of room+day/time
         itemName=itemName+"  {"+roomName+" "+NumericTime.NumericToTextDayTime(time)+"}"
-    gItems[itemName]=Item(ItemText=itemName, Time=time, Room=roomName, People=peopleList, ModName=modName)
+    item=Item(ItemText=itemName, Time=time, Room=roomName, People=peopleList, ModName=modName)
+    gItems[item.Name]=item
 
 
 #.......
@@ -805,7 +817,8 @@ def AddItemWithPeople(gItems: dict[str, Item], gSchedules: dict[str, list[Schedu
 def AddItemWithoutPeople(gItems: dict[str, Item], time: float, roomName: str, itemName: str) -> None:
     if itemName in gItems:  # If the item's name is already in use, add a uniquifier of room+day/time
         itemName=itemName+"  {"+roomName+" "+NumericTime.NumericToTextDayTime(time)+"}"
-    gItems[itemName]=Item(ItemText=itemName, Time=time, Room=roomName)
+    item=Item(ItemText=itemName, Time=time, Room=roomName)
+    gItems[item.Name]=item
 
 
 #******
