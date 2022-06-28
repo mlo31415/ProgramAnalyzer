@@ -204,8 +204,8 @@ def main():
     # The simple sort works because the times are stored as numeric hours since start of first day.
     gTimes.sort()
 
-    #******
-    # Analyze the Precis cells and add the information to the
+    #***********************************************************************
+    # Analyze the Precis cells and add the information to gItems
     # The first row is column labels. So ignore it.
     precisCells=precisCells[1:]
 
@@ -229,8 +229,8 @@ def main():
         if count == 0:
             print("    None found", file=f)
 
-    #******
-    # Analyze the People cells
+    #***********************************************************************
+    # Analyze the People cells and add the information to gPersons
 
     # Step 1 is to find the column labels.
     # They are in the first non-empty row.
@@ -261,7 +261,6 @@ def main():
     if fnameCol == -1 or lnameCol == -1 or emailCol == -1 or responseCol == -1 or fullnameCol == -1:
         LogError("People tab is missing at least one column label.")
         LogError("    labels="+" ".join(peopleCells[firstNonEmptyRow]))
-
 
     # We'll use the "full name" or, failing that, combine the first and last names to create a full name like is used elsewhere.
     for i in range(firstNonEmptyRow+1, len(peopleCells)):
@@ -300,6 +299,7 @@ def main():
 
         if fullname != "":
             gPersons[fullname]=Person(email, response)       # Store the email and response as a tuple in the entry indexed by the full name
+
 
 
     #*************************************************************************************************
