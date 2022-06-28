@@ -96,7 +96,7 @@ def main():
     # Analyze the Schedule cells
     # The first row of the spreadsheet is the list of rooms.
     # Make a list of room names and room column indexes
-    roomIndexes: list[int]=[]
+    roomIndexes: list[int]=[]       # List of all column indexes that contain room names.  These are the columns that contain schedules
     for i in range(0, len(scheduleCells[0])):
         if scheduleCells[0][i] is None:
             break
@@ -738,7 +738,8 @@ def main():
 #*************************************************************************************************
 # Miscellaneous helper functions
 
-# Read the contents of a spreadsheet tab into
+# Read the contents of a spreadsheet tab into a list of list of strings
+# Ignore rows beginning with #
 def ReadSheetFromTab(sheet, spreadSheetID, parms: ParmDict, parmname: str) -> list[list[str]]:
 
     # Convert the generic name of the tab to the specific name to be used this year
