@@ -6,8 +6,7 @@ import os.path
 import difflib
 import re as RegEx
 import docx
-from docx.shared import Pt
-from docx.shared import Inches
+from docx.shared import Pt, Inches
 from docx import text
 from docx.text import paragraph
 import numpy as np
