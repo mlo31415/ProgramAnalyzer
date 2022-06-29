@@ -247,67 +247,35 @@ def main():
 
     # Start by removing empty rows and padding all rows out to make the array rectangular
     peopleCells=SquareUpMatrix(RemoveEmptyRowsFromMatrix(peopleCells))
+    columnLabels=peopleCells[0]
 
-    # Step 1 is to find the column labels. Read them and identify the Fname, Lname, Email, and Response columns
-    fnameCol=-1
-    lnameCol=-1
-    emailCol=-1
-    responseCol=-1
-    fullnameCol=-1
-    for i, cell in enumerate(peopleCells[0]):
-        cell=cell.lower()
-        if cell == "fname":
-            fnameCol=i
-        if cell == "lname":
-            lnameCol=i
-        if cell == "full name":
-            fullnameCol=i
-        if cell == "email":
-            emailCol=i
-        if cell == "response":
-            responseCol=i
-    if fnameCol == -1 or lnameCol == -1 or emailCol == -1 or responseCol == -1 or fullnameCol == -1:
-        LogError("People tab is missing at least one recommended column label.")
-        LogError(" Required: fname, lname, full name, email, response")
-        LogError("    labels="+" ".join(peopleCells[0]))
+    # Now read the remaining rows one by one, storing the cells in a ParmDict with the column header as key.
+    for row in peopleCells[1:]:
+        pd=ParmDict(CaseInsensitiveCompare=True)
+        for i, val in enumerate(row):
+            pd[columnLabels[i]]=val
 
-    # We'll use the "full name" or, failing that, combine the first and last names to create a full name like is used elsewhere.
-    for i in range(1, len(peopleCells)):
-        if len(peopleCells) == 0:   # Skip empty rows
-            continue
-        row=[r.strip() for r in peopleCells[i]]    # Get rid of leading and trailing blanks in each cell
-
+        # Now, we need to form a Fullname for the Person.
+        # If there is a Fullname column, use that.
         fullname=""
-        if 0 <= fullnameCol < len(row):
-            fullname=row[fullnameCol]
+        if pd.Exists("full name") and pd["full name"] != "":
+            fullname=pd["full name"]
+        else:
+            # Create a fullname out of fname+lname
+            # Got to handle the case where one or the other name is missing or empty
+            if pd.Exists("fname"):
+                fullname=pd["fname"].strip()
+            if pd.Exists("lname"):
+                fullname=(fullname+" "+pd["lname"].strip()).strip()
 
         if fullname == "":
-            fname=""
-            if 0 <= fnameCol < len(row):
-                fname=row[fnameCol]
-            lname=""
-            if 0 <= lnameCol < len(row):
-                lname=row[lnameCol]
-            if len(fname) > 0 and len(lname) > 0:   # Gotta handle Ctein!
-                fullname=fname+" "+lname
-            elif len(fname) > 0:
-                fullname=fname
-            elif len(lname) > 0:
-                fullname=lname
+            LogError("*** Can't find fullname in row:")
+            LogError("        "+str(columnLabels))
+            LogError("        "+str(row))
+            continue
 
-        if len(fullname.strip()) == 0:
-            LogError("Name missing from People tab row #"+str(i+1))
-            LogError("    row="+" ".join(peopleCells[i]))
-
-        email=""
-        if 0 <= emailCol < len(row):
-            email=row[emailCol]
-        response=""
-        if 0 <= responseCol < len(row):
-            response=row[responseCol]
-
-        if fullname != "":
-            gPersons[fullname]=Person(email, response)       # Store the email and response in a Person structure indexed by the full name
+        pd["Fullname"]=fullname
+        gPersons[fullname]=Person(fullname, pd)       # Store the email and response in a Person structure indexed by the full name
 
 
 
@@ -498,13 +466,10 @@ def main():
     fname=os.path.join( reportsdir, "Program participants.xml")
     SafeDelete(fname)
     with open(fname, "w") as xml:
-        # The first row contains the column headers
-        headers=peopleCells[0]
-        peopleCells=peopleCells[1:]
-        for row in peopleCells:
+        for person in gPersons.values():
             xml.writelines(f"<person>")
-            for col, cell in enumerate(row):
-                xml.writelines(f"<{headers[col]}>{cell}</{headers[col]}>")
+            for key, val in person.Parms.items():
+                xml.writelines(f"<{key}>{val}</{key}>")
             xml.writelines("</person>\n")
 
 
