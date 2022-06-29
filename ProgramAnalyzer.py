@@ -222,7 +222,7 @@ def main():
     # The first row is column labels. So ignore it.
     precisCells=precisCells[1:]
 
-    # The rest of the rows of the tab is pairs title:precis.
+    # The rest of the rows of the tab contins the title in the first column and the precis in the second
     count: int=0
     fname=os.path.join(reportsdir, "Diag - precis without items.txt")
     with open(fname, "w") as f:
@@ -231,12 +231,9 @@ def main():
             row=[r.strip() for r in row]    # Get rid of leading and trailing blanks
             if len(row) > 1 and len(row[0]) > 0 and len(row[1]) > 0: # If both the item name and the precis exist, store them in the precis table.
                 itemname=row[0]
-                found=False
-                for iname in gItems:
-                    if iname == itemname:
-                        gItems[itemname].Precis=row[1]
-                        found=True
-                if not found:
+                if itemname in gItems:
+                    gItems[itemname].Precis=row[1]
+                else:
                     count+=1
                     print("   "+itemname, file=f)
         if count == 0:
