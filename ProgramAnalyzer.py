@@ -272,7 +272,8 @@ def main():
         if cell == "response":
             responseCol=i
     if fnameCol == -1 or lnameCol == -1 or emailCol == -1 or responseCol == -1 or fullnameCol == -1:
-        LogError("People tab is missing at least one column label.")
+        LogError("People tab is missing at least one recommended column label.")
+        LogError(" Required: fname, lname, full name, email, response")
         LogError("    labels="+" ".join(peopleCells[firstNonEmptyRow]))
 
     # We'll use the "full name" or, failing that, combine the first and last names to create a full name like is used elsewhere.
@@ -311,7 +312,7 @@ def main():
             response=row[responseCol]
 
         if fullname != "":
-            gPersons[fullname]=Person(email, response)       # Store the email and response as a tuple in the entry indexed by the full name
+            gPersons[fullname]=Person(email, response)       # Store the email and response in a Person structure indexed by the full name
 
 
 
