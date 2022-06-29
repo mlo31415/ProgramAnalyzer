@@ -554,6 +554,8 @@ def main():
     for itemname, item in gItems.items():
         if item.Name.find("Reading") > -1 or item.Name.find("KK") > -1 or item.Name.find("Kaffe") > -1 or item.Name.find("Autograph") > -1:
             continue
+        if item.Parms["solo"]:  # Solo items don't need a moderator
+            continue
         if item.ModName != "":
             continue
         print(f"{NumericTime.NumericToTextDayTime(item.Time)} {item.Name}: {len(item.People)}", file=txt)
