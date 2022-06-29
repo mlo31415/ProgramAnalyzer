@@ -14,7 +14,7 @@ from googleapiclient.discovery import build
 from google.oauth2 import service_account
 from googleapiclient.errors import HttpError
 
-from HelpersPackage import PyiResourcePath, ParmDict, ReadListAsParmDict, MessageLog, SquareUpMatrix
+from HelpersPackage import PyiResourcePath, ParmDict, ReadListAsParmDict, MessageLog, SquareUpMatrix, RemoveEmptyRowsFromMatrix
 
 from ScheduleElement import ScheduleElement
 from Item import Item
@@ -245,21 +245,16 @@ def main():
     #***********************************************************************
     # Analyze the People cells and add the information to gPersons
 
-    # Step 1 is to find the column labels.
-    # They are in the first non-empty row.
-    firstNonEmptyRow=0
-    while firstNonEmptyRow < len(peopleCells):
-        if len(peopleCells[firstNonEmptyRow]) > 0:      # Rely on Googledocs truncating of trailing empty cells so that a blank line has no cells in it.
-            break
-        firstNonEmptyRow+=1
+    # Start by removing empty rows and padding all rows out to make the array rectangular
+    peopleCells=SquareUpMatrix(RemoveEmptyRowsFromMatrix(peopleCells))
 
-    # The first non-empty row is column labels.  Read them and identify the Fname, Lname, Email, and Response columns
+    # Step 1 is to find the column labels. Read them and identify the Fname, Lname, Email, and Response columns
     fnameCol=-1
     lnameCol=-1
     emailCol=-1
     responseCol=-1
     fullnameCol=-1
-    for i, cell in enumerate(peopleCells[firstNonEmptyRow]):
+    for i, cell in enumerate(peopleCells[0]):
         cell=cell.lower()
         if cell == "fname":
             fnameCol=i
@@ -274,10 +269,10 @@ def main():
     if fnameCol == -1 or lnameCol == -1 or emailCol == -1 or responseCol == -1 or fullnameCol == -1:
         LogError("People tab is missing at least one recommended column label.")
         LogError(" Required: fname, lname, full name, email, response")
-        LogError("    labels="+" ".join(peopleCells[firstNonEmptyRow]))
+        LogError("    labels="+" ".join(peopleCells[0]))
 
     # We'll use the "full name" or, failing that, combine the first and last names to create a full name like is used elsewhere.
-    for i in range(firstNonEmptyRow+1, len(peopleCells)):
+    for i in range(1, len(peopleCells)):
         if len(peopleCells) == 0:   # Skip empty rows
             continue
         row=[r.strip() for r in peopleCells[i]]    # Get rid of leading and trailing blanks in each cell
