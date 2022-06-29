@@ -731,7 +731,7 @@ def ReadSheetFromTab(sheet, spreadSheetID, parms: ParmDict, parmname: str) -> li
 
     if not cells:
         LogError(f"ReadSheetFromTab: Can't locate {tabname} tab in spreadsheet")
-        raise (ValueError, "No precisCells found")
+        raise (ValueError, "No cells found in tab")
 
     return [p for p in cells if len(p) > 0 and "".join(p)[0] != "#"]  # Drop blank lines and lines with a "#" alone in column 1.
 
