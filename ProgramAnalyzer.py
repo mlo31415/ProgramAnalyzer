@@ -98,6 +98,44 @@ def main():
     gRoomNames: list[str]=[]    # The list of room names corresponding to the columns in gItems
 
 
+    #***********************************************************************
+    # Analyze the People cells and add the information to gPersons
+
+    # Start by removing empty rows and padding all rows out to make the array rectangular
+    peopleCells=SquareUpMatrix(RemoveEmptyRowsFromMatrix(peopleCells))
+    columnLabels=peopleCells[0]
+
+    # Now read the remaining rows one by one, storing the cells in a ParmDict with the column header as key.
+    for row in peopleCells[1:]:
+        pd=ParmDict(CaseInsensitiveCompare=True)
+        for i, val in enumerate(row):
+            pd[columnLabels[i]]=val
+
+        # Now, we need to form a Fullname for the Person.
+        # If there is a Fullname column, use that.
+        fullname=""
+        if pd.Exists("full name") and pd["full name"] != "":
+            fullname=pd["full name"]
+        else:
+            # Create a fullname out of fname+lname
+            # Got to handle the case where one or the other name is missing or empty
+            if pd.Exists("fname"):
+                fullname=pd["fname"].strip()
+            if pd.Exists("lname"):
+                fullname=(fullname+" "+pd["lname"].strip()).strip()
+
+        if fullname == "":
+            LogError("*** Can't find fullname in row:")
+            LogError("        "+str(columnLabels))
+            LogError("        "+str(row))
+            continue
+
+        pd["Fullname"]=fullname
+        gPersons[fullname]=Person(fullname, pd)       # Store the email and response in a Person structure indexed by the full name
+
+
+
+
     # Now process the schedule, row by row
     # When we find a row with data in column 0, we have found a new time. This is a time row.
     # A time row contains items.
@@ -238,42 +276,6 @@ def main():
                     print("   "+itemname, file=f)
         if count == 0:
             print("    None found", file=f)
-
-    #***********************************************************************
-    # Analyze the People cells and add the information to gPersons
-
-    # Start by removing empty rows and padding all rows out to make the array rectangular
-    peopleCells=SquareUpMatrix(RemoveEmptyRowsFromMatrix(peopleCells))
-    columnLabels=peopleCells[0]
-
-    # Now read the remaining rows one by one, storing the cells in a ParmDict with the column header as key.
-    for row in peopleCells[1:]:
-        pd=ParmDict(CaseInsensitiveCompare=True)
-        for i, val in enumerate(row):
-            pd[columnLabels[i]]=val
-
-        # Now, we need to form a Fullname for the Person.
-        # If there is a Fullname column, use that.
-        fullname=""
-        if pd.Exists("full name") and pd["full name"] != "":
-            fullname=pd["full name"]
-        else:
-            # Create a fullname out of fname+lname
-            # Got to handle the case where one or the other name is missing or empty
-            if pd.Exists("fname"):
-                fullname=pd["fname"].strip()
-            if pd.Exists("lname"):
-                fullname=(fullname+" "+pd["lname"].strip()).strip()
-
-        if fullname == "":
-            LogError("*** Can't find fullname in row:")
-            LogError("        "+str(columnLabels))
-            LogError("        "+str(row))
-            continue
-
-        pd["Fullname"]=fullname
-        gPersons[fullname]=Person(fullname, pd)       # Store the email and response in a Person structure indexed by the full name
-
 
 
     #*************************************************************************************************
