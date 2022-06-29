@@ -570,7 +570,7 @@ def main():
     print("List of non-readings and KKs with no precis\n\n", file=txt)
     found=False
     for itemname, item in gItems.items():
-        if item.Name.find("Reading") > -1 or item.Name.find("KK") > -1 or item.Name.find("Kaffe") > -1 or item.Name.find("Autograph") > -1:
+        if "Reading" in item.Name or "KK" in item.Name or "Kaffe" in item.Name or "Autograph" in item.Name:
             continue
         if item.Precis is not None and len(item.Precis) > 0:
             continue
