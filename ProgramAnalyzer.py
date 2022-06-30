@@ -378,15 +378,14 @@ def main():
     fname=os.path.join( reportsdir, "Diag - Disturbingly similar names.txt")
     SafeDelete(fname)
     if len(similarNames) > 0:
-        txt=open(fname, "w")
-        print("Names that are disturbingly similar:", file=txt)
-        count=0
-        for s in similarNames:
-            print(f"   {s[0]}  &  {s[1]}", file=txt)
-            count+=1
-        if count == 0:
-            print("    None found", file=txt)
-        txt.close()
+        with open(fname, "w") as txt:
+            print("Names that are disturbingly similar:", file=txt)
+            count=0
+            for s in similarNames:
+                print(f"   {s[0]}  &  {s[1]}", file=txt)
+                count+=1
+            if count == 0:
+                print("    None found", file=txt)
 
 
     #****************************************************
@@ -426,18 +425,17 @@ def main():
     # Get a list of the program participants (the keys of the  participants dictionary) sorted by the last token in the name (which will usually be the last name)
     fname=os.path.join( reportsdir, "Program participant schedules.txt")
     SafeDelete(fname)
-    txt=open(fname, "w")
-    for personname in sortedAllParticipantList:
-        print("\n\n********************************************", file=txt)
-        print(personname, file=txt)
-        for schedElement in gSchedules[personname]:
-            if len(schedElement.DisplayName) > 0:
-                print(f"\n{NumericTime.NumericToTextDayTime(schedElement.Time)}: {schedElement.DisplayName} [{schedElement.Room}] {schedElement.ModFlag}", file=txt)
-                item=gItems[schedElement.ItemName]
-                print("Participants: "+item.DisplayPlist(), file=txt)
-                if item.Precis is not None and item.Precis != "":
-                    print("Precis: "+item.Precis, file=txt)
-    txt.close()
+    with open(fname, "w") as txt:
+        for personname in sortedAllParticipantList:
+            print("\n\n********************************************", file=txt)
+            print(personname, file=txt)
+            for schedElement in gSchedules[personname]:
+                if len(schedElement.DisplayName) > 0:
+                    print(f"\n{NumericTime.NumericToTextDayTime(schedElement.Time)}: {schedElement.DisplayName} [{schedElement.Room}] {schedElement.ModFlag}", file=txt)
+                    item=gItems[schedElement.ItemName]
+                    print("Participants: "+item.DisplayPlist(), file=txt)
+                    if item.Precis is not None and item.Precis != "":
+                        print("Precis: "+item.Precis, file=txt)
 
 
     # *******
@@ -478,91 +476,84 @@ def main():
     # Report on the number of people/item
     fname=os.path.join( reportsdir, "Items' people counts.txt")
     SafeDelete(fname)
-    txt=open(fname, "w")
-    print("List of number of people scheduled on each item\n\n", file=txt)
-    for itemname, item in gItems.items():
-        print(f"{NumericTime.NumericToTextDayTime(item.Time)} {item.Name}: {len(item.People)}", file=txt)
-    txt.close()
+    with open(fname, "w") as txt:
+        print("List of number of people scheduled on each item\n\n", file=txt)
+        for itemname, item in gItems.items():
+            print(f"{NumericTime.NumericToTextDayTime(item.Time)} {item.Name}: {len(item.People)}", file=txt)
 
     #******
     # Flag items with a suspiciously small number of people on them
     fname=os.path.join( reportsdir, "Diag - Items with unexpectedly low number of participants.txt")
     SafeDelete(fname)
-    txt=open(fname, "w")
-    print("List of non-readings, non-KKs, and non-solo items with fewer than 3 people on them\n\n", file=txt)
-    found=False
-    for itemname, item in gItems.items():
-        if item.Name:
-            if len(item.People) >= 3:
-                continue
-            if "Reading" in item.Name or "KK" in item.Name or "Kaffe" in item.Name or "Autograph" in item.Name:
-                continue
-            if item.Parms["solo"]:
-                continue
-            print(f"{NumericTime.NumericToTextDayTime(item.Time)} {item.Name}: {len(item.People)}", file=txt)
-            found=True
-    if not found:
-        print("None found", file=txt)
-    txt.close()
+    with open(fname, "w") as txt:
+        print("List of non-readings, non-KKs, and non-solo items with fewer than 3 people on them\n\n", file=txt)
+        found=False
+        for itemname, item in gItems.items():
+            if item.Name:
+                if len(item.People) >= 3:
+                    continue
+                if "Reading" in item.Name or "KK" in item.Name or "Kaffe" in item.Name or "Autograph" in item.Name:
+                    continue
+                if item.Parms["solo"]:
+                    continue
+                print(f"{NumericTime.NumericToTextDayTime(item.Time)} {item.Name}: {len(item.People)}", file=txt)
+                found=True
+        if not found:
+            print("None found", file=txt)
+
 
 
     #******
     # Flag items missing a moderator or a precis
     fname=os.path.join( reportsdir, "Diag - Items missing a moderator.txt")
     SafeDelete(fname)
-    txt=open(fname, "w")
-    print("List of non-readings and KKs with no moderator\n\n", file=txt)
-    found=False
-    for itemname, item in gItems.items():
-        if "Reading" in item.Name or "KK" in item.Name or "Kaffe" in item.Name or "Autograph" in item.Name:
-            continue
-        if item.Parms["solo"]:  # Solo items don't need a moderator
-            continue
-        if item.ModName != "":
-            continue
-        print(f"{NumericTime.NumericToTextDayTime(item.Time)} {item.Name}: {len(item.People)}", file=txt)
-        found=True
-    if not found:
-        print("None found", file=txt)
-    txt.close()
+    with open(fname, "w") as txt:
+        print("List of non-readings and KKs with no moderator\n\n", file=txt)
+        found=False
+        for itemname, item in gItems.items():
+            if "Reading" in item.Name or "KK" in item.Name or "Kaffe" in item.Name or "Autograph" in item.Name:
+                continue
+            if item.Parms["solo"]:  # Solo items don't need a moderator
+                continue
+            if item.ModName != "":
+                continue
+            print(f"{NumericTime.NumericToTextDayTime(item.Time)} {item.Name}: {len(item.People)}", file=txt)
+            found=True
+        if not found:
+            print("None found", file=txt)
+
 
     fname=os.path.join( reportsdir, "Diag - Items missing a precis.txt")
     SafeDelete(fname)
-    txt=open(fname, "w")
-    print("List of non-readings and KKs with no precis\n\n", file=txt)
-    found=False
-    for itemname, item in gItems.items():
-        if "Reading" in item.Name or "KK" in item.Name or "Kaffe" in item.Name or "Autograph" in item.Name:
-            continue
-        if item.Precis is not None and len(item.Precis) > 0:
-            continue
-        print(f"{NumericTime.NumericToTextDayTime(item.Time)} {item.Name}: {len(item.People)}", file=txt)
-        found=True
-    if not found:
-        print("None found", file=txt)
-    txt.close()
+    with open(fname, "w") as txt:
+        print("List of non-readings and KKs with no precis\n\n", file=txt)
+        found=False
+        for itemname, item in gItems.items():
+            if "Reading" in item.Name or "KK" in item.Name or "Kaffe" in item.Name or "Autograph" in item.Name:
+                continue
+            if item.Precis is not None and len(item.Precis) > 0:
+                continue
+            print(f"{NumericTime.NumericToTextDayTime(item.Time)} {item.Name}: {len(item.People)}", file=txt)
+            found=True
+        if not found:
+            print("None found", file=txt)
+
 
     #******
     # Report on the number of items/person
     # Include all people in the people tab, even those with no items
     fname=os.path.join( reportsdir, "Peoples' item counts.txt")
     SafeDelete(fname)
-    txt=open(fname, "w")
-    print("List of number of items each person is scheduled on\n\n", file=txt)
-    for personname in gPersons:
-        if personname in gSchedules.keys():
-            print(f"{personname}: {len(gSchedules[personname])}{'' if gPersons[personname].RespondedYes else ' not confirmed'}", file=txt)
-        else:
-            if gPersons[personname].RespondedYes:
-                print(personname+": coming, but not scheduled", file=txt)
-    txt.close()
+    with open(fname, "w") as txt:
+        print("List of number of items each person is scheduled on\n\n", file=txt)
+        for personname in gPersons:
+            if personname in gSchedules.keys():
+                print(f"{personname}: {len(gSchedules[personname])}{'' if gPersons[personname].RespondedYes else ' not confirmed'}", file=txt)
+            else:
+                if gPersons[personname].RespondedYes:
+                    print(personname+": coming, but not scheduled", file=txt)
 
 
-    # def Popup(s: str):
-    #     return
-    #     ctypes.windll.user32.MessageBoxW(0, s, "Your title", 1)
-    #
-    # Popup("About to create Document()")
     doc=docx.Document()
     # Popup("Document created")
     fname=os.path.join( reportsdir, "Pocket program.txt")
