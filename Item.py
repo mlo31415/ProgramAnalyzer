@@ -46,7 +46,7 @@ class Item:
             l=l.strip("<>").strip()
             if ":" in l:
                 loc=l.find(":")
-                self.Parms[l[:loc]]=l[loc:]
+                self.Parms[l[:loc]]=l[loc+1:].strip()
             else:
                 self.Parms[l]="True"
 
