@@ -481,6 +481,7 @@ def main():
         for itemname, item in gItems.items():
             print(f"{NumericTime.NumericToTextDayTime(item.Time)} {item.Name}: {len(item.People)}", file=txt)
 
+
     #******
     # Flag items with a suspiciously small number of people on them
     fname=os.path.join( reportsdir, "Diag - Items with unexpectedly low number of participants.txt")
@@ -500,7 +501,6 @@ def main():
                 found=True
         if not found:
             print("None found", file=txt)
-
 
 
     #******
@@ -535,6 +535,20 @@ def main():
                 continue
             print(f"{NumericTime.NumericToTextDayTime(item.Time)} {item.Name}: {len(item.People)}", file=txt)
             found=True
+        if not found:
+            print("None found", file=txt)
+
+
+
+    fname=os.path.join( reportsdir, "Equipment requirements.txt")
+    SafeDelete(fname)
+    with open(fname, "w") as txt:
+        print("List of items with equipment requirements\n\n", file=txt)
+        found=False
+        for itemname, item in gItems.items():
+            if item.Parms.Exists("equipment"):
+                print(f"{NumericTime.NumericToTextDayTime(item.Time)}, {item.Room}:  {item.Name}\n\t\t{item.Parms['equipment']}\n", file=txt)
+                found=True
         if not found:
             print("None found", file=txt)
 
