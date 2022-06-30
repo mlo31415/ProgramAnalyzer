@@ -453,6 +453,8 @@ def main():
                 if len(schedElement.DisplayName) > 0:
                     print(f"<item><title>{NumericTime.NumericToTextDayTime(schedElement.Time)}: {schedElement.DisplayName} [{schedElement.Room}] {schedElement.ModFlag}</title>", file=xml)
                     item=gItems[schedElement.ItemName]
+                    if schedElement.DisplayName in gItems and gItems[schedElement.DisplayName].Parms.Exists("equipment"):
+                        print(f"<equipment>{gItems[schedElement.DisplayName].Parms['equipment']}</equipment>", file=xml)
                     print(f"<participants>{item.DisplayPlist()}</participants>", file=xml)
                     if item.Precis is not None and item.Precis != "":
                         print(f"<precis>{item.Precis}</precis>", file=xml)
