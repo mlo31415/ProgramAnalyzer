@@ -162,7 +162,7 @@ def main():
     # We will drop columns even if they have something in them if they are not headed by a room name
     # We wprk in the transposed cleanedSchedualCells, since it's much easier to delete rows than columns
     temp=np.array(cleanedSchedualCells).T.tolist()  # Use numpy to transpose the array
-    cleanedSchedualCells=temp[0:]    # Copy over the time row
+    cleanedSchedualCells=[temp[0]]    # Copy over the time row
     for row in temp[1:]:
         if len(row[0].strip()) > 0:     # Copy over any rows with text in the first cell
             cleanedSchedualCells.append(row)
