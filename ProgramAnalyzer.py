@@ -146,19 +146,14 @@ def main():
     # Rows that are blank or start with a # as the 1st character of column 0 are ignored
     # Compress out the ignored rows
     cleanedSchedualCells: list[list[str]]=[]
-    rowIndex=1  # The first row contains the room names and we've already processed them.
-    while rowIndex < len(scheduleCells):
-        row=scheduleCells[rowIndex]
+    for row in scheduleCells:
         if len(row) == 0:  # Ignore empty rows
-            rowIndex+=1
             continue
         # Skip rows where the first character in the row is a "#"
         s="".join([r.strip() for r in row])
         if s[0] == "#":
-            rowIndex+=1
             continue
         cleanedSchedualCells.append(row)
-        rowIndex+=1
 
     cleanedSchedualCells=SquareUpMatrix(cleanedSchedualCells)
 
@@ -173,11 +168,13 @@ def main():
             cleanedSchedualCells.append(row)
     cleanedSchedualCells=np.array(cleanedSchedualCells).T.tolist()  # And transpose it back
 
-    # Copy the room names to gRoomNames
-    gRoomNames=[r.strip() for r in scheduleCells[0]] # Get the room names which are in the first row of the scheduleCells tab
+    # Move the room names line out of cleanedSchedualCells and into gRoomNames
+    gRoomNames=[r.strip() for r in cleanedSchedualCells[0]] # Get the room names which are in the first row of the scheduleCells tab
     if len(gRoomNames) == 0:
         LogError("Room names line (1st row of the schedule tab) is blank.")
         return
+    cleanedSchedualCells=cleanedSchedualCells[1:]
+
 
     # Now we have just the schedule rows.  They are of two types:
     #       A time row, which contains a time in colum 0
@@ -198,7 +195,7 @@ def main():
         # Possibly followed by a people row
         rowSecond=None
         if rowIndex < len(cleanedSchedualCells):
-            row=cleanedSchedualCells[rowIndex]   # Peak ahead to the next row
+            row=cleanedSchedualCells[rowIndex]   # Peek ahead to the next row
             if len(row[0]) == 0:
                 # We found a people row
                 rowSecond=row
