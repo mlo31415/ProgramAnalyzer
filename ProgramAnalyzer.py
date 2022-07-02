@@ -446,7 +446,7 @@ def main():
             print(f"<email>{gPersons[personname].Email}</email>", file=xml)
             for schedElement in gSchedules[personname]:
                 if len(schedElement.DisplayName) > 0:
-                    print(f"<item><title>{NumericTime.NumericToTextDayTime(schedElement.Time)}: {schedElement.DisplayName} [{schedElement.Room}] {schedElement.ModFlag}</title>", file=xml)
+                    print(f"<item><title>{NumericTime.NumericToTextDayTime(schedElement.Time)}: {schedElement.DisplayName} [{schedElement.Room}]</title>", file=xml)
                     item=gItems[schedElement.ItemName]
                     if schedElement.DisplayName in gItems and gItems[schedElement.DisplayName].Parms.Exists("equipment"):
                         print(f"<equipment>{gItems[schedElement.DisplayName].Parms['equipment']}</equipment>", file=xml)
