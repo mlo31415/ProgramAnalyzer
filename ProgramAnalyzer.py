@@ -428,7 +428,7 @@ def main():
             print(personname, file=txt)
             for schedElement in gSchedules[personname]:
                 if len(schedElement.DisplayName) > 0:
-                    print(f"\n{NumericTime.NumericToTextDayTime(schedElement.Time)}: {schedElement.DisplayName} [{schedElement.Room}] {schedElement.ModFlag}", file=txt)
+                    print(f"\n{NumericTime.NumericToTextDayTime(schedElement.Time)}: {schedElement.DisplayName} [{schedElement.Room}]", file=txt)
                     item=gItems[schedElement.ItemName]
                     print("Participants: "+item.DisplayPlist(), file=txt)
                     if item.Precis is not None and item.Precis != "":
