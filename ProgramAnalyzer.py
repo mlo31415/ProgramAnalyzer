@@ -177,9 +177,9 @@ def main():
 
 
     # Now we have just the schedule rows.  They are of two types:
-    #       A time row, which contains a time in colum 0
-    #       A people row which follows a time row and has column 0 empty
-    # Process them
+    #       A time/item row, which contains a time in column 0 and may contain items in some or all of the rest of the columns
+    #       A people row which follows a time row and has column 0 empty. This may contain a list of people for each of the items
+    # Process them.
     rowIndex=0
     while rowIndex < len(cleanedSchedualCells):
         # The first row must be a time row.
