@@ -215,6 +215,13 @@ def main():
             itemName=rowFirst[col]
             if len(itemName) > 0:  # It is only an item if the cell contains text
 
+                # In some cases, the item may have a generic name, e.g.,  "Reading", "Autographs".  This name will be used in multiple places, but
+                # We require a unique name to track the isons of people with items.  If an item name is already in gItems, we uniquify the item name
+                # by appending day/time to it.
+                # Note that anything in {curly brackets} is ignored.
+                if itemName in gItems:
+                    itemName+=" {"+roomName+" "+str(time)+"}"
+
                 # Was there a people row following this time/items row?
                 if rowSecond is not None:
                     # We indicate items which go for an hour, but have some people in one part and some in another using a special notation in the people list.
