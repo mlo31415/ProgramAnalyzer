@@ -318,6 +318,28 @@ def main():
 
 
     #******
+    # Check for people with bogus email addresses
+    fname=os.path.join(reportsdir, "Diag - People with suspect email addresses.txt")
+    with open(fname, "w") as txt:
+        print("People with suspect email addresses:", file=txt)
+        count=0
+        for personname, person in gPersons.items():
+            if len(person.Email) > 0:
+                if "," in person.Email or " " in person.Email:
+                    count+=1
+                    print(f"   {personname} has a email address containing a comma or a space", file=txt)
+                else:
+                    pattern="^[a-zA-Z0-9_]+@[a-zA-Z0-9_]+\.[a-zA-Z0-9]+$"
+                    m=RegEx.match(pattern, person.Email)
+                    if m is None:
+                        count+=1
+                        print(f"   {personname} has a email address not of the form something@something.something", file=txt)
+
+        if count == 0:
+            print("    None found", file=txt)
+
+
+    #******
     # Check for people in the schedule whose response is 'y', but who are not scheduled to be on the program
     fname=os.path.join(reportsdir, "Diag - People response is 'y' but who are not scheduled.txt")
     with open(fname, "w") as txt:
