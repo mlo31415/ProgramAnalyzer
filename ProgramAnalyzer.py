@@ -177,15 +177,15 @@ def main():
 
 
     # Now we have just the schedule rows.  They are of two types:
-    #       A time/item row, which contains a time in column 0 and may contain items in some or all of the rest of the columns
+    #       A time/items row, which contains a time in column 0 and may contain items in some or all of the rest of the columns
     #       A people row which follows a time row and has column 0 empty. This may contain a list of people for each of the items
     # Process them.
     rowIndex=0
     while rowIndex < len(cleanedSchedualCells):
-        # The first row must be a time row.
+        # The first row must be a time/items row.
         row=cleanedSchedualCells[rowIndex]
-        if len(row[0]) == 0:     # Time rows have content in the 1st column. Is it a time row?
-            LogError("Error reading schedule tab: The row below is a people row; we were expecting a time row:")
+        if len(row[0]) == 0:     # Time/items rows have content in the 1st column. Is it a time/items row?
+            LogError("Error reading schedule tab: The row below is a people row; we were expecting a time/items row:")
             LogError("       row="+" ".join(row))
             rowIndex+=1
             continue
