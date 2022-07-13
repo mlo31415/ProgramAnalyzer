@@ -206,17 +206,17 @@ def main():
         if time not in gTimes:
             gTimes.append(time)  # We want to allow duplicate time rows, just-in-case
 
-        # Looking at the rest of the row, there may be text in one or more of the room columns
+        # Looking at the rest of the row, there may be text in one or more of the room columns which defines an item
         for col, roomName in enumerate(gRoomNames):
             if col == 0:    # Time is in col 0, so we don't want to look at that
                 continue
 
             # This has to be an item name since it's a cell containing text in a row that starts with a time and in a column that starts with a room
             itemName=rowFirst[col]
-            if len(itemName) > 0:  # Not all rooms contain items at all times, so check that the cell contains text?
+            if len(itemName) > 0:  # It is only an item if the cell contains text
 
-                # Does a row indexed by peopleRowIndex exist in the spreadsheet? Does it have enough columns? Does it have anything in the correct column?
-                if rowSecond is not None and len(rowSecond[col]) > 0:
+                # Was there a people row following this time/items row?
+                if rowSecond is not None:
                     # We indicate items which go for an hour, but have some people in one part and some in another using a special notation in the people list.
                     # Robert A. Heinlein, [0.5] John W. Campbell puts RAH on the hour and JWC a half-hour later.
                     # There is much messiness in this.
