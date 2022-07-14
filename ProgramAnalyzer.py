@@ -83,7 +83,7 @@ def main():
                 startingDay=startingDay[0].upper()+startingDay.lower()[1:]  # Force the capitalization to be right
     # Reorganize the dayList so it starts with our starting day. It's extra-long so that clipping days from the front will still leave a full week.
     if startingDay not in NumericTime.gDayList:
-        LogError("Can't interpret Starting day='"+startingDay+"'.  Will use 'Friday'")
+        LogError("Can't interpret ControlTab:Starting day='"+startingDay+"'.  Will use 'Friday'")
         startingDay="Friday"
     i=NumericTime.gDayList.index(startingDay)
     NumericTime.gDayList=NumericTime.gDayList[i:]
