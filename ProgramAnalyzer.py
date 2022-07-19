@@ -596,21 +596,6 @@ def main():
 
     doc=docx.Document()
     # Popup("Document created")
-    fname=os.path.join(reportsdir, "Pocket program.txt")
-    try:
-        # Popup("About to try SafeDelete("+fname+")")
-        if not SafeDelete(fname):
-            pass
-            # Popup("SafeDelete returned False")
-    except:
-        pass
-        # Popup("SafeDelete threw exception")
-    try:
-        # Popup("About to try Open("+fname+")")
-        txt=open(fname, "w")
-    except:
-        pass
-        # Popup("open("+fname+")  threw exception")
 
     AppendParaToDoc(doc, "Schedule", bold=True, size=24)
     print("Schedule", file=txt)
