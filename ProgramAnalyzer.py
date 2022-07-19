@@ -594,9 +594,20 @@ def main():
                     print(personname+": coming, but not scheduled", file=txt)
 
 
-    doc=docx.Document()
-    # Popup("Document created")
+    # Create the pocket program Word file and the .txt file at the same time
+    fname=os.path.join(reportsdir, "Pocket program.txt")
+    try:
+        if not SafeDelete(fname):
+            pass
+    except:
+        pass
+    try:
+        txt=open(fname, "w")    # The file to receive the .txt document
+    except:
+        pass
+        # Popup("open("+fname+")  threw exception")
 
+    doc=docx.Document()     # The object holding the partly-created Word document
     AppendParaToDoc(doc, "Schedule", bold=True, size=24)
     print("Schedule", file=txt)
     for time in gTimes:
@@ -619,10 +630,8 @@ def main():
                         if item.Precis is not None and item.Precis != "":
                             AppendParaToDoc(doc, item.Precis, italic=True, size=12, indent=0.6)
                             print("            "+item.Precis, file=txt)
-    # Popup("About to create Pocket Program.docx")
     fname=os.path.join(reportsdir, "Pocket program.docx")
     doc.save(fname)
-    # Popup("Pocket Program.docx has been saved")
     txt.close()
 
 
