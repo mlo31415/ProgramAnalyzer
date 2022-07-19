@@ -5,10 +5,14 @@ import json
 import os.path
 import difflib
 import re as RegEx
+
 import docx
 from docx.shared import Pt, Inches
 from docx import text
 from docx.text import paragraph
+from docx.enum import section
+from docx.enum.section import WD_ORIENTATION
+
 import numpy as np
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
@@ -634,6 +638,21 @@ def main():
     doc.save(fname)
     txt.close()
 
+
+    # Create the tentacrd Word document
+    doc=docx.Document()
+    section=doc.sections[0]
+    pagedims=section.page_height, section.page_width
+    for personname in sortedAllParticipantList:
+        section=doc.add_section()
+        section.orientation=WD_ORIENTATION.LANDSCAPE
+        section.page_width, section.page_height=pagedims    # Note that this flips the dims
+        section.top_margin, section.bottom_margin=(6*914400, 914400)  # (Inches(5), Inches(1))
+        para=doc.add_paragraph()
+        para.alignment=1
+        AppendTextToPara(para, personname, size=86, indent=0.3)
+
+    doc.save(os.path.join(reportsdir, "Tentcards.docx"))
 
     #******
     # Generate web pages, one for each day.
