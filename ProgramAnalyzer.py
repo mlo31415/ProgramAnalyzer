@@ -646,11 +646,19 @@ def main():
     for personname in sortedAllParticipantList:
         section=doc.add_section()
         section.orientation=WD_ORIENTATION.LANDSCAPE
-        section.page_width, section.page_height=pagedims    # Note that this flips the dims
-        section.top_margin, section.bottom_margin=(6*914400, 914400)  # (Inches(5), Inches(1))
+        section.page_width=Inches(11)
+        section.page_height=Inches(8.5)
+        section.top_margin=Inches(5)
+        section.bottom_margin=Inches(1)
+        section.right_margin=Inches(0.2)
+        section.left_margin=Inches(0.2)
+
         para=doc.add_paragraph()
         para.alignment=1
-        AppendTextToPara(para, personname, size=86, indent=0.3)
+        size=86
+        if len(personname) > 18:
+            size=86*18/len(personname)
+        AppendTextToPara(para, personname, size=size, indent=0)
 
     doc.save(os.path.join(reportsdir, "Tentcards.docx"))
 
