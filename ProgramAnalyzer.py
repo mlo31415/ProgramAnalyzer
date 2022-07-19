@@ -639,10 +639,9 @@ def main():
     txt.close()
 
 
-    # Create the tentacrd Word document
+    # Create the individual (one per person) tentcard Word document
     doc=docx.Document()
     section=doc.sections[0]
-    pagedims=section.page_height, section.page_width
     for personname in sortedAllParticipantList:
         section=doc.add_section()
         section.orientation=WD_ORIENTATION.LANDSCAPE
