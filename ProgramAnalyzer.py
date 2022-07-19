@@ -659,7 +659,43 @@ def main():
             size=86*18/len(personname)
         AppendTextToPara(para, personname, size=size, indent=0)
 
-    doc.save(os.path.join(reportsdir, "Tentcards.docx"))
+    doc.save(os.path.join(reportsdir, "Tentcards -- Individual.docx"))
+
+
+    # Create the tentcards for each program item Word document
+    doc=docx.Document()
+    section=doc.sections[0]
+    for room in gRoomNames:
+        for time in gTimes:
+            for itemName, item in gItems.items():
+                if item.Time == time and item.Room == room:
+                    if len(item.DisplayName) > 0:
+                        for person in item.People:
+                            # Do a tentcard for this person
+                            section=doc.add_section()
+                            section.orientation=WD_ORIENTATION.LANDSCAPE
+                            section.page_width=Inches(11)
+                            section.page_height=Inches(8.5)
+
+                            section.top_margin=Inches(1)
+                            section.right_margin=Inches(0.2)
+                            section.left_margin=Inches(0.2)
+                            #section.top_margin=Inches(5)
+                            section.bottom_margin=Inches(1)
+
+                            # Add the paragraph for this tentcard
+                            AppendParaToDoc(doc, f"{NumericTime.NumericToTextDayTime(time)} --  {room}\n", size=12, indent=0)
+                            AppendParaToDoc(doc, f"{item.DisplayName}\n", size=12, indent=0)
+
+                            # Set the margins for the big person's name for the front of the tentcard
+                            AppendParaToDoc(doc, "\n", size=230)
+                            size=86
+                            if len(person) > 18:
+                                size=86*18/len(person)
+                            AppendParaToDoc(doc, person, size=size, indent=0, alignment=1)
+
+    doc.save(os.path.join(reportsdir, "Tentcards -- By Program Item.docx"))
+
 
     #******
     # Generate web pages, one for each day.
@@ -837,8 +873,7 @@ def AddItemWithoutPeople(gItems: dict[str, Item], time: float, roomName: str, it
 
 #******
 # Create a docx and a .txt version for the pocket program
-# Note that we're generating two files at once here.
-def AppendParaToDoc(doc: docx.Document, txt: str, bold=False, italic=False, size=14, indent=0.0, font="Calibri"):
+def AppendParaToDoc(doc: docx.Document, txt: str, bold=False, italic=False, size=14, indent=0.0, font="Calibri", alignment=0):
     para=doc.add_paragraph()
     run=para.add_run(txt)
     run.bold=bold
@@ -846,6 +881,7 @@ def AppendParaToDoc(doc: docx.Document, txt: str, bold=False, italic=False, size
     runfont=run.font
     runfont.name=font
     runfont.size=Pt(size)
+    para.alignment=alignment
     para.paragraph_format.left_indent=Inches(indent)
     para.paragraph_format.line_spacing=1
     para.paragraph_format.space_after=0
