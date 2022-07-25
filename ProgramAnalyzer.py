@@ -451,21 +451,34 @@ def main():
 
 
     #*******
-    # Print the program participant's schedule report
+    # Print the program participant's schedule report and create a docx file as well.
     # Get a list of the program participants (the keys of the  participants dictionary) sorted by the last token in the name (which will usually be the last name)
+    doc=docx.Document()     # The object holding the partly-created Word document
     fname=os.path.join(reportsdir, "Program participant schedules.txt")
     SafeDelete(fname)
     with open(fname, "w") as txt:
         for personname in sortedAllParticipantList:
+            section=doc.add_section()
+            section.orientation=WD_ORIENTATION.PORTRAIT
             print("\n\n********************************************", file=txt)
             print(personname, file=txt)
+            AppendParaToDoc(doc, personname, bold=True, size=16)
             for schedElement in gSchedules[personname]:
                 if len(schedElement.DisplayName) > 0:
                     print(f"\n{NumericTime.NumericToTextDayTime(schedElement.Time)}: {schedElement.DisplayName} [{schedElement.Room}]", file=txt)
+                    para=doc.add_paragraph()
+                    AppendTextToPara(para, "\n"+NumericTime.NumericToTextDayTime(schedElement.Time)+":", size=14)
+                    AppendTextToPara(para, "  "+schedElement.DisplayName, size=14, bold=True)
+                    AppendTextToPara(para, "  "+schedElement.Room, size=12)
                     item=gItems[schedElement.ItemName]
-                    print("Participants: "+item.DisplayPlist(), file=txt)
+                    part=f"Participants: {item.DisplayPlist()}"
+                    print(part, file=txt)
+                    AppendParaToDoc(doc, part)
                     if item.Precis is not None and item.Precis != "":
-                        print("Precis: "+item.Precis, file=txt)
+                        print(f"Precis: {item.Precis}", file=txt)
+                        AppendParaToDoc(doc, item.Precis, italic=True)
+    fname=os.path.join(reportsdir, "Program participant schedules.docx")
+    doc.save(fname)
 
 
     # *******
