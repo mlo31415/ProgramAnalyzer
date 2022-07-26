@@ -476,7 +476,7 @@ def main():
                     AppendParaToDoc(doc, part)
                     if item.Precis is not None and item.Precis != "":
                         print(f"Precis: {item.Precis}", file=txt)
-                        AppendParaToDoc(doc, item.Precis, italic=True)
+                        AppendParaToDoc(doc, item.Precis, italic=True, size=12)
     fname=os.path.join(reportsdir, "Program participant schedules.docx")
     doc.save(fname)
 
