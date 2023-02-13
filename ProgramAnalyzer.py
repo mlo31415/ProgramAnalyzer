@@ -490,16 +490,19 @@ def main():
         for personname in sortedAllParticipantList:
             print(f"<person><full name>{personname}</full name>", file=xml)
             print(f"<email>{gPersons[personname].Email}</email>", file=xml)
-            for schedElement in gSchedules[personname]:
-                if len(schedElement.DisplayName) > 0:
-                    print(f"<item><title>{NumericTime.NumericToTextDayTime(schedElement.Time)}: {schedElement.DisplayName} [{schedElement.Room}]</title>", file=xml)
-                    item=gItems[schedElement.ItemName]
-                    if schedElement.DisplayName in gItems and gItems[schedElement.DisplayName].Parms.Exists("equipment"):
-                        print(f"<equipment>{gItems[schedElement.DisplayName].Parms['equipment']}</equipment>", file=xml)
-                    print(f"<participants>{item.DisplayPlist()}</participants>", file=xml)
-                    if item.Precis is not None and item.Precis != "":
-                        print(f"<precis>{item.Precis}</precis>", file=xml)
-                    print(f"</item>\n", file=xml)
+            if len(gSchedules[personname]) == 0:
+                print(f"<item><title>No Items Scheduled Yet</title><participants>{personname}</participants></item>", file=xml)
+            else:
+                for schedElement in gSchedules[personname]:
+                    if len(schedElement.DisplayName) > 0:
+                        print(f"<item><title>{NumericTime.NumericToTextDayTime(schedElement.Time)}: {schedElement.DisplayName} [{schedElement.Room}]</title>", file=xml)
+                        item=gItems[schedElement.ItemName]
+                        if schedElement.DisplayName in gItems and gItems[schedElement.DisplayName].Parms.Exists("equipment"):
+                            print(f"<equipment>{gItems[schedElement.DisplayName].Parms['equipment']}</equipment>", file=xml)
+                        print(f"<participants>{item.DisplayPlist()}</participants>", file=xml)
+                        if item.Precis is not None and item.Precis != "":
+                            print(f"<precis>{item.Precis}</precis>", file=xml)
+                        print(f"</item>\n", file=xml)
             print("</person>", file=xml)
 
 
