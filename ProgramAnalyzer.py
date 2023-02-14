@@ -253,6 +253,10 @@ def main():
     gSchedules: dict[str, list[ScheduleElement]]=defaultdict(list)  # A dictionary keyed by a person's name containing a ScheduleElement list
     # ScheduleElement is the (time, room, item, moderator) tuples, of an item that that person is on.
 
+    # Used so that the gSchedules XML contains entries for unscheduled people which will be used in ProgramMailAnalyzer to handle things like invitations
+    for person in gPersons:
+        gSchedules[person]=[ScheduleElement(PersonName=person, IsDummy=True)]
+
     for item in gItems.values():
         for personName in item.People:  # For each person listed on this item
             if IsModerator(personName):

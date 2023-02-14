@@ -9,6 +9,7 @@ class ScheduleElement:
     Room: str=""          # The name of a room
     ItemName: str=""      # The name of an item
     IsMod: bool=False       # Is this person the moderator of this item?
+    IsDummy: bool=False     # Is this a dummy item?
 
     @property
     # Generate the display-name of an item. (Remove any text following the first "{")
