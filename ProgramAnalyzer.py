@@ -140,7 +140,7 @@ def main():
 
 
 
-    # Now process the schedule, row by row
+    # Now process the main schedule row by row
     # When we find a row with data in column 0, we have found a new time. This is a time row.
     # A time row contains items.
     # A time row will normally be followed by a people row containing the participants for those items.
@@ -237,14 +237,14 @@ def main():
                         AddItemWithPeople(gItems, time, roomName, itemName, rowSecond[col])
                     else:
                         plist1=r.groups()[0].strip()
-                        deltaT=r.groups()[1].strip()
+                        deltaT=float(r.groups()[1].strip())
                         plist2=r.groups()[2].strip()
-                        AddItemWithPeople(gItems, time, roomName, itemName, plist1)
-                        newTime=time+float(deltaT)
+                        AddItemWithPeople(gItems, time, roomName, itemName, plist1, length=deltaT)
+                        newTime=time+deltaT
                         if newTime not in gTimes:
                             gTimes.append(newTime)
                         # This second instance will need to have a distinct item name, so add {#2} to the item name
-                        AddItemWithPeople(gItems, newTime, roomName, itemName+" {#2}", plist2)
+                        AddItemWithPeople(gItems, newTime, roomName, itemName+" {#2}", plist2, length=1.0-deltaT)   #TODO: Do we want to handle divisions other thin into 1/2?
                 else:  # We have an item with no people on it.
                     AddItemWithoutPeople(gItems, time, roomName, itemName)
 
@@ -369,6 +369,27 @@ def main():
         if count == 0:
             print("    None found", file=txt)
 
+
+    # Does (t1, l1) overlap (t2, l2) where t and l and times and lengths in float hours?
+    def TimesOverlap(t1: float, l1: float, t2: float, l2: float) -> bool:
+        # Define epsilon=0.001 hours slop
+        epsilon=0.001
+
+        # Bogus times never overlap
+        if t1 < 0+epsilon or t2 < 0+epsilon:
+            return False
+
+        # Note that we want to ignore 0-length overlaps such as  (10.0, 1.0) not overlapping (11.0, x)
+        if t1 < t2:
+            if t1+l1 > t2+epsilon:
+                return True    # t1+l1 is less than t2 or exceeds t2 by less than epsilon
+            return False
+        # So t1 must be >= t2
+        if t2+l2 > t1+epsilon:
+            return True    # t2+l2 is less than t1 or exceeds t1 by less than epsilon
+        return False
+
+
     #******
     # Check for people who are scheduled opposite themselves
     fname=os.path.join(reportsdir, "Diag - People scheduled against themselves.txt")
@@ -384,7 +405,7 @@ def main():
             # Look for duplicate times
             prev: ScheduleElement=pSched[0]
             for item in pSched[1:]:
-                if item.Time == prev.Time:
+                if TimesOverlap(item.Time, item.Length, prev.Time, prev.Length):
                     print(f"{personname}: {NumericTime.NumericToTextDayTime(prev.Time)}: {prev.Room} and also {item.Room}", file=txt)
                     count+=1
                 prev=item
@@ -822,7 +843,7 @@ def main():
 #*************************************************************************************************
 # Miscellaneous helper functions
 
-# Read the contents of a spreadsheet tab into a list of list of strings
+# Read the contents of a spreadsheet tab into a list of lists of strings
 # Ignore rows beginning with #
 def ReadSheetFromTab(sheet, spreadSheetID, parms: ParmDict, parmname: str) -> list[list[str]]:
 
@@ -863,7 +884,7 @@ def SafeDelete(fn: str) -> bool:
 
 #.......
 # Add an item with a list of people to the gItems dict, and add the item to each of the persons who are on it
-def AddItemWithPeople(gItems: dict[str, Item], time: float, roomName: str, itemName: str, plistText: str) -> None:
+def AddItemWithPeople(gItems: dict[str, Item], time: float, roomName: str, itemName: str, plistText: str, length: float=1.0) -> None:
 
     plist=[p.strip() for p in plistText.split(",") ]    # Get the people as a list with excess spaces removed
     plist=[p for p in plist if len(p) > 0]              # Ignore empty entries
@@ -876,7 +897,7 @@ def AddItemWithPeople(gItems: dict[str, Item], time: float, roomName: str, itemN
     # And add the item with its list of people to the items table.
     if itemName in gItems:  # If the item's name is already in use, add a uniquifier of room+day/time
         itemName=itemName+"  {"+roomName+" "+NumericTime.NumericToTextDayTime(time)+"}"
-    item=Item(ItemText=itemName, Time=time, Room=roomName, People=peopleList, ModName=modName)
+    item=Item(ItemText=itemName, Time=time, Length=length, Room=roomName, People=peopleList, ModName=modName)
     gItems[item.Name]=item
 
 

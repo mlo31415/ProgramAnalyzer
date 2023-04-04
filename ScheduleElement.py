@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 class ScheduleElement:
     PersonName: str=""          # The person's name
     Time: float=-1        # A numeric time
+    Length: float=0.0       # Length of item in hours
     Room: str=""          # The name of a room
     ItemName: str=""      # The name of an item
     IsMod: bool=False       # Is this person the moderator of this item?

@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from HelpersPackage import ParmDict, SearchAndReplace
+from Log import Log
 
 # A class to hold the information for one Item
 class Item:
-    def __init__(self, ItemText: str="", Time: float=0.0, Room: str="", People: list[str]=None, ModName: str="", Precis: str="", Parms: ParmDict=None):
+    def __init__(self, ItemText: str="", Time: float=0.0, Length: float=1.0, Room: str="", People: list[str]=None, ModName: str="", Precis: str="", Parms: ParmDict=None):
         self.Time: float=Time
+        self.Length=Length
         self.Room: str=Room
         if People is None:
             People=[]
