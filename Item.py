@@ -16,6 +16,10 @@ class Item:
             Parms=ParmDict(CaseInsensitiveCompare=True)
         self.Parms: ParmDict=Parms
         self.ItemText=ItemText  # This must be last as it relies on the rest of the object having been initialized
+        self.IsContinuation: bool=False
+        if "{cont}" in ItemText:
+            self.IsContinuation=True
+        Log(f"{ItemText=}  {Time=}")
 
 
     @property
