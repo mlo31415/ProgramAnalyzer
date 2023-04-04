@@ -129,7 +129,7 @@ def main():
                 fullname=(fullname+" "+pd["lname"].strip()).strip()
 
         if fullname == "":
-            LogError("*** Can't find fullname in row:")
+            LogError("*** Can't find full name in row:")
             LogError("        "+str(columnLabels))
             LogError("        "+str(row))
             continue
@@ -427,7 +427,7 @@ def main():
 
     #*******
     # Print the People with items by time report
-    # Get a list of the program participants (the keys of the  participants dictionary) sorted by the last token in the name (which will usually be the last name)
+    # Get a list of the program participants (the keys of the participants dictionary) sorted by the last token in the name (which will usually be the last name)
     sortedAllParticipantList=sorted(gSchedules.keys(), key=lambda x: x.split(" ")[-1])
     fname=os.path.join(reportsdir, "People with items by time.txt")
     SafeDelete(fname)
