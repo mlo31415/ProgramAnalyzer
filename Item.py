@@ -30,7 +30,7 @@ class Item:
     @ItemText.setter
     # We take the entire item cell contents and parse it into its pieces.
     def ItemText(self, val: str):
-        # Save the whole item text in _ItenText
+        # Save the whole item text in _ItemText
         self._ItemText=val
         # Initialize the rest to empty strings
         self._Name: str=""
