@@ -1,4 +1,4 @@
-from HelpersPackage import ParmDict
+from HelpersPackage import ParmDict, YesNoMaybe
 
 class Person:
     def __init__(self, Fullname: str="", Parms: ParmDict=None):
@@ -11,7 +11,7 @@ class Person:
 
     @property
     def RespondedYes(self) -> bool:
-        return self.Parms["response", ""].lower() == "y"
+        return "yes" == YesNoMaybe(self.Parms["response", ""])
 
     @property
     def Email(self) -> str:
@@ -19,4 +19,4 @@ class Person:
 
     @property
     def Response(self) -> str:
-        return self.Parms["response"]
+        return YesNoMaybe(self.Parms["response"])
