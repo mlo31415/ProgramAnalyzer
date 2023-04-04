@@ -433,10 +433,11 @@ def main():
     SafeDelete(fname)
     with open(fname, "w") as txt:
         for personname in sortedAllParticipantList:
-            print("\n"+personname, file=txt)
-            for schedElement in gSchedules[personname]:
-                if len(schedElement.DisplayName) > 0:
-                    print(f"    {NumericTime.NumericToTextDayTime(schedElement.Time)}: {schedElement.DisplayName} [{schedElement.Room}] {schedElement.ModFlag}", file=txt)
+            if gPersons[personname].RespondedYes:
+                print("\n"+personname, file=txt)
+                for schedElement in gSchedules[personname]:
+                    if len(schedElement.DisplayName) > 0:
+                        print(f"    {NumericTime.NumericToTextDayTime(schedElement.Time)}: {schedElement.DisplayName} [{schedElement.Room}] {schedElement.ModFlag}", file=txt)
 
     #*******
     # Print the Items with people by time report
