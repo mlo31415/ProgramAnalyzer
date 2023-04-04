@@ -19,6 +19,7 @@ from google.oauth2 import service_account
 from googleapiclient.errors import HttpError
 
 from HelpersPackage import PyiResourcePath, ParmDict, ReadListAsParmDict, MessageLog, SquareUpMatrix, RemoveEmptyRowsFromMatrix
+from HelpersPackage import GetParmFromParmDict
 
 from ScheduleElement import ScheduleElement
 from Item import Item
@@ -42,11 +43,7 @@ def main():
         MessageLog(f"Can't open/read {os.getcwd()}/parameters.txt\nProgramAnalyzer terminated.")
         exit(999)
 
-    if not parms["credentials"]:
-        MessageLog("parameters.txt does not designate a credentials file.\nProgramAnalyzer terminated.")
-        exit(999)
-
-    with open(parms["credentials"]) as source:
+    with open(GetParmFromParmDict(parms, "credentials")) as source:
         info=json.load(source)
         Log("Json read")
 
@@ -56,7 +53,7 @@ def main():
     Log("credentials.txt read")
 
     # Create the reports subfolder if none exists
-    reportsdir=parms["reportsdir", "Reports"]
+    reportsdir=GetParmFromParmDict(parms, "reportsdir", "Reports")
     if not os.path.exists(reportsdir):
         os.mkdir(reportsdir)
         Log(f"Reports directory {os.getcwd()}/{reportsdir} created ")
@@ -69,10 +66,7 @@ def main():
 
     # Call the Sheets API to load the various tabs of the spreadsheet
     googleSheets=service.spreadsheets()
-    if not parms["SheetID"]:
-        MessageLog("parameters.txt does not designate a SheetID")
-        exit(999)
-    SPREADSHEET_ID=parms["SheetID"]  # This is the ID of the specific spreadsheet we're reading
+    SPREADSHEET_ID=GetParmFromParmDict(parms, "SheetID")  # This is the ID of the specific spreadsheet we're reading
     scheduleCells=ReadSheetFromTab(googleSheets, SPREADSHEET_ID, parms, "ScheduleTab")
     precisCells=ReadSheetFromTab(googleSheets, SPREADSHEET_ID, parms, "PrecisTab")
     peopleCells=ReadSheetFromTab(googleSheets, SPREADSHEET_ID, parms, "PeopleTab")
@@ -832,10 +826,7 @@ def main():
 def ReadSheetFromTab(sheet, spreadSheetID, parms: ParmDict, parmname: str) -> list[list[str]]:
 
     # Convert the generic name of the tab to the specific name to be used this year
-    tabname=parms[parmname]
-    if not tabname:
-        LogError(f"ReadSheetFromTab: Parameter {parmname} not found in parameters.txt")
-        return []
+    tabname=GetParmFromParmDict(parms, parmname)
     cells=[]
     try:
         cells=sheet.values().get(spreadsheetId=spreadSheetID, range=f'{tabname}!A1:Z999').execute().get('values', [])  # Read the whole thing.
