@@ -405,9 +405,8 @@ def main():
             # Look for duplicate times
             prev: ScheduleElement=pSched[0]
             for item in pSched:
-                if item.IsDummy:        # We insert dummy items for use elsewhere and need to ignore them here.
-                    continue
-                if not prev.IsDummy:    # An empty Item structure also has IsDummy set, and prev is initialized to am empty Item structure
+                # We insert dummy items for use elsewhere and need to ignore them here.  Also, prev is initialized to an empty Item which also has IsDummy ste
+                if not item.IsDummy and not prev.IsDummy:
                     if TimesOverlap(item.Time, item.Length, prev.Time, prev.Length):
                         print(f"{personname}: {NumericTime.NumericToTextDayTime(prev.Time)}: {prev.Room} and also {item.Room}", file=txt)
                         count+=1
