@@ -404,10 +404,13 @@ def main():
             pSched.sort(key=lambda x: x.Time)
             # Look for duplicate times
             prev: ScheduleElement=pSched[0]
-            for item in pSched[1:]:
-                if TimesOverlap(item.Time, item.Length, prev.Time, prev.Length):
-                    print(f"{personname}: {NumericTime.NumericToTextDayTime(prev.Time)}: {prev.Room} and also {item.Room}", file=txt)
-                    count+=1
+            for item in pSched:
+                if item.IsDummy:        # We insert dummy items for use elsewhere and need to ignore them here.
+                    continue
+                if not prev.IsDummy:    # An empty Item structure also has IsDummy set, and prev is initialized to am empty Item structure
+                    if TimesOverlap(item.Time, item.Length, prev.Time, prev.Length):
+                        print(f"{personname}: {NumericTime.NumericToTextDayTime(prev.Time)}: {prev.Room} and also {item.Room}", file=txt)
+                        count+=1
                 prev=item
 
         # To make it clear that the test ran, write a message if no conflicts were found.
