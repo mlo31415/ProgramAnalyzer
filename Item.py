@@ -7,7 +7,7 @@ from Log import Log
 class Item:
     def __init__(self, ItemText: str="", Time: float=0.0, Length: float=1.0, Room: str="", People: list[str]=None, ModName: str="", Precis: str="", Parms: ParmDict=None):
         self.Time: float=Time
-        self.Length=Length
+        self.Length: float=Length
         self.Room: str=Room
         if People is None:
             People=[]

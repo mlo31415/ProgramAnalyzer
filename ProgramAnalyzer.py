@@ -246,7 +246,7 @@ def main():
                         # This second instance will need to have a distinct item name, so add {#2} to the item name
                         AddItemWithPeople(gItems, newTime, roomName, itemName+" {#2}", plist2, length=1.0-deltaT)   #TODO: Do we want to handle divisions other thin into 1/2?
                 else:  # We have an item with no people on it.
-                    AddItemWithoutPeople(gItems, time, roomName, itemName)
+                    AddItemWithoutPeople(gItems, time, roomName, itemName, 1.0)
 
 
     # Extract information from Items, etc., to be used to process schedules
@@ -261,7 +261,7 @@ def main():
         for personName in item.People:  # For each person listed on this item
             if IsModerator(personName):
                 modName=RemoveModFlag(personName)
-            gSchedules[personName].append(ScheduleElement(PersonName=personName, Time=item.Time, Room=item.Room, ItemName=item.Name, IsMod=(personName == personName)))  # And append a tuple with the time, room, item name, and moderator flag
+            gSchedules[personName].append(ScheduleElement(PersonName=personName, Time=item.Time, Length=item.Length, Room=item.Room, ItemName=item.Name, IsMod=(personName == personName)))  # And append a tuple with the time, room, item name, and moderator flag
 
     # Make sure times are sorted into ascending order.
     # The simple sort works because the times are stored as numeric hours since start of first day.
@@ -905,10 +905,10 @@ def AddItemWithPeople(gItems: dict[str, Item], time: float, roomName: str, itemN
 
 #.......
 # Add an item with a list of people, and add the item to each of the persons
-def AddItemWithoutPeople(gItems: dict[str, Item], time: float, roomName: str, itemName: str) -> None:
+def AddItemWithoutPeople(gItems: dict[str, Item], time: float, roomName: str, itemName: str, length: float=0) -> None:
     if itemName in gItems:  # If the item's name is already in use, add a uniquifier of room+day/time
         itemName=itemName+"  {"+roomName+" "+NumericTime.NumericToTextDayTime(time)+"}"
-    item=Item(ItemText=itemName, Time=time, Room=roomName)
+    item=Item(ItemText=itemName, Time=time, Room=roomName, Length=length)
     gItems[item.Name]=item
 
 
