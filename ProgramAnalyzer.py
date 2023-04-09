@@ -259,10 +259,7 @@ def main():
 
     for item in gItems.values():
         for personName in item.People:  # For each person listed on this item
-            ismod=False
-            if IsModerator(personName):
-                personName=RemoveModFlag(personName)
-                ismod=True
+            ismod, personName=CheckModFlag(personName)
             gSchedules[personName].append(ScheduleElement(PersonName=personName, Time=item.Time, Length=item.Length, Room=item.Room, ItemName=item.Name, IsMod=ismod))  # And append a tuple with the time, room, item name, and moderator flag
 
     # Make sure times are sorted into ascending order.
@@ -867,15 +864,13 @@ def ReadSheetFromTab(sheet, spreadSheetID, parms: ParmDict, parmname: str) -> li
     return [p for p in cells if len(p) > 0 and "".join(p)[0] != "#"]  # Drop blank lines and lines with a "#" alone in column 1.
 
 
-
+# Take a name string which may contain the (M) moderater flag and split it into isMon and the name by itself
 # Generate the name of a person stripped if any "(M)" or "(m)" flags
-def RemoveModFlag(s: str) -> str:
-    return s.replace("(M)", "").replace("(m)", "").strip()
+def CheckModFlag(s: str) -> tuple[bool, str]:
+    if "(m)" in s.lower():
+        return True, s.replace("(M)", "").replace("(m)", "").strip()
+    return False, s
 
-# Is this person's name flagged as a moderator?
-# Check by seeing if RemoveModFlag() does anything
-def IsModerator(s: str) -> bool:
-    return s != RemoveModFlag(s)
 
 # Delete a file, ignoring any errors
 # We do this because of as-yet not understood failures to delete files
@@ -895,9 +890,10 @@ def AddItemWithPeople(gItems: dict[str, Item], time: float, roomName: str, itemN
     modName=""
     peopleList: list[str]=[]
     for person in plist:  # For each person listed on this item
-        if IsModerator(person):
-            modName=person=RemoveModFlag(person)
-        peopleList.append(person)
+        ismod, name=CheckModFlag(person)
+        if ismod:
+            modName=name
+        peopleList.append(name)
     # And add the item with its list of people to the items table.
     if itemName in gItems:  # If the item's name is already in use, add a uniquifier of room+day/time
         itemName=itemName+"  {"+roomName+" "+NumericTime.NumericToTextDayTime(time)+"}"
