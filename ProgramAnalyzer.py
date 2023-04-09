@@ -259,9 +259,11 @@ def main():
 
     for item in gItems.values():
         for personName in item.People:  # For each person listed on this item
+            ismod=False
             if IsModerator(personName):
-                modName=RemoveModFlag(personName)
-            gSchedules[personName].append(ScheduleElement(PersonName=personName, Time=item.Time, Length=item.Length, Room=item.Room, ItemName=item.Name, IsMod=(personName == personName)))  # And append a tuple with the time, room, item name, and moderator flag
+                personName=RemoveModFlag(personName)
+                ismod=True
+            gSchedules[personName].append(ScheduleElement(PersonName=personName, Time=item.Time, Length=item.Length, Room=item.Room, ItemName=item.Name, IsMod=ismod))  # And append a tuple with the time, room, item name, and moderator flag
 
     # Make sure times are sorted into ascending order.
     # The simple sort works because the times are stored as numeric hours since start of first day.
