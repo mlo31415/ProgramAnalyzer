@@ -50,7 +50,7 @@ def main():
     if info is None:
         MessageLog("Json file is empty")
         exit(999)
-    Log("credentials.txt read")
+    Log("Spreadsheet credentials read")
 
     # Create the reports subfolder if none exists
     reportsdir=GetParmFromParmDict(parms, "reportsdir", "Reports")
