@@ -636,7 +636,8 @@ def main():
         for personname, person in gPersons.items():
             if PersonOfInterest(person, gSchedules):
                 if personname in gSchedules.keys():
-                    print(f"{personname}: {len(gSchedules[personname])}{'' if person.RespondedYes else ' not confirmed'}", file=txt)
+                    numItems=sum(not x.IsDummy for x in gSchedules[personname])
+                    print(f"{personname}: {numItems}{'' if person.RespondedYes else ' not confirmed'}", file=txt)
                 else:
                     if person.RespondedYes:
                         print(personname+": responded Yes, but is not scheduled", file=txt)
