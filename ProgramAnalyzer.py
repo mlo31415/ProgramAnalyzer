@@ -235,7 +235,8 @@ def main():
                     if r is None:
                         AddItemWithPeople(gItems, time, roomName, itemName, rowSecond[col])
                     else:
-                        plist1=r.groups()[0].strip()
+                        # Sometimes the first person can have a trailing comma, e.g., Socrates, [0.0] Plato.  Drop it.
+                        plist1=r.groups()[0].strip().removesuffix(",")
                         deltaT=float(r.groups()[1].strip())
                         plist2=r.groups()[2].strip()
                         AddItemWithPeople(gItems, time, roomName, itemName, plist1, length=deltaT)
