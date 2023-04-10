@@ -10,7 +10,6 @@ import docx
 from docx.shared import Pt, Inches
 from docx import text
 from docx.text import paragraph
-from docx.enum import section
 from docx.enum.section import WD_ORIENTATION
 
 import numpy as np
