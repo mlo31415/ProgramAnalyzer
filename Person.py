@@ -4,9 +4,11 @@ class Person:
     def __init__(self, Fullname: str="", Parms: ParmDict=None):
         self.ListScheduleElement=[]
         self.Fullname=Fullname
+
+        # Parms is a dictionary of *all* columns in the People tab.  If it is not supplied, just create an empty ParmDict()
         if Parms is None:
             Parms=ParmDict()
-        self.Parms: ParmDict=Parms         # This will be a dictionary of *all* columns in the People tab
+        self.Parms: ParmDict=Parms
         pass
 
     @property
