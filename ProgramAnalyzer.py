@@ -863,6 +863,15 @@ def ReadSheetFromTab(sheet, spreadSheetID, parms: ParmDict, parmname: str) -> li
     return [p for p in cells if len(p) > 0 and "".join(p)[0] != "#"]  # Drop blank lines and lines with a "#" alone in column 1.
 
 
+# Take a Person and gSchedules and return True if that Person is scheduled on some item *or* is listed as Response='y'
+def PersonOfInterest(person: Person, gschedules: dict[str, list[ScheduleElement]]) -> bool:
+    if person.RespondedYes:
+        return True
+    if person.Fullname not in gschedules.keys():
+        return False
+    return sum(not x.IsDummy for x in gschedules[person.Fullname]) > 0
+
+
 # Take a name string which may contain the (M) moderater flag and split it into isMon and the name by itself
 # Generate the name of a person stripped if any "(M)" or "(m)" flags
 def CheckModFlag(s: str) -> tuple[bool, str]:
