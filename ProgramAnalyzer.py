@@ -517,7 +517,7 @@ def main():
         for personname in sortedAllParticipantList:
             print(f"<person><full name>{personname}</full name>", file=xml)
             print(f"<email>{gPersons[personname].Email}</email>", file=xml)
-            if len(gSchedules[personname]) == 0:
+            if sum(not x.IsDummy for x in gSchedules[personname]) == 0:
                 print(f"<item><title>No Items Scheduled Yet</title><participants>{personname}</participants></item>", file=xml)
             else:
                 for schedElement in gSchedules[personname]:
