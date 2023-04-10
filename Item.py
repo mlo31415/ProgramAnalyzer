@@ -40,8 +40,8 @@ class Item:
         # Strip off the comment
         if "#" in val:
             loc=val.find("#")
-            self._Comment=val[loc:]
-            val=val[:loc].strip()
+            self._Comment=val[loc-1:]
+            val=val[:loc-1].strip()
             if len(val) == 0:
                 return
 
