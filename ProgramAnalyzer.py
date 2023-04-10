@@ -857,6 +857,9 @@ def ReadSheetFromTab(sheet, spreadSheetID, parms: ParmDict, parmname: str) -> li
     except HttpError:
         LogError(f"ReadSheetFromTab: Can't locate {tabname} tab in spreadsheet. Is the supplied SheetID wrong?")
         exit(999)
+    except Exception as e:
+        LogError(f"ReadSheetFromTab: Exception {e} while attempting to load tab {tabname} tab in spreadsheet.")
+        exit(999)
 
     if not cells:
         LogError(f"ReadSheetFromTab: Can't locate {tabname} tab in spreadsheet")
