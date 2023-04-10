@@ -632,12 +632,13 @@ def main():
     SafeDelete(fname)
     with open(fname, "w") as txt:
         print("List of number of items each person is scheduled on\n\n", file=txt)
-        for personname in gPersons:
-            if personname in gSchedules.keys():
-                print(f"{personname}: {len(gSchedules[personname])}{'' if gPersons[personname].RespondedYes else ' not confirmed'}", file=txt)
-            else:
-                if gPersons[personname].RespondedYes:
-                    print(personname+": coming, but not scheduled", file=txt)
+        for personname, person in gPersons.items():
+            if PersonOfInterest(person, gSchedules):
+                if personname in gSchedules.keys():
+                    print(f"{personname}: {len(gSchedules[personname])}{'' if person.RespondedYes else ' not confirmed'}", file=txt)
+                else:
+                    if person.RespondedYes:
+                        print(personname+": responded Yes, but is not scheduled", file=txt)
 
 
     # Create the pocket program Word file and the .txt file at the same time
