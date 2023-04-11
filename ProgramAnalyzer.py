@@ -485,25 +485,27 @@ def main():
     SafeDelete(fname)
     with open(fname, "w") as txt:
         for personname in sortedAllParticipantList:
-            section=doc.add_section()
-            section.orientation=WD_ORIENTATION.PORTRAIT
-            print("\n\n********************************************", file=txt)
-            print(personname, file=txt)
-            AppendParaToDoc(doc, personname, bold=True, size=16)
-            for schedElement in gSchedules[personname]:
-                if len(schedElement.DisplayName) > 0:
-                    print(f"\n{NumericTime.NumericToTextDayTime(schedElement.Time)}: {schedElement.DisplayName} [{schedElement.Room}]", file=txt)
-                    para=doc.add_paragraph()
-                    AppendTextToPara(para, "\n"+NumericTime.NumericToTextDayTime(schedElement.Time)+":", size=14)
-                    AppendTextToPara(para, "  "+schedElement.DisplayName, size=14, bold=True)
-                    AppendTextToPara(para, "  "+schedElement.Room, size=12)
-                    item=gItems[schedElement.ItemName]
-                    part=f"Participants: {item.DisplayPlist()}"
-                    print(part, file=txt)
-                    AppendParaToDoc(doc, part)
-                    if item.Precis is not None and item.Precis != "":
-                        print(f"Precis: {item.Precis}", file=txt)
-                        AppendParaToDoc(doc, item.Precis, italic=True, size=12)
+            if PersonOfInterest(personname, gSchedules):
+                section=doc.add_section()
+                section.orientation=WD_ORIENTATION.PORTRAIT
+                print("\n\n********************************************", file=txt)
+                print(personname, file=txt)
+                AppendParaToDoc(doc, personname, bold=True, size=16)
+                for schedElement in gSchedules[personname]:
+                    if len(schedElement.DisplayName) > 0:
+                        print(f"\n{NumericTime.NumericToTextDayTime(schedElement.Time)}: {schedElement.DisplayName} [{schedElement.Room}]", file=txt)
+                        para=doc.add_paragraph()
+                        AppendTextToPara(para, "\n"+NumericTime.NumericToTextDayTime(schedElement.Time)+":", size=14)
+                        AppendTextToPara(para, "  "+schedElement.DisplayName, size=14, bold=True)
+                        AppendTextToPara(para, "  "+schedElement.Room, size=12)
+                        item=gItems[schedElement.ItemName]
+                        part=f"Participants: {item.DisplayPlist()}"
+                        print(part, file=txt)
+                        AppendParaToDoc(doc, part)
+                        if item.Precis is not None and item.Precis != "":
+                            print(f"Precis: {item.Precis}", file=txt)
+                            AppendParaToDoc(doc, item.Precis, italic=True, size=12)
+    # The .txt file has been written and closed, so now output the docx.Document() object as a Word file.
     fname=os.path.join(reportsdir, "Program participant schedules.docx")
     doc.save(fname)
 
