@@ -478,7 +478,8 @@ def main():
 
 
     #*******
-    # Print the program participant's schedule report and create a docx file as well.
+    # Print the program participant's schedule report in .txt and docx formats, simultaneously.
+    # We print the .txt file as we go along, while accumulating the docx file in docx.Document() object, and then output it at the end.
     # Get a list of the program participants (the keys of the  participants dictionary) sorted by the last token in the name (which will usually be the last name)
     doc=docx.Document()     # The object holding the partly-created Word document
     fname=os.path.join(reportsdir, "Program participant schedules.txt")
