@@ -402,16 +402,17 @@ def main():
             pSched=gSchedules[personname] # pSched is a person's schedule, which is a list of (time, room, item) tuples
             if len(pSched) < 2:     # If the persons is only on one item, then there can't be a conflict
                 continue
+            # Remove dummy entries
+            pSched=[x for x in pSched if not x.IsDummy]
             # Sort pSched by time
             pSched.sort(key=lambda x: x.Time)
             # Look for duplicate times
             prev: ScheduleElement=pSched[0]
-            for item in pSched:
+            for item in pSched[1:]:
                 # We insert dummy items for use elsewhere and need to ignore them here.  Also, prev is initialized to an empty Item which also has IsDummy ste
-                if not item.IsDummy and not prev.IsDummy:
-                    if TimesOverlap(item.Time, item.Length, prev.Time, prev.Length):
-                        print(f"{personname}: {NumericTime.NumericToTextDayTime(prev.Time)}: {prev.Room} and also {item.Room}", file=txt)
-                        count+=1
+                if TimesOverlap(item.Time, item.Length, prev.Time, prev.Length):
+                    print(f"{personname}: {NumericTime.NumericToTextDayTime(prev.Time)}: {prev.Room} and also {item.Room}", file=txt)
+                    count+=1
                 prev=item
 
         # To make it clear that the test ran, write a message if no conflicts were found.
