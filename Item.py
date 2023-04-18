@@ -21,7 +21,6 @@ class Item:
         self.IsContinuation: bool=False
         if "{cont}" in ItemText:
             self.IsContinuation=True
-        Log(f"{ItemText=}  {Time=}")
 
 
     @property

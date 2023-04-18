@@ -18,13 +18,14 @@ from google.oauth2 import service_account
 from googleapiclient.errors import HttpError
 
 from HelpersPackage import PyiResourcePath, ParmDict, ReadListAsParmDict, MessageLog, SquareUpMatrix, RemoveEmptyRowsFromMatrix
-from HelpersPackage import GetParmFromParmDict
+from HelpersPackage import GetParmFromParmDict, Int0
 
 from ScheduleElement import ScheduleElement
 from Item import Item
 from Person import Person
 from Log import Log, LogClose, LogError
 import NumericTime
+from NumericTime import TextToNumericTime
 
 
 def main():
@@ -354,6 +355,8 @@ def main():
         count=0
         for personname in gPersons.keys():
             if gPersons[personname].RespondedYes:
+                shouldavoid=gPersons[personname].Avoid
+                Log(f"{personname}: avoid {shouldavoid}")
                 found=False
                 for item in gSchedules.values():
                     for x in item:

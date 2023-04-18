@@ -7,9 +7,18 @@ from Log import LogError
 
 
 gDayList=["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+def StrToDayNumber(dstr: str) -> int:
+    dstr=dstr.lower()
+    daylist=[x.lower() for x in gDayList]
+    for i, day in enumerate(daylist):
+        if day.startswith(dstr):
+            return i
+    assert False
+    return 0
+
 
 # Convert a text date string to numeric
-def TextToNumericTime(s: str) -> int:
+def TextToNumericTime(s: str) -> float:
     s=s.strip()
 
     # The date string is of the form Day Hour AM/PM or Day Noon
@@ -36,9 +45,26 @@ def TextToNumericTime(s: str) -> int:
                 day=m.groups()[0]
                 suffix=m.groups()[1]
             else:
-                LogError("Can't interpret time: '"+s+"'")
+                m=re.match(r"^([A-Za-z]+)\s*([0-9]+)\s*$", s)     # <day> <hr>)
+                if m is not None:
+                    day=m.groups()[0]
+                    hour=m.groups()[1]
+                else:
+                    m=re.match(r"^([A-Za-z]+)\s*([0-9]+):([0-9]+)\s*$", s)  # <day> <hr>:<min>
+                    if m is not None:
+                        day=m.groups()[0]
+                        hour=m.groups()[1]
+                        minutes=m.groups()[2]
+                    else:
+                        m=re.match(r"^([A-Za-z]+)\s*([0-9]+).([0-9]+)\s*$", s)  # <day> <hr>.<fraction>
+                        if m is not None:
+                            day=m.groups()[0]
+                            hour=m.groups()[1]
+                            minutes=60*float("."+m.groups()[2])
+                        else:
+                            LogError("Can't interpret time: '"+s+"'")
 
-    d=gDayList.index(day)
+    d=StrToDayNumber(day)
     h=0
     if hour != "":
         h=int(hour)
