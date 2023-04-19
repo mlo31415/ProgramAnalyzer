@@ -3,6 +3,20 @@ import re as RegEx
 from HelpersPackage import ParmDict, YesNoMaybe, Int0
 from NumericTime import TextToNumericTime
 
+
+# ======================================================
+class Avoidment:
+    def __init__(self, start: float, end: float, desc: str):
+        self.Start=start
+        self.End=end
+        self.Description=desc
+
+    def __str__(self) -> str:
+        return self.Description
+
+
+
+# ======================================================
 class Person:
     def __init__(self, Fullname: str="", Parms: ParmDict=None):
         self.ListScheduleElement=[]
@@ -27,13 +41,14 @@ class Person:
         return YesNoMaybe(self.Parms["response"])
 
     @property
-    def Avoid(self) -> list[tuple[float, float]]:
+    def Avoid(self) -> list[Avoidment]:
         if "avoid" not in self.Parms:
             return []
         return ParseAvoid(self.Parms["avoid"])
 
+
 # Parse the Avoid column for a person into times to be avoided.
-def ParseAvoid(avstring: str) -> list[tuple[float, float]]:
+def ParseAvoid(avstring: str) -> list[Avoidment]:
     # The contents are a list of comma-separated times or time-ranges.  First create the list of individual items and remove excess spaces.
     avstrl=[x.strip() for x in avstring.split(",")]
 
@@ -42,7 +57,7 @@ def ParseAvoid(avstring: str) -> list[tuple[float, float]]:
     # Arrive: [day] [time]      (If day is missing, Friday is assumed)
     # [Leave, Depart]: [day] [time]      (If day is missing, Sunday is assumed)
     # [Day]: float-float | dinner | evening
-    out: list[tuple[float, float]]=[]   # A list of start-end tuples
+    out: list[Avoidment]=[]   # A list of start-end tuples
     for avs in avstrl:
         avl=[x.strip().lower() for x in avs.split(" ")]
         assert len(avl) > 0
@@ -58,7 +73,7 @@ def ParseAvoid(avstring: str) -> list[tuple[float, float]]:
                     time=avl[1]
                 else:
                     time=avl[0]
-                out.append((0, TextToNumericTime(day+" "+time)))
+                out.append(Avoidment(0, TextToNumericTime(day+" "+time), avs))
 
             case "leave" | "depart":
 
@@ -70,31 +85,39 @@ def ParseAvoid(avstring: str) -> list[tuple[float, float]]:
                     time=avl[1]
                 else:
                     time=avl[0]
-                out.append((TextToNumericTime(day+" "+time), 999))
+                out.append(Avoidment(TextToNumericTime(day+" "+time), 999, avs))
 
             case "fri" | "friday":
                 # [time-time] | "dinner" | "evening"
                 ret=ProcessTimeRange(avl, "fri")
-                if ret is not None:
-                    out.append(ret)
+                if ret is None:
+                    continue
+                ret.Description=avs
+                out.append(ret)
 
             case "sat" | "saturday":
                 # [time-time] | "dinner" | "evening"
                 ret=ProcessTimeRange(avl, "sat")
-                if ret is not None:
-                    out.append(ret)
+                if ret is None:
+                    continue
+                ret.Description=avs
+                out.append(ret)
 
             case "sun" | "sunday":
                 # [time-time] | "dinner" | "evening"
                 ret=ProcessTimeRange(avl, "sun")
-                if ret is not None:
-                    out.append(ret)
+                if ret is None:
+                    continue
+                ret.Description=avs
+                out.append(ret)
 
     return out
 
 
 
-def ProcessTimeRange(avl: list[str], day: str="") -> tuple[float, float] | None:
+
+
+def ProcessTimeRange(avl: list[str], day: str="") -> Avoidment | None:
     range=()
     if avl[0] == "dinner":
         range=(18, 20)
@@ -106,5 +129,6 @@ def ProcessTimeRange(avl: list[str], day: str="") -> tuple[float, float] | None:
         if m is not None:
             range=(float(m.groups()[0]), float(m.groups()[1]))
     if len(range) == 0:
-        return ()
-    return (TextToNumericTime(f"{day} {range[0]}"), TextToNumericTime(f"{day} {range[1]}"))
+        return None
+    return Avoidment(TextToNumericTime(f"{day} {range[0]}"), TextToNumericTime(f"{day} {range[1]}"), "")
+

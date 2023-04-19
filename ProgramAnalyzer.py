@@ -394,16 +394,14 @@ def main():
 
     #******
     # Check for people who are scheduled opposite themselves
-    fname=os.path.join(reportsdir, "Diag - People scheduled against themselves.txt")
+    fname=os.path.join(reportsdir, "Diag - People with schedule conflicts.txt")
     with open(fname, "w") as txt:
-        print("People who are scheduled to be in two places at the same time", file=txt)
+        print("People with schedule conflicts", file=txt)
         count=0
         for personname in gSchedules.keys():
-            pSched=gSchedules[personname] # pSched is a person's schedule, which is a list of (time, room, item) tuples
-            if len(pSched) < 2:     # If the persons is only on one item, then there can't be a conflict
+            pSched=[x for x in gSchedules[personname] if not x.IsDummy]     # Get a single person's schedule w/o dummy entries
+            if len(pSched) < 2:  # If the persons is only on one item, then there can't be a conflict
                 continue
-            # Remove dummy entries
-            pSched=[x for x in pSched if not x.IsDummy]
             # Sort pSched by time
             pSched.sort(key=lambda x: x.Time)
             # Look for duplicate times
@@ -411,9 +409,18 @@ def main():
             for item in pSched[1:]:
                 # We insert dummy items for use elsewhere and need to ignore them here.  Also, prev is initialized to an empty Item which also has IsDummy ste
                 if TimesOverlap(item.Time, item.Length, prev.Time, prev.Length):
-                    print(f"{personname}: {NumericTime.NumericToTextDayTime(prev.Time)}: {prev.Room} and also {item.Room}", file=txt)
+                    print(f"{personname}: is scheduled to be in {prev.Room} and also {item.Room} at {NumericTime.NumericToTextDayTime(prev.Time)}", file=txt)
                     count+=1
                 prev=item
+
+            # Now check for Avoid conflicts
+            avoidments=gPersons[personname].Avoid
+            for item in pSched:
+                for av in avoidments:
+                    if TimesOverlap(item.Time, item.Length, av.Start, av.End-av.Start):
+                        print(f'{personname}: is scheduled to be in {prev.Room} at {NumericTime.NumericToTextDayTime(prev.Time)}, conflicting with "{av}"', file=txt)
+                        count+=1
+
 
         # To make it clear that the test ran, write a message if no conflicts were found.
         if count == 0:
