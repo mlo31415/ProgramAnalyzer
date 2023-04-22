@@ -355,8 +355,6 @@ def main():
         count=0
         for personname in gPersons.keys():
             if gPersons[personname].RespondedYes:
-                shouldavoid=gPersons[personname].Avoid
-                Log(f"{personname}: avoid {shouldavoid}")
                 found=False
                 for item in gSchedules.values():
                     for x in item:
