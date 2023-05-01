@@ -111,6 +111,14 @@ def ParseAvoid(avstring: str) -> list[Avoidment]:
                 ret.Description=avs
                 out.append(ret)
 
+            case "daily" | "every" | "all":
+                for day in ["thu", "fri", "sat", "sun", "mon", "tue", "wed"]:   # A bit of a kludge, but we don't know the actual con days this deep in Person
+                    # [time-time] | "dinner" | "evening"
+                    ret=ProcessTimeRange(avl, day)
+                    if ret is None:
+                        continue
+                    ret.Description=avs
+                    out.append(ret) #
     return out
 
 
