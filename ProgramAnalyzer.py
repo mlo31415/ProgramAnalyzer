@@ -416,7 +416,7 @@ def main():
             for item in pSched:
                 for av in avoidments:
                     if TimesOverlap(item.Time, item.Length, av.Start, av.End-av.Start):
-                        print(f'{personname}: is scheduled to be in {prev.Room} at {NumericTime.NumericToTextDayTime(prev.Time)}, conflicting with "{av}"', file=txt)
+                        print(f'{personname}: is scheduled to be in {item.Room} at {NumericTime.NumericToTextDayTime(item.Time)}, conflicting with "{av}"', file=txt)
                         count+=1
 
 
