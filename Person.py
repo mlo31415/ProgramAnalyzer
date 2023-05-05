@@ -119,7 +119,7 @@ def ParseAvoid(avstring: str) -> list[Avoidment]:
                         continue
                     ret.Description=avs
                     out.append(ret) #
-    return out
+    return out  #Test of push
 
 
 
