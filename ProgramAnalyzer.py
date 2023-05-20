@@ -129,7 +129,7 @@ def main():
                 fullname=(fullname+" "+pd["lname"].strip()).strip()
 
         if fullname == "":
-            LogError("*** Can't find full name in row:")
+            LogError("*** Can't find or construct a full name for this row:")
             LogError("        "+str(columnLabels))
             LogError("        "+str(row))
             continue
