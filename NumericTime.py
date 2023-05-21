@@ -1,129 +1,227 @@
-from typing import Tuple
+from typing import Tuple, Any
 
 import re
 import math
 
-from Log import LogError
+from Log import LogError, Log
+
+class NumericTime:
+    gDayList: list[str]=[]      # List of the day names starting with Day One of the convention schedule.  This must be initialized by a call to
+    epsilon=0.001
+    startDay=0
+
+    # This takes and of the following:
+    #   "Saturday", 13.5
+    #   35.5
+    #   2, 13.5
+    #   "Saturday 13.5"
+    #   "Saturday 1:30 pm"
+    def __init__(self, day: Any=-1, time: float=-1):
+        if day == -1 and time == -1:
+            Log("Empty NumericTime class initiailized")
+            self._day=0
+            self._time=0
+            return
+
+        if time < -0.5: # No time specified, so interpret the day
+
+            if isinstance(day, str):
+                # We have a string for the day and no time specified.  Interpret the day as a full day/time definition
+                self.TextToNumericTime(day)
+                return
+            # So we have a numeric day.  This requires that time be specified, also
+            if isinstance(day, float) or isinstance(day, int):
+                if day < self.epsilon:
+                    self._day=0
+                    self._time=0
+                    return
+                self._day=math.floor((day-self.epsilon)/24)
+                self._time=day-24*self._day
+                return
+
+            assert False
+
+        if isinstance(day, str):
+            # We have a text day and a time defined also.  Interpret the day as the name of a day
+            self._day=self.StrToDayNumber(day)
+            self._time=math.floor(time+self.epsilon)
+            return
+
+        # So day and time are both numeric and supplied
+        assert time > -self.epsilon
+        self._day=math.floor(day+self.epsilon)
+        self._time=math.floor(time+self.epsilon)
 
 
-gDayList=["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-def StrToDayNumber(dstr: str) -> int:
-    dstr=dstr.lower()
-    daylist=[x.lower() for x in gDayList]
-    for i, day in enumerate(daylist):
-        if day.startswith(dstr):
-            return i
-    assert False
-    return 0
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, NumericTime):
+            return abs(self._day-other._day) < self.epsilon and abs(self._time-other._time) < self.epsilon
+        if isinstance(other, float) or isinstance(other, int):
+            return self.__eq__(NumericTime(other))
+        return NotImplemented
+
+    def __lt__(self, other) -> bool:
+        if self._day+self.epsilon < other._day:
+            return True
+        if other._day+self.epsilon < self._day:
+            return False
+        return self._time+self.epsilon < other._time
+
+    def __hash__(self):
+        return hash(self.Numeric)
+
+    # We only add intervals to a NumericTime --it maes no sense to add Friday, 2pm to Saturday 10am!
+    def __add__(self, other):
+        if isinstance(other, float) or  isinstance(other, int):
+            return NumericTime(self.Numeric+other)
+        return NotImplemented
+
+    # If it gets a number, it subtracts that many hours fromt eh NumericTime,  If it gets anothrer NumericTime, it yields the interval between them
+    def __sub__(self, other):
+        if isinstance(other, float) or  isinstance(other, int):
+            return NumericTime(self.Numeric-other)
+        if isinstance(other, NumericTime):
+            return self.Numeric-other.Numeric
+        return NotImplemented
+
+    def __str__(self):
+        return f"{self.gDayList[self.DayNumber]} {self.NumericToTextTime()}"
+
+    def __repr__(self):
+        return self.__str__
+
+    @classmethod
+    def SetStartingDay(cls, day: str):
+        daylist=["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+        if day not in daylist:
+            return False
+        cls.gDayList=daylist[daylist.index(day):]
+        return True
+
+    @property
+    def Numeric(self) -> float:
+        return 24*self._day+self._time
+
+    @property
+    def Bogus(self) -> bool:
+        return self.Numeric < self.epsilon
 
 
-# Convert a text date string to numeric
-def TextToNumericTime(s: str) -> float:
-    s=s.strip()
+    def StrToDayNumber(self, dstr: str) -> int:
+        dstr=dstr.lower()
+        daylist=[x.lower() for x in self.gDayList]
+        for i, day in enumerate(daylist):
+            if day.startswith(dstr):
+                return i
+        assert False
 
-    # The date string is of the form Day Hour AM/PM or Day Noon
-    day=""
-    hour=""
-    minutes=""
-    suffix=""
 
-    m=re.match(r"^([A-Za-z]+)\s*([0-9]+)\s*([A-Za-z]+)$", s)     # <day> <hr> <am/pm/noon/etc>
-    if m is not None:
-        day=m.groups()[0]
-        hour=m.groups()[1]
-        suffix=m.groups()[2]
-    else:
-        m=re.match(r"^([A-Za-z]+)\s*([0-9]+):([0-9]+)\s*([A-Za-z]+)$", s)    # <day> <hr>:<min> <am/pm/noon/etc>
+    # Convert a text date string to numeric
+    def TextToNumericTime(self, s: str):
+        s=s.strip()
+
+        # The date string is of the form Day Hour AM/PM or Day Noon
+        day=""
+        hour=""
+        minutes=""
+        suffix=""
+
+        m=re.match(r"^([A-Za-z]+)\s*([0-9]+)\s*([A-Za-z]+)$", s)     # <day> <hr> <am/pm/noon/etc>
         if m is not None:
             day=m.groups()[0]
             hour=m.groups()[1]
-            minutes=m.groups()[2]
-            suffix=m.groups()[3]
+            suffix=m.groups()[2]
         else:
-            m=re.match(r"^([A-Za-z]+)\s*([A-Za-z]+)$", s)    # <day> <am/pm/noon/etc>
+            m=re.match(r"^([A-Za-z]+)\s*([0-9]+):([0-9]+)\s*([A-Za-z]+)$", s)    # <day> <hr>:<min> <am/pm/noon/etc>
             if m is not None:
                 day=m.groups()[0]
-                suffix=m.groups()[1]
+                hour=m.groups()[1]
+                minutes=m.groups()[2]
+                suffix=m.groups()[3]
             else:
-                m=re.match(r"^([A-Za-z]+)\s*([0-9]+)\s*$", s)     # <day> <hr>)
+                m=re.match(r"^([A-Za-z]+)\s*([A-Za-z]+)$", s)    # <day> <am/pm/noon/etc>
                 if m is not None:
                     day=m.groups()[0]
-                    hour=m.groups()[1]
+                    suffix=m.groups()[1]
                 else:
-                    m=re.match(r"^([A-Za-z]+)\s*([0-9]+):([0-9]+)\s*$", s)  # <day> <hr>:<min>
+                    m=re.match(r"^([A-Za-z]+)\s*([0-9]+)\s*$", s)     # <day> <hr>)
                     if m is not None:
                         day=m.groups()[0]
                         hour=m.groups()[1]
-                        minutes=m.groups()[2]
                     else:
-                        m=re.match(r"^([A-Za-z]+)\s*([0-9]+).([0-9]+)\s*$", s)  # <day> <hr>.<fraction>
+                        m=re.match(r"^([A-Za-z]+)\s*([0-9]+):([0-9]+)\s*$", s)  # <day> <hr>:<min>
                         if m is not None:
                             day=m.groups()[0]
                             hour=m.groups()[1]
-                            minutes=60*float("."+m.groups()[2])
+                            minutes=m.groups()[2]
                         else:
-                            LogError("Can't interpret time: '"+s+"'")
+                            m=re.match(r"^([A-Za-z]+)\s*([0-9]+).([0-9]+)\s*$", s)  # <day> <hr>.<fraction>
+                            if m is not None:
+                                day=m.groups()[0]
+                                hour=m.groups()[1]
+                                minutes=60*float("."+m.groups()[2])
+                            else:
+                                LogError("Can't interpret time: '"+s+"'")
 
-    d=StrToDayNumber(day)
-    h=0
-    if hour != "":
-        h=int(hour)
-    if minutes != "":
-        h=h+int(minutes)/60
-    if suffix.lower() == "pm":
-        h=h+12
-    elif suffix.lower() == "noon":
-        h=12
-    elif suffix.lower() == "midnight":
-        h=24
+        d=self.StrToDayNumber(day)
+        h=0
+        if hour != "":
+            h=int(hour)
+        if minutes != "":
+            h=h+int(minutes)/60
+        if suffix.lower() == "pm":
+            h=h+12
+        elif suffix.lower() == "noon":
+            h=12
+        elif suffix.lower() == "midnight":
+            h=24
 
-    #print("'"+s+"'  --> day="+day+"  hour="+hour+"  minutes="+minutes+"  suffix="+suffix+"   --> d="+str(d)+"  h="+str(h)+"  24*d+h="+(str(24*d+h))+"  --> "+NumericToTextDayTime(24*d+h))
-    return 24*d+h
-
-
-def DayNumber(t: float) -> int:
-    return math.floor((t-.01)/24)  # Compute the day number. The "-.01" is to force midnight into the preceding day rather than the following day
-
-# Convert a numeric daytime to text
-# The input time is a floating point number of hours since the start of the 1st day of the convention
-def NumericToTextDayTime(t: float) -> str:
-    return f"{gDayList[DayNumber(t)]} {NumericToTextTime(t)}"
+        #print("'"+s+"'  --> day="+day+"  hour="+hour+"  minutes="+minutes+"  suffix="+suffix+"   --> d="+str(d)+"  h="+str(h)+"  24*d+h="+(str(24*d+h))+"  --> "+NumericToTextDayTime(24*d+h))
+        self._day=d
+        self._time=h
 
 
-def NumericTimeToDayHourMinute(t: float) -> Tuple[int, int, float, bool]:
-    d=DayNumber(t)
-    t=t-24*d
-    isPM=t>12           # AM or PM?
-    if isPM:
-        t=t-12
-    h=math.floor(t)     # Get the hour
-    t=t-h               # What's left is the fractional hour
-    return d, h, t, isPM
+    @property
+    def DayNumber(self) -> int:
+        return self._day
 
-
-def NumericToTextTime(f: float) -> str:
-    d, h, m, isPM=NumericTimeToDayHourMinute(f)
-
-    if h == 12:         # Handle noon and midnight specially
+    @property
+    def DayHourMinute(self) -> Tuple[int, int, float, bool]:
+        t=self._time
+        isPM=t>12           # AM or PM?
         if isPM:
-            return "Midnight"
+            t=t-12
+        h=math.floor(t)     # Get the hour
+        t=t-h               # What's left is the fractional hour
+        return self._day, h, t, isPM
+
+
+    def NumericToTextTime(self) -> str:
+        d, h, m, isPM=self.DayHourMinute
+
+        if h == 12:         # Handle noon and midnight specially
+            if isPM:
+                return "Midnight"
+            else:
+                return "Noon"
+
+        if h == 0 and m != 0:
+            numerictime="12:"+str(math.floor(60*m))     # Handle the special case of times after noon but before 1
         else:
-            return "Noon"
+            numerictime=str(h) + ("" if m == 0 else ":" + str(math.floor(60*m)))
 
-    if h == 0 and m != 0:
-        numerictime="12:"+str(math.floor(60*m))     # Handle the special case of times after noon but before 1
-    else:
-        numerictime=str(h) + ("" if m == 0 else ":" + str(math.floor(60*m)))
-
-    return numerictime + (" pm" if isPM else " am")
+        return numerictime + (" pm" if isPM else " am")
 
 
-# Return the name of the day corresponding to a numeric time
-def NumericTimeToDayString(f: float) -> str:
-    d, _, _, _=NumericTimeToDayHourMinute(f)
-    return gDayList[int(d)]
+    # Return the name of the day corresponding to a numeric time
+    @property
+    def DayString(self) -> str:
+        return self.gDayList[int(self.DayNumber)]
 
-# We sort days based on one day ending and the next beginning at 4am -- this puts late-night items with the previous day
-# Note that the return value is used for sorting, but not for dae display
-def NumericTimeToNominalDay(f: float) -> str:
-    return NumericTimeToDayString(f-4)
+    # We sort days based on one day ending and the next beginning at 4am -- this puts late-night items with the previous day
+    # Note that the return value is used for sorting, but not for dae display
+    @property
+    def NominalDayString(self) -> str:
+        if self.Numeric > 4:
+            return (self-4).DayString
+        return self.gDayList[0]     # This is wrong, but what can we do?

@@ -2,15 +2,18 @@
 
 from dataclasses import dataclass, field
 
+from NumericTime import NumericTime
+
 @dataclass(order=False)
 class ScheduleElement:
+    Time: NumericTime=None       # A numeric time
     PersonName: str=""          # The person's name
-    Time: float=-1        # A numeric time
     Length: float=1.0       # Length of item in hours
     Room: str=""          # The name of a room
     ItemName: str=""      # The name of an item
     IsMod: bool=False       # Is this person the moderator of this item?
     IsDummy: bool=False     # Is this a dummy item?
+
 
     @property
     # Generate the display-name of an item. (Remove any text following the first "{")

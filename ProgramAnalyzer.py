@@ -25,7 +25,7 @@ from ScheduleElement import ScheduleElement
 from Item import Item
 from Person import Person
 from Log import Log, LogClose, LogError
-import NumericTime
+from NumericTime import NumericTime
 
 
 def main():
@@ -79,21 +79,20 @@ def main():
             if len(row) > 1:
                 startingDay=row[1].strip()
                 startingDay=startingDay[0].upper()+startingDay.lower()[1:]  # Force the capitalization to be right
+
     # Reorganize the dayList so it starts with our starting day. It's extra-long so that clipping days from the front will still leave a full week.
-    if startingDay not in NumericTime.gDayList:
+    if not NumericTime().SetStartingDay(startingDay):
         LogError("Can't interpret ControlTab:Starting day='"+startingDay+"'.  Will use 'Friday'")
-        startingDay="Friday"
-    i=NumericTime.gDayList.index(startingDay)
-    NumericTime.gDayList=NumericTime.gDayList[i:]
+        NumericTime().SetStartingDay("Friday")
 
     # We're done with reading the spreadsheet. Now analyze the data.
     # ******
     # Start reading ths spreadsheet and building the participants and items databases (dictionaries)
     # Note that time and room are redundant and could be pulled out of the Items dictionary
     gItems: dict[str, Item]={}  # A dictionary keyed by item name containing an Item (time, room, people-list, moderator), where people-list is the list of people on the item
-    gTimes: list[float]=[]  # A list of times found in the spreadsheet.
+    gTimes: list[NumericTime]=[]  # A list of times found in the spreadsheet.
     gPersons: defaultdict[str, Person]=defaultdict(Person)   # A dict of Persons keyed by the people key (full name)
-    gRoomNames: list[str]=[]    # The list of room names corresponding to the columns in gItems
+    gRoomNames: list[str]    # The list of room names corresponding to the columns in gItems
 
 
     #***********************************************************************
@@ -206,7 +205,7 @@ def main():
                 rowIndex+=1
 
         # Get the time from rowFirst and add it to gTimes
-        time=NumericTime.TextToNumericTime(rowFirst[0])
+        time=NumericTime(rowFirst[0])
         if time not in gTimes:
             gTimes.append(time)  # We want to allow duplicate time rows, just-in-case
 
@@ -256,7 +255,7 @@ def main():
 
     # Used so that the gSchedules XML contains entries for unscheduled people which will be used in ProgramMailAnalyzer to handle things like invitations
     for person in gPersons:
-        gSchedules[person]=[ScheduleElement(PersonName=person, IsDummy=True)]
+        gSchedules[person]=[ScheduleElement(PersonName=person, IsDummy=True, )]
 
     for item in gItems.values():
         for personName in item.People:  # For each person listed on this item
@@ -379,12 +378,12 @@ def main():
 
 
     # Does (t1, l1) overlap (t2, l2) where t and l and times and lengths in float hours?
-    def TimesOverlap(t1: float, l1: float, t2: float, l2: float) -> bool:
+    def TimesOverlap(t1: NumericTime, l1: float, t2: NumericTime, l2: float) -> bool:
         # Define epsilon=0.001 hours slop
         epsilon=0.001
 
         # Bogus times never overlap
-        if t1 < 0+epsilon or t2 < 0+epsilon:
+        if t1.Bogus or t2.Bogus:
             return False
 
         # Note that we want to ignore 0-length overlaps such as  (10.0, 1.0) not overlapping (11.0, x)
@@ -416,7 +415,7 @@ def main():
             for item in pSched[1:]:
                 # We insert dummy items for use elsewhere and need to ignore them here.  Also, prev is initialized to an empty Item which also has IsDummy ste
                 if TimesOverlap(item.Time, item.Length, prev.Time, prev.Length):
-                    print(f"{personname}: is scheduled to be in {prev.Room} and also {item.Room} at {NumericTime.NumericToTextDayTime(prev.Time)}", file=f)
+                    print(f"{personname}: is scheduled to be in {prev.Room} and also {item.Room} at {prev.Time}", file=f)
                     count+=1
                 prev=item
 
@@ -424,14 +423,25 @@ def main():
             avoidments=gPersons[personname].Avoid
             for item in pSched:
                 for av in avoidments:
-                    if TimesOverlap(item.Time, item.Length, av.Start, av.End-av.Start):
-                        print(f'{personname}: is scheduled to be in {item.Room} at {NumericTime.NumericToTextDayTime(item.Time)}, conflicting with "{av}"', file=f)
+                    if TimesOverlap(item.Time, item.Length, av.Start, av.Duration):
+                        print(f'{personname}: is scheduled to be in {item.Room} at {item.Time}, conflicting with "{av}"', file=f)
                         count+=1
-
 
         # To make it clear that the test ran, write a message if no conflicts were found.
         if count == 0:
             print("    None found", file=f)
+
+    #******
+    # Check for people who are scheduled opposite themselves
+    fname=os.path.join(reportsdir, "People's scheduling limitations.txt")
+    with open(fname, "w") as f:
+        print("People's scheduling limitations", file=f)
+        print(timestamp,  file=f)
+        for personname in gSchedules.keys():
+            avoidments=gPersons[personname].Avoid
+            for av in avoidments:
+                print(f'{personname}: "{av.Pretty()}"', file=f)
+
 
 
     #******
@@ -473,13 +483,14 @@ def main():
     fname=os.path.join(reportsdir, "People with items by time.txt")
     SafeDelete(fname)
     with open(fname, "w") as f:
+        print("People with Items by Time\n", file=f)
         print(timestamp,  file=f)
         for personname in sortedAllParticipantList:
             if gPersons[personname].RespondedYes:
                 print("\n"+personname, file=f)
                 for schedElement in gSchedules[personname]:
                     if len(schedElement.DisplayName) > 0:
-                        print(f"    {NumericTime.NumericToTextDayTime(schedElement.Time)}: {schedElement.DisplayName} [{schedElement.Room}] {schedElement.ModFlag}", file=f)
+                        print(f"    {schedElement.Time}: {schedElement.DisplayName} [{schedElement.Room}] {schedElement.ModFlag}", file=f)
 
     #*******
     # Print the Items with people by time report
@@ -487,13 +498,14 @@ def main():
     fname=os.path.join(reportsdir, "Items with people by time.txt")
     SafeDelete(fname)
     with open(fname, "w") as f:
+        print("Items with People by Time\n", file=f)
         print(timestamp,  file=f)
         for time in gTimes:
             for room in gRoomNames:
                 # Now search for the program item and people list for this slot
                 for itemName, item in gItems.items():
                     if item.Time == time and item.Room == room:
-                        print(f"{NumericTime.NumericToTextDayTime(time)}, {room}: {itemName}   {item.DisplayPlist()}", file=f)
+                        print(f"{time}, {room}: {itemName}   {item.DisplayPlist()}", file=f)
                         if item.Precis is not None and item.Precis != "":
                             print("     "+item.Precis, file=f)
 
@@ -516,9 +528,9 @@ def main():
                 AppendParaToDoc(doc, personname, bold=True, size=16)
                 for schedElement in gSchedules[personname]:
                     if len(schedElement.DisplayName) > 0:
-                        print(f"\n{NumericTime.NumericToTextDayTime(schedElement.Time)}: {schedElement.DisplayName} [{schedElement.Room}]", file=f)
+                        print(f"\n{schedElement.Time}: {schedElement.DisplayName} [{schedElement.Room}]", file=f)
                         para=doc.add_paragraph()
-                        AppendTextToPara(para, "\n"+NumericTime.NumericToTextDayTime(schedElement.Time)+":", size=14)
+                        AppendTextToPara(para, f"\n{schedElement.Time}:", size=14)
                         AppendTextToPara(para, "  "+schedElement.DisplayName, size=14, bold=True)
                         AppendTextToPara(para, "  "+schedElement.Room, size=12)
                         item=gItems[schedElement.ItemName]
@@ -547,7 +559,7 @@ def main():
             else:
                 for schedElement in gSchedules[personname]:
                     if len(schedElement.DisplayName) > 0:
-                        print(f"<item><title>{NumericTime.NumericToTextDayTime(schedElement.Time)}: {schedElement.DisplayName} [{schedElement.Room}]</title>", file=xml)
+                        print(f"<item><title>{schedElement.Time}: {schedElement.DisplayName} [{schedElement.Room}]</title>", file=xml)
                         item=gItems[schedElement.ItemName]
                         if schedElement.DisplayName in gItems and gItems[schedElement.DisplayName].Parms.Exists("equipment"):
                             print(f"<equipment>{gItems[schedElement.DisplayName].Parms['equipment']}</equipment>", file=xml)
@@ -578,7 +590,7 @@ def main():
         print("List of number of people scheduled on each item\n\n", file=f)
         print(timestamp,  file=f)
         for itemname, item in gItems.items():
-            print(f"{NumericTime.NumericToTextDayTime(item.Time)} {item.Name}: {len(item.People)}", file=f)
+            print(f"{item.Time} {item.Name}: {len(item.People)}", file=f)
 
 
     #******
@@ -597,7 +609,7 @@ def main():
                     continue
                 if item.Parms["solo"]:
                     continue
-                print(f"{NumericTime.NumericToTextDayTime(item.Time)} {item.Name}: {len(item.People)}", file=f)
+                print(f"{item.Time} {item.Name}: {len(item.People)}", file=f)
                 found=True
         if not found:
             print("None found", file=f)
@@ -618,7 +630,7 @@ def main():
                 continue
             if item.ModName != "":
                 continue
-            print(f"{NumericTime.NumericToTextDayTime(item.Time)} {item.Name}: {len(item.People)}", file=f)
+            print(f"{item.Time} {item.Name}: {len(item.People)}", file=f)
             found=True
         if not found:
             print("None found", file=f)
@@ -635,7 +647,7 @@ def main():
                 continue
             if item.Precis is not None and len(item.Precis) > 0:
                 continue
-            print(f"{NumericTime.NumericToTextDayTime(item.Time)} {item.Name}: {len(item.People)}", file=f)
+            print(f"{item.Time} {item.Name}: {len(item.People)}", file=f)
             found=True
         if not found:
             print("None found", file=f)
@@ -650,7 +662,7 @@ def main():
         found=False
         for itemname, item in gItems.items():
             if item.Parms.Exists("equipment"):
-                print(f"{NumericTime.NumericToTextDayTime(item.Time)}, {item.Room}:  {item.Name}\n\t\t{item.Parms['equipment']}\n", file=f)
+                print(f"{item.Time}, {item.Room}:  {item.Name}\n\t\t{item.Parms['equipment']}\n", file=f)
                 found=True
         if not found:
             print("None found", file=f)
@@ -692,8 +704,8 @@ def main():
     print("Schedule", file=f)
     for time in gTimes:
         AppendParaToDoc(doc, "")
-        AppendParaToDoc(doc, NumericTime.NumericToTextDayTime(time), bold=True)
-        print("\n"+NumericTime.NumericToTextDayTime(time), file=f)
+        AppendParaToDoc(doc, str(time), bold=True)
+        print(f"\n{time}", file=f)
         for room in gRoomNames:
             # Now search for the program item and people list for this slot
             for itemName, item in gItems.items():
@@ -717,7 +729,6 @@ def main():
 
     # Create the individual (one per person) tentcard Word document
     doc=docx.Document()
-    section=doc.sections[0]
     for personname in sortedAllParticipantList:
         section=doc.add_section()
         section.orientation=WD_ORIENTATION.LANDSCAPE
@@ -740,7 +751,6 @@ def main():
 
     # Create the tentcards for each program item Word document
     doc=docx.Document()
-    section=doc.sections[0]
     for room in gRoomNames:
         for time in gTimes:
             for itemName, item in gItems.items():
@@ -760,7 +770,7 @@ def main():
                             section.bottom_margin=Inches(1)
 
                             # Add the paragraph for this tentcard
-                            AppendParaToDoc(doc, f"{NumericTime.NumericToTextDayTime(time)} --  {room}\n", size=12, indent=0)
+                            AppendParaToDoc(doc, f"{time} --  {room}\n", size=12, indent=0)
                             AppendParaToDoc(doc, f"{item.DisplayName}\n", size=12, indent=0)
 
                             # Set the margins for the big person's name for the front of the tentcard
@@ -781,7 +791,7 @@ def main():
         # We generate a separate report for each day
         # The times are sorted in ascending order.
         # We will let the act of the time flipping over to a new day create the new file
-        sortday=NumericTime.NumericTimeToNominalDay(time)
+        sortday=time.NominalDayString
         if sortday != currentday:
             # Close the old file, if any
             if f is not None:
@@ -811,7 +821,7 @@ def main():
             f.write('<table border="0" cellspacing="0" cellpadding="2">\n')
 
         f.write('<tr><td colspan="3">')
-        f.write(f'<p class="time">{NumericTime.NumericToTextTime(time)}</p>')
+        f.write(f'<p class="time">{time.NumericToTextTime()}</p>')
         f.write('</td></tr>\n')
         for room in gRoomNames:
             # Now search for the program item and people list for this slot
@@ -860,7 +870,7 @@ def main():
                         inuse=True
                         AppendParaToDoc(doc, "")    # Skip a line
                         para=doc.add_paragraph()
-                        AppendTextToPara(para, NumericTime.NumericToTextDayTime(item.Time)+":  ", bold=True)   # Add the time in bold followed by the item's title
+                        AppendTextToPara(para, f"{item.Time}:  ", bold=True)   # Add the time in bold followed by the item's title
                         AppendTextToPara(para, item.DisplayName)
                         AppendParaToDoc(doc, item.DisplayPlist(), italic=True, indent=0.5)        # Then, on a new line, the people list in italic
         fname=os.path.join(path, room.replace("/", "-")+".docx")
@@ -883,7 +893,6 @@ def ReadSheetFromTab(sheet, spreadSheetID, parms: ParmDict, parmname: str) -> li
 
     # Convert the generic name of the tab to the specific name to be used this year
     tabname=GetParmFromParmDict(parms, parmname)
-    cells=[]
     try:
         cells=sheet.values().get(spreadsheetId=spreadSheetID, range=f'{tabname}!A1:Z999').execute().get('values', [])  # Read the whole thing.
     except HttpError:
@@ -933,7 +942,7 @@ def SafeDelete(fn: str) -> bool:
 
 #.......
 # Add an item with a list of people to the gItems dict, and add the item to each of the persons who are on it
-def AddItemWithPeople(gItems: dict[str, Item], time: float, roomName: str, itemName: str, plistText: str, length: float=1.0) -> None:
+def AddItemWithPeople(gItems: dict[str, Item], time: NumericTime, roomName: str, itemName: str, plistText: str, length: float=1.0) -> None:
 
     plist=[p.strip() for p in plistText.split(",") ]    # Get the people as a list with excess spaces removed
     plist=[p for p in plist if len(p) > 0]              # Ignore empty entries
@@ -946,16 +955,16 @@ def AddItemWithPeople(gItems: dict[str, Item], time: float, roomName: str, itemN
         peopleList.append(name)
     # And add the item with its list of people to the items table.
     if itemName in gItems:  # If the item's name is already in use, add a uniquifier of room+day/time
-        itemName=itemName+"  {"+roomName+" "+NumericTime.NumericToTextDayTime(time)+"}"
+        itemName='{'+f"{itemName}  {roomName} {time}"+'}'
     item=Item(ItemText=itemName, Time=time, Length=length, Room=roomName, People=peopleList, ModName=modName)
     gItems[item.Name]=item
 
 
 #.......
 # Add an item with a list of people, and add the item to each of the persons
-def AddItemWithoutPeople(gItems: dict[str, Item], time: float, roomName: str, itemName: str, length: float=0) -> None:
+def AddItemWithoutPeople(gItems: dict[str, Item], time: NumericTime, roomName: str, itemName: str, length: float=0) -> None:
     if itemName in gItems:  # If the item's name is already in use, add a uniquifier of room+day/time
-        itemName=itemName+"  {"+roomName+" "+NumericTime.NumericToTextDayTime(time)+"}"
+        itemName=itemName+'  {'+f"{roomName} {time}"+'}'
     item=Item(ItemText=itemName, Time=time, Room=roomName, Length=length)
     gItems[item.Name]=item
 

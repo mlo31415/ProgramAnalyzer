@@ -1,19 +1,25 @@
 import re as RegEx
 
-from HelpersPackage import ParmDict, YesNoMaybe, Int0
-from NumericTime import TextToNumericTime
+from HelpersPackage import ParmDict, YesNoMaybe
+from NumericTime import NumericTime
 
 
 # ======================================================
 class Avoidment:
-    def __init__(self, start: float, end: float, desc: str):
-        self.Start=start
-        self.End=end
+    def __init__(self, start: NumericTime, end: NumericTime, desc: str):
+        self.Start: NumericTime=start
+        self.End: NumericTime=end
         self.Description=desc
 
     def __str__(self) -> str:
         return self.Description
 
+    def Pretty(self) -> str:
+        return f"{self.Start}-{self.End}"
+
+    @property
+    def Duration(self) -> float:
+        return self.Start-self.End
 
 
 # ======================================================
@@ -73,7 +79,7 @@ def ParseAvoid(avstring: str) -> list[Avoidment]:
                     time=avl[1]
                 else:
                     time=avl[0]
-                out.append(Avoidment(0, TextToNumericTime(day+" "+time), avs))
+                out.append(Avoidment(NumericTime(0.0), NumericTime(day+" "+time), avs))
 
             case "leave" | "depart":
 
@@ -85,7 +91,7 @@ def ParseAvoid(avstring: str) -> list[Avoidment]:
                     time=avl[1]
                 else:
                     time=avl[0]
-                out.append(Avoidment(TextToNumericTime(day+" "+time), 999, avs))
+                out.append(Avoidment(NumericTime(day+" "+time), NumericTime(7, 23.99), avs))
 
             case "fri" | "friday":
                 # [time-time] | "dinner" | "evening"
@@ -138,5 +144,5 @@ def ProcessTimeRange(avl: list[str], day: str="") -> Avoidment | None:
             range=(float(m.groups()[0]), float(m.groups()[1]))
     if len(range) == 0:
         return None
-    return Avoidment(TextToNumericTime(f"{day} {range[0]}"), TextToNumericTime(f"{day} {range[1]}"), "")
+    return Avoidment(NumericTime(f"{day} {range[0]}"), NumericTime(f"{day} {range[1]}"), "")
 
