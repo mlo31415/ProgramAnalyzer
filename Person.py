@@ -15,7 +15,21 @@ class Avoidment:
         return self.Description
 
     def Pretty(self) -> str:
-        return f"{self.Start}-{self.End}"
+        startd=None
+        endd=None
+        if self.Start.Numeric > NumericTime().epsilon:
+            startd=self.Start.Day
+        if self.End.Hour < 23.75:
+            endd=self.End.Day
+
+        if startd is None:
+            return f"--{self.End}"
+        if endd is None:
+            return f"{self.Start} --"
+        if startd == endd:
+            return f"{self.Start} -- {self.End.NumericToTextTime()}"
+        return f"{self.Start} -- {self.End}"
+
 
     @property
     def Duration(self) -> float:
