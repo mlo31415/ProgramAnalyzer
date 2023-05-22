@@ -18,7 +18,7 @@ class NumericTime:
     #   "Saturday 1:30 pm"
     def __init__(self, day: Any=-1, time: float=-1):
         if day == -1 and time == -1:
-            Log("Empty NumericTime class initiailized")
+            Log("Empty NumericTime class initialized")
             self._day=0
             self._time=0
             return
