@@ -72,14 +72,18 @@ def ParseAvoid(avstring: str) -> list[Avoidment]:
         match command:
             case "arrive":
                 # [day] time
-                day="fri"
+                day="fri"       #TODO: This and other day references really ought to depend on the starting and ending days of the convention
                 time=""
                 if len(avl) > 1:
                     day=avl[0]
                     time=avl[1]
                 else:
                     time=avl[0]
-                out.append(Avoidment(NumericTime(0.0), NumericTime(day+" "+time), avs))
+                if day == "sun":    #If the arrival day is Sunday, both Froday and Saturday are also excluded
+                    out.append(Avoidment(NumericTime("Saturday 12:01 am"), NumericTime("Saturday 11:59 pm"), avs))
+                if day == "sat" or day == "sun":
+                    out.append(Avoidment(NumericTime("Friday 12:01 am"), NumericTime("Friday 11:59 pm"), avs))
+                out.append(Avoidment(NumericTime(day+" 12:01 am"), NumericTime(day+" "+time), avs))
 
             case "leave" | "depart":
 
@@ -91,7 +95,11 @@ def ParseAvoid(avstring: str) -> list[Avoidment]:
                     time=avl[1]
                 else:
                     time=avl[0]
-                out.append(Avoidment(NumericTime(day+" "+time), NumericTime(7, 23.99), avs))
+                if day == "sat":
+                    out.append(Avoidment(NumericTime("Friday 12:01 am"), NumericTime("Friday 11:59 pm"), avs))
+                if day == "fri":
+                    out.append(Avoidment(NumericTime("Saturday 12:01 am"), NumericTime("Saturday 11:59 pm"), avs))
+                out.append(Avoidment(NumericTime(day+" "+time), NumericTime(day+ " 11:59pm"), avs))
 
             case "fri" | "friday":
                 # [time-time] | "dinner" | "evening"
