@@ -186,6 +186,14 @@ class NumericTime:
         return self._day
 
     @property
+    def Hour(self) -> float:
+        d, h, t, ispm=self.DayHourMinute
+        h+=t
+        if ispm:
+            h+=12
+        return h
+
+    @property
     def DayHourMinute(self) -> Tuple[int, int, float, bool]:
         t=self._time
         isPM=t>12           # AM or PM?
@@ -199,16 +207,16 @@ class NumericTime:
     def NumericToTextTime(self) -> str:
         d, h, m, isPM=self.DayHourMinute
 
-        if h == 12:         # Handle noon and midnight specially
+        if h == 12 and m == 0:         # Handle noon and midnight specially
             if isPM:
                 return "Midnight"
             else:
                 return "Noon"
 
         if h == 0 and m != 0:
-            numerictime="12:"+str(math.floor(60*m))     # Handle the special case of times after noon but before 1
+            numerictime=f"12:{math.floor(60*m):02}"     # Handle the special case of times after noon but before 1
         else:
-            numerictime=str(h) + ("" if m == 0 else ":" + str(math.floor(60*m)))
+            numerictime=f"{h}{'' if m == 0 else f':{math.floor(60*m):02}'}"
 
         return numerictime + (" pm" if isPM else " am")
 
