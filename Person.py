@@ -15,21 +15,43 @@ class Avoidment:
         return self.Description
 
     def Pretty(self) -> str:
-        startd=None
-        endd=None
-        if self.Start.Numeric > NumericTime().epsilon:
-            startd=self.Start.Day
-        if self.End.Hour < 23.75:
-            endd=self.End.Day
+        out=""
+        avs=[(self.Start, self.End)]    # This will be a list of NumericTime tuples
+        if self.Start.Day != self.End.Day:  # If the avoidance spans more than one day, break it into single-day avoidances
+            avs=[(self.Start, NumericTime(f"{self.Start.Day} 12:59 pm"))]
+            for day in range(self.Start.Day+1, self.End.Day+1):
+                if day == self.End.Day:
+                    avs.append((NumericTime(f"{day} 12:01 am"), self.End))
+                else:
+                    avs.append((NumericTime(f"{day} 12:01 am"), NumericTime(f"{day} 12:59 pm")))
 
-        if startd is None:
-            return f"--{self.End}"
-        if endd is None:
-            return f"{self.Start} --"
-        if startd == endd:
-            return f"{self.Start} -- {self.End.NumericToTextTime()}"
-        return f"{self.Start} -- {self.End}"
+        for tpl in avs:
+            ntstart=tpl[0]
+            ntend=tpl[1]
 
+            # Check for the whole day
+            if ntstart.Hour < 0.05 and ntend.Hour > 23.95:
+                if out != "":
+                    out+="; "
+                out+=ntstart.DayString+ "(all day)"
+                continue
+
+            # OK, we know this is all in one day but is not the whole day.  Handle the cases where we start at midnight or end at midnight
+            if ntstart.Hour < 0.05:
+                if out != "":
+                    out+="; "
+                out+=f"--{ntend}"
+                continue
+            if ntend.Hour > 23.95:
+                if out != "":
+                    out+="; "
+                out+=f"{ntstart} --"
+                continue
+            if out != "":
+                out+="; "
+            out+= f"{ntstart} -- {ntend}"
+
+        return out
 
     @property
     def Duration(self) -> float:
@@ -93,7 +115,7 @@ def ParseAvoid(avstring: str) -> list[Avoidment]:
                     time=avl[1]
                 else:
                     time=avl[0]
-                if day == "sun":    #If the arrival day is Sunday, both Froday and Saturday are also excluded
+                if day == "sun":    # If the arrival day is Sunday, both Froday and Saturday are also excluded
                     out.append(Avoidment(NumericTime("Saturday 12:01 am"), NumericTime("Saturday 11:59 pm"), avs))
                 if day == "sat" or day == "sun":
                     out.append(Avoidment(NumericTime("Friday 12:01 am"), NumericTime("Friday 11:59 pm"), avs))
