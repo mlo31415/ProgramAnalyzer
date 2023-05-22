@@ -171,6 +171,8 @@ class NumericTime:
             h=h+int(minutes)/60
         if suffix.lower() == "pm":
             h=h+12
+        elif suffix.lower() == "am" and int(hour) == 12:
+            h=h-12  # Special case of 12:30 am being 30 minutes into the day
         elif suffix.lower() == "noon":
             h=12
         elif suffix.lower() == "midnight":
