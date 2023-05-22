@@ -406,7 +406,7 @@ def main():
         count=0
         for personname in gSchedules.keys():
             pSched=[x for x in gSchedules[personname] if not x.IsDummy]     # Get a single person's schedule w/o dummy entries
-            if len(pSched) < 2:  # If the persons is only on one item, then there can't be a conflict
+            if len(pSched) == 0:
                 continue
             # Sort pSched by time
             pSched.sort(key=lambda x: x.Time)
