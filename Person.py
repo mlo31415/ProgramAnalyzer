@@ -138,7 +138,7 @@ def ParseAvoid(avstring: str) -> list[Avoidment]:
                 out.append(Avoidment(NumericTime(day+" "+time), NumericTime(day+ " 11:59pm"), avs))
 
             case "fri" | "friday":
-                # [time-time] | "dinner" | "evening"
+                # [time-time] | "dinner" | "evening" | "all day"
                 ret=ProcessTimeRange(avl, "fri")
                 if ret is None:
                     continue
@@ -146,7 +146,7 @@ def ParseAvoid(avstring: str) -> list[Avoidment]:
                 out.append(ret)
 
             case "sat" | "saturday":
-                # [time-time] | "dinner" | "evening"
+                # [time-time] | "dinner" | "evening" | "all day"
                 ret=ProcessTimeRange(avl, "sat")
                 if ret is None:
                     continue
@@ -154,7 +154,7 @@ def ParseAvoid(avstring: str) -> list[Avoidment]:
                 out.append(ret)
 
             case "sun" | "sunday":
-                # [time-time] | "dinner" | "evening"
+                # [time-time] | "dinner" | "evening" | "all day"
                 ret=ProcessTimeRange(avl, "sun")
                 if ret is None:
                     continue
@@ -181,6 +181,8 @@ def ProcessTimeRange(avl: list[str], day: str="") -> Avoidment | None:
         range=(18, 20)
     elif avl[0] == "evening":
         range=(20, 24)
+    elif avl[0] == "all" and avl[1] == "day":
+        range=(0.02, 23.98)
     else:
         # We probably have a number range (nn-nn)
         m=RegEx.match("([0-9.:]+)-([0-9.:]+)$", avl[0])
