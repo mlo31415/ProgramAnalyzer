@@ -439,8 +439,16 @@ def main():
         print(timestamp,  file=f)
         for personname in gSchedules.keys():
             avoidments=gPersons[personname].Avoid
+            output=f"{personname}: "
+            found=False
             for av in avoidments:
-                print(f'{personname}: "{av.Pretty()}"', file=f)
+                if not found:
+                    found=True
+                else:
+                    output+=", "
+                output+=av.Pretty()
+            if found:
+                print(output, file=f)
 
 
 
