@@ -85,7 +85,7 @@ class NumericTime:
         return NotImplemented
 
     def __str__(self):
-        return f"{self.gDayList[self.DayNumber]} {self.NumericToTextTime()}"
+        return f"{self.gDayList[self.Day]} {self.NumericToTextTime()}"
 
     def __repr__(self):
         return self.__str__
@@ -182,7 +182,7 @@ class NumericTime:
 
 
     @property
-    def DayNumber(self) -> int:
+    def Day(self) -> int:
         return self._day
 
     @property
@@ -216,7 +216,7 @@ class NumericTime:
     # Return the name of the day corresponding to a numeric time
     @property
     def DayString(self) -> str:
-        return self.gDayList[int(self.DayNumber)]
+        return self.gDayList[int(self.Day)]
 
     # We sort days based on one day ending and the next beginning at 4am -- this puts late-night items with the previous day
     # Note that the return value is used for sorting, but not for dae display
