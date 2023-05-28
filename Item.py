@@ -34,16 +34,17 @@ class Item:
         self._ItemText=val
         # Initialize the rest to empty strings
         self._Name: str=""
-        self._ItemText: str=""
         self._Comment=""
 
-        # Strip off the comment
+        # Strip off the comment.  This must follow the last "}" so we can say things like '{#2}'
         if "#" in val:
             loc=val.find("#")
-            self._Comment=val[loc-1:]
-            val=val[:loc-1].strip()
-            if len(val) == 0:
-                return
+            loc2=val.rfind("}")
+            if loc > loc2:
+                self._Comment=val[loc-1:]
+                val=val[:loc-1].strip()
+                if len(val) == 0:
+                    return
 
         # Look for keywords, remove them and save them
         lst, val=SearchAndReplace("(<.*?>)", val, "")
