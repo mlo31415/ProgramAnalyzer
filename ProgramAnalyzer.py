@@ -431,7 +431,7 @@ def main():
             print("    None found", file=f)
 
     #******
-    # Check for people who are scheduled opposite themselves
+    # Make a handy-dandy list of people's scheduling limitations
     fname=os.path.join(reportsdir, "People's scheduling limitations.txt")
     with open(fname, "w") as f:
         print("People's scheduling limitations", file=f)
