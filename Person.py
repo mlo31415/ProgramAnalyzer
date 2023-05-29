@@ -55,7 +55,7 @@ class Avoidment:
 
     @property
     def Duration(self) -> float:
-        return self.Start-self.End
+        return self.End-self.Start
 
 
 # ======================================================
