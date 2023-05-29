@@ -406,18 +406,17 @@ def main():
         count=0
         for personname in gSchedules.keys():
             pSched=[x for x in gSchedules[personname] if not x.IsDummy]     # Get a single person's schedule w/o dummy entries
-            if len(pSched) == 0:
-                continue
-            # Sort pSched by time
-            pSched.sort(key=lambda x: x.Time)
+
             # Look for duplicate times
-            prev: ScheduleElement=pSched[0]
-            for item in pSched[1:]:
-                # We insert dummy items for use elsewhere and need to ignore them here.  Also, prev is initialized to an empty Item which also has IsDummy ste
-                if TimesOverlap(item.Time, item.Length, prev.Time, prev.Length):
-                    print(f"{personname}: is scheduled to be in {prev.Room} and also {item.Room} at {prev.Time}", file=f)
-                    count+=1
-                prev=item
+            if len(pSched) > 1:     # Need two to tango
+                pSched.sort(key=lambda x: x.Time)       # Sort pSched by time
+                prev: ScheduleElement=pSched[0]
+                for item in pSched[1:]:
+                    # We insert dummy items for use elsewhere and need to ignore them here.  Also, prev is initialized to an empty Item which also has IsDummy set
+                    if TimesOverlap(item.Time, item.Length, prev.Time, prev.Length):
+                        print(f"{personname}: is scheduled to be in {prev.Room} and also {item.Room} at {prev.Time}", file=f)
+                        count+=1
+                    prev=item
 
             # Now check for Avoid conflicts
             avoidments=gPersons[personname].Avoid
