@@ -109,7 +109,7 @@ def main():
             exit(999)
 
     # Now read the remaining rows one by one, storing the cells in a ParmDict with the column header as key.
-    for row in peopleCells[1:]:
+    for irow, row in enumerate(peopleCells[1:]):
         pd=ParmDict(CaseInsensitiveCompare=True)
         for i, val in enumerate(row):
             pd[columnLabels[i]]=val
@@ -128,9 +128,9 @@ def main():
                 fullname=(fullname+" "+pd["lname"].strip()).strip()
 
         if fullname == "":
-            LogError("*** Can't find or construct a non-null full name for this row:")
-            LogError("        "+str(columnLabels))
-            LogError("        "+str(row))
+            LogError(f"*** Can't find or construct a non-null full name for row {irow}")
+            LogError("      Col Names: "+str(columnLabels))
+            LogError("      Row Data:  "+str(row))
             continue
 
         pd["Fullname"]=fullname
