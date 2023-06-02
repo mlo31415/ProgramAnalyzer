@@ -128,7 +128,7 @@ def main():
                 fullname=(fullname+" "+pd["lname"].strip()).strip()
 
         if fullname == "":
-            LogError(f"*** Can't find or construct a non-null full name for row {irow}")
+            LogError(f"*** Can't find or construct a non-null full name for row {irow+1}")
             LogError("      Col Names: "+str(columnLabels))
             LogError("      Row Data:  "+str(row))
             continue
