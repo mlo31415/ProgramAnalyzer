@@ -6,6 +6,7 @@ import os.path
 import difflib
 import re as RegEx
 from datetime import datetime
+import csv
 
 import docx
 from docx.shared import Pt, Inches
@@ -221,7 +222,7 @@ def main():
                 # In some cases, the item may have a generic name, e.g.,  "Reading", "Autographs".  This name will be used in multiple places, but
                 # We require a unique name to track the isons of people with items.  If an item name is already in gItems, we uniquify the item name
                 # by appending day/time to it.
-                # Note that anything in {curly brackets} is ignored.
+                # Note that anything in {curly brackets} is ignored when printing, etc..
                 if itemName in gItems:
                     itemName+=" {"+roomName+" "+str(time)+"}"
 
@@ -594,10 +595,18 @@ def main():
     fname=os.path.join(reportsdir, "Items' people counts.txt")
     SafeDelete(fname)
     with open(fname, "w") as f:
+        itemdata=[]
         print("List of number of people scheduled on each item\n\n", file=f)
         print(timestamp,  file=f)
         for itemname, item in gItems.items():
+            itemdata.append([len(item.People), str(item.Time), item.Name])
             print(f"{item.Time} {item.Name}: {len(item.People)}", file=f)
+
+    fname=os.path.join(reportsdir, "Items' people counts.csv")
+    with open(fname, mode='w') as f:
+        writer=csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        for id in itemdata:
+            writer.writerow(id)
 
 
     #******
