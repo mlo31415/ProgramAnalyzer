@@ -596,15 +596,14 @@ def main():
     SafeDelete(fname)
     with open(fname, "w") as f:
         itemdata=[]
-        print("List of number of people scheduled on each item\n\n", file=f)
-        print(timestamp,  file=f)
         for itemname, item in gItems.items():
             itemdata.append([len(item.People), str(item.Time), item.Name])
             print(f"{item.Time} {item.Name}: {len(item.People)}", file=f)
 
     fname=os.path.join(reportsdir, "Items' people counts.csv")
-    with open(fname, mode='w') as f:
+    with open(fname, mode='w', encoding='UTF8', newline="") as f:
         writer=csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        writer.writerow(["Number", "Item Time", "Item Title"])
         for id in itemdata:
             writer.writerow(id)
 
@@ -690,7 +689,7 @@ def main():
     fname=os.path.join(reportsdir, "Peoples' item counts.txt")
     SafeDelete(fname)
     with open(fname, "w") as f:
-        print("List of number of items each person is scheduled on\n\n", file=f)
+        print("List of number of items each person is scheduled on\n", file=f)
         print(timestamp,  file=f)
         for personname, person in gPersons.items():
             if PersonOfInterest(person, gSchedules):
@@ -700,6 +699,15 @@ def main():
                 else:
                     if person.RespondedYes:
                         print(personname+": responded Yes, but is not scheduled", file=f)
+
+    fname=os.path.join(reportsdir, "Peoples' item counts.csv")
+    with open(fname, "w", encoding='UTF8', newline="") as f:
+        writer=csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        writer.writerow(["Number" , "Person"])
+        for personname, person in gPersons.items():
+            if PersonOfInterest(person, gSchedules):
+                numItems=sum(not x.IsDummy for x in gSchedules[personname])
+                writer.writerow([numItems, personname])
 
 
     # Create the pocket program Word file and the .txt file at the same time
