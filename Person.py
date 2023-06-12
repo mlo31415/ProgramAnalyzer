@@ -115,10 +115,6 @@ def ParseAvoid(avstring: str) -> list[Avoidment]:
                     time=avl[1]
                 else:
                     time=avl[0]
-                if day.startswith("sun"):    # If the arrival day is Sunday, both Friday and Saturday are also excluded
-                    out.append(Avoidment(NumericTime("Saturday 12:01 am"), NumericTime("Saturday 11:59 pm"), avs))
-                if day.startswith("sat") or day.startswith("sun"):
-                    out.append(Avoidment(NumericTime("Friday 12:01 am"), NumericTime("Friday 11:59 pm"), avs))
                 out.append(Avoidment(NumericTime(day+" 12:01 am"), NumericTime(day+" "+time), avs))
 
             case "leave" | "depart":
@@ -131,11 +127,7 @@ def ParseAvoid(avstring: str) -> list[Avoidment]:
                     time=avl[1]
                 else:
                     time=avl[0]
-                if day == "sat":
-                    out.append(Avoidment(NumericTime("Friday 12:01 am"), NumericTime("Friday 11:59 pm"), "Friday all day"))
-                if day == "fri":
-                    out.append(Avoidment(NumericTime("Saturday 12:01 am"), NumericTime("Saturday 11:59 pm"), "Saturday all day"))
-                out.append(Avoidment(NumericTime(day+" "+time), NumericTime(day+ " 11:59pm"), avs))
+                out.append(Avoidment(NumericTime(day+" "+time), NumericTime("Sun 11:59pm"), avs))
 
             case "fri" | "friday":
                 # [time-time] | "dinner" | "evening" | "all day"
@@ -168,8 +160,11 @@ def ParseAvoid(avstring: str) -> list[Avoidment]:
                     if ret is None:
                         continue
                     ret.Description=avs
-                    out.append(ret) #
-    return out  #Test of push
+                    out.append(ret)
+            case None:
+                i=0
+
+    return out
 
 
 
