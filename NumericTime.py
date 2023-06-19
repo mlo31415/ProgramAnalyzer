@@ -3,6 +3,7 @@ from typing import Tuple, Any
 import re
 import math
 
+from HelpersPackage import IsInt
 from Log import LogError, Log
 
 class NumericTime:
@@ -22,6 +23,10 @@ class NumericTime:
             self._day=0
             self._time=0
             return
+
+        # If the day is supplied as a numeric string, turn it into a number
+        if isinstance(day, str) and IsInt(day):
+            day=int(day)
 
         if time < -0.5: # No time specified, so interpret the day
 
@@ -117,7 +122,7 @@ class NumericTime:
 
 
     # Convert a text date string to numeric
-    def TextToNumericTime(self, s: str):
+    def TextToNumericTime(self, s: str) -> bool:
         s=s.strip()
 
         # The date string is of the form Day Hour AM/PM or Day Noon
@@ -162,6 +167,7 @@ class NumericTime:
                                 minutes=60*float("."+m.groups()[2])
                             else:
                                 LogError("Can't interpret time: '"+s+"'")
+                                return False
 
         d=self.StrToDayNumber(day)
         h=0
@@ -181,6 +187,7 @@ class NumericTime:
         #print("'"+s+"'  --> day="+day+"  hour="+hour+"  minutes="+minutes+"  suffix="+suffix+"   --> d="+str(d)+"  h="+str(h)+"  24*d+h="+(str(24*d+h))+"  --> "+NumericToTextDayTime(24*d+h))
         self._day=d
         self._time=h
+        return True
 
 
     @property
