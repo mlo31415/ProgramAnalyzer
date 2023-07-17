@@ -398,59 +398,59 @@ def main():
         return False
 
 
-    #******
-    # Check for people who are scheduled opposite themselves
-    fname=os.path.join(reportsdir, "Diag - People with schedule conflicts.txt")
-    with open(fname, "w") as f:
-        print("People with schedule conflicts", file=f)
-        print(timestamp,  file=f)
-        count=0
-        for personname in gSchedules.keys():
-            pSched=[x for x in gSchedules[personname] if not x.IsDummy]     # Get a single person's schedule w/o dummy entries
-            if len(pSched) == 0:
-                continue
-
-            # Look for duplicate times
-            if len(pSched) > 1:     # Need two to tango
-                pSched.sort(key=lambda x: x.Time)       # Sort pSched by time
-                prev: ScheduleElement=pSched[0]
-                for item in pSched[1:]:
-                    # We insert dummy items for use elsewhere and need to ignore them here.  Also, prev is initialized to an empty Item which also has IsDummy set
-                    if TimesOverlap(item.Time, item.Length, prev.Time, prev.Length):
-                        print(f"{personname}: is scheduled to be in {prev.Room} and also {item.Room} at {prev.Time}", file=f)
-                        count+=1
-                    prev=item
-
-            # Now check for Avoid conflicts
-            avoidments=gPersons[personname].Avoid
-            for item in pSched:
-                for av in avoidments:
-                    if TimesOverlap(item.Time, item.Length, av.Start, av.Duration):
-                        print(f'{personname}: is scheduled to be in {item.Room} at {item.Time}, conflicting with "{av}"', file=f)
-                        count+=1
-
-        # To make it clear that the test ran, write a message if no conflicts were found.
-        if count == 0:
-            print("    None found", file=f)
-
-    #******
-    # Make a handy-dandy list of people's scheduling limitations
-    fname=os.path.join(reportsdir, "People's scheduling limitations.txt")
-    with open(fname, "w") as f:
-        print("People's scheduling limitations", file=f)
-        print(timestamp,  file=f)
-        for personname in gSchedules.keys():
-            avoidments=gPersons[personname].Avoid
-            output=f"{personname}: "
-            found=False
-            for av in avoidments:
-                if not found:
-                    found=True
-                else:
-                    output+=", "
-                output+=av.Pretty()
-            if found:
-                print(output, file=f)
+    # #******
+    # # Check for people who are scheduled opposite themselves
+    # fname=os.path.join(reportsdir, "Diag - People with schedule conflicts.txt")
+    # with open(fname, "w") as f:
+    #     print("People with schedule conflicts", file=f)
+    #     print(timestamp,  file=f)
+    #     count=0
+    #     for personname in gSchedules.keys():
+    #         pSched=[x for x in gSchedules[personname] if not x.IsDummy]     # Get a single person's schedule w/o dummy entries
+    #         if len(pSched) == 0:
+    #             continue
+    #
+    #         # Look for duplicate times
+    #         if len(pSched) > 1:     # Need two to tango
+    #             pSched.sort(key=lambda x: x.Time)       # Sort pSched by time
+    #             prev: ScheduleElement=pSched[0]
+    #             for item in pSched[1:]:
+    #                 # We insert dummy items for use elsewhere and need to ignore them here.  Also, prev is initialized to an empty Item which also has IsDummy set
+    #                 if TimesOverlap(item.Time, item.Length, prev.Time, prev.Length):
+    #                     print(f"{personname}: is scheduled to be in {prev.Room} and also {item.Room} at {prev.Time}", file=f)
+    #                     count+=1
+    #                 prev=item
+    #
+    #         # Now check for Avoid conflicts
+    #         avoidments=gPersons[personname].Avoid
+    #         for item in pSched:
+    #             for av in avoidments:
+    #                 if TimesOverlap(item.Time, item.Length, av.Start, av.Duration):
+    #                     print(f'{personname}: is scheduled to be in {item.Room} at {item.Time}, conflicting with "{av}"', file=f)
+    #                     count+=1
+    #
+    #     # To make it clear that the test ran, write a message if no conflicts were found.
+    #     if count == 0:
+    #         print("    None found", file=f)
+    #
+    # #******
+    # # Make a handy-dandy list of people's scheduling limitations
+    # fname=os.path.join(reportsdir, "People's scheduling limitations.txt")
+    # with open(fname, "w") as f:
+    #     print("People's scheduling limitations", file=f)
+    #     print(timestamp,  file=f)
+    #     for personname in gSchedules.keys():
+    #         avoidments=gPersons[personname].Avoid
+    #         output=f"{personname}: "
+    #         found=False
+    #         for av in avoidments:
+    #             if not found:
+    #                 found=True
+    #             else:
+    #                 output+=", "
+    #             output+=av.Pretty()
+    #         if found:
+    #             print(output, file=f)
 
 
 
