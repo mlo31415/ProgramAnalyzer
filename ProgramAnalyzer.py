@@ -407,6 +407,8 @@ def main():
         count=0
         for personname in gSchedules.keys():
             pSched=[x for x in gSchedules[personname] if not x.IsDummy]     # Get a single person's schedule w/o dummy entries
+            if len(pSched) == 0:
+                continue
 
             # Look for duplicate times
             if len(pSched) > 1:     # Need two to tango
