@@ -93,7 +93,7 @@ def main():
     gItems: dict[str, Item]={}  # A dictionary keyed by item name containing an Item (time, room, people-list, moderator), where people-list is the list of people on the item
     gTimes: list[NumericTime]=[]  # A list of times found in the spreadsheet.
     gPersons: defaultdict[str, Person]=defaultdict(Person)   # A dict of Persons keyed by the people key (full name)
-    gRoomNames: list[str]    # The list of room names corresponding to the columns in gItems
+    gRoomNames: list[str]=[]    # The list of room names corresponding to the columns in gItems
 
 
     #***********************************************************************
