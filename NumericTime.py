@@ -3,7 +3,7 @@ from typing import Tuple, Any
 import re
 import math
 
-from HelpersPackage import IsInt
+from HelpersPackage import IsInt, Int0
 from Log import LogError, Log
 
 class NumericTime:
@@ -131,36 +131,36 @@ class NumericTime:
         minutes=""
         suffix=""
 
-        m=re.match(r"^([A-Za-z]+)\s*([0-9]+)\s*([A-Za-z]+)$", s)     # <day> <hr> <am/pm/noon/etc>
+        m=re.match(r"^([a-z]+|[0-9])\s*([0-9]+)\s*([a-z]+)$", s, re.IGNORECASE)     # <day> <hr> <am/pm/noon/etc>
         if m is not None:
             day=m.groups()[0]
             hour=m.groups()[1]
             suffix=m.groups()[2]
         else:
-            m=re.match(r"^([A-Za-z]+)\s*([0-9]+):([0-9]+)\s*([A-Za-z]+)$", s)    # <day> <hr>:<min> <am/pm/noon/etc>
+            m=re.match(r"^([a-z]+|[0-9])\s*([0-9]+):([0-9]+)\s*([a-z]+)$", s, re.IGNORECASE)    # <day> <hr>:<min> <am/pm/noon/etc>
             if m is not None:
                 day=m.groups()[0]
                 hour=m.groups()[1]
                 minutes=m.groups()[2]
                 suffix=m.groups()[3]
             else:
-                m=re.match(r"^([A-Za-z]+)\s*([A-Za-z]+)$", s)    # <day> <am/pm/noon/etc>
+                m=re.match(r"^([a-z]+|[0-9])\s*([a-z]+)$", s, re.IGNORECASE)    # <day> <am/pm/noon/etc>
                 if m is not None:
                     day=m.groups()[0]
                     suffix=m.groups()[1]
                 else:
-                    m=re.match(r"^([A-Za-z]+)\s*([0-9]+)\s*$", s)     # <day> <hr>)
+                    m=re.match(r"^([a-z]+|[0-9])\s*([0-9]+)\s*$", s, re.IGNORECASE)     # <day> <hr>)
                     if m is not None:
                         day=m.groups()[0]
                         hour=m.groups()[1]
                     else:
-                        m=re.match(r"^([A-Za-z]+)\s*([0-9]+):([0-9]+)\s*$", s)  # <day> <hr>:<min>
+                        m=re.match(r"^([a-z]+|[0-9])\s*([0-9]+):([0-9]+)\s*$", s, re.IGNORECASE)  # <day> <hr>:<min>
                         if m is not None:
                             day=m.groups()[0]
                             hour=m.groups()[1]
                             minutes=m.groups()[2]
                         else:
-                            m=re.match(r"^([A-Za-z]+)\s*([0-9]+).([0-9]+)\s*$", s)  # <day> <hr>.<fraction>
+                            m=re.match(r"^([a-z]+|[0-9])\s*([0-9]+).([0-9]+)\s*$", s, re.IGNORECASE)  # <day> <hr>.<fraction>
                             if m is not None:
                                 day=m.groups()[0]
                                 hour=m.groups()[1]
@@ -169,7 +169,12 @@ class NumericTime:
                                 LogError("Can't interpret time: '"+s+"'")
                                 return False
 
-        d=self.StrToDayNumber(day)
+        d=0
+        if IsInt(day):
+            d=Int0(day)
+        else:
+            d=self.StrToDayNumber(day)
+
         h=0
         if hour != "":
             h=int(hour)
@@ -204,7 +209,11 @@ class NumericTime:
 
     @property
     def DayHourMinute(self) -> Tuple[int, int, float, bool]:
-        t=self._time
+        try:
+            t=self._time
+        except AttributeError:
+            pass
+
         isPM=t>12           # AM or PM?
         if isPM:
             t=t-12
