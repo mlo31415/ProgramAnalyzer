@@ -323,10 +323,11 @@ def main():
         print(timestamp,  file=f)
         count=0
         for personname in gSchedules.keys():
-            if personname in gPersons.keys():
-                if not gPersons[personname].RespondedYes:
-                    count+=1
-                    print(f"   {personname} has a response of '{gPersons[personname].Response}'", file=f)
+            if any([not x.IsDummy for x in gSchedules[personname]]):
+                if personname in gPersons.keys():
+                    if not gPersons[personname].RespondedYes:
+                        count+=1
+                        print(f"   {personname} has a response of '{gPersons[personname].Response}'", file=f)
         if count == 0:
             print("    None found", file=f)
 
