@@ -232,7 +232,7 @@ def main():
                     # Robert A. Heinlein, [0.5] John W. Campbell puts RAH on the hour and JWC a half-hour later.
                     # There is much messiness in this.
                     # We look for the [##] in the people list.  If we find it, we divide the people list in half and create two items with separate plists.
-                    r=RegEx.match("(.*)\[([0-9.]*)](.*)", rowSecond[col])
+                    r=RegEx.match("(.*)\\[([0-9.]*)](.*)", rowSecond[col])
                     if r is None:
                         AddItemWithPeople(gItems, time, roomName, itemName, rowSecond[col])
                     else:
@@ -345,7 +345,7 @@ def main():
                     count+=1
                     print(f"   {personname} has a email address containing a comma or a space", file=f)
                 else:
-                    pattern="^[a-zA-Z0-9_]+@[a-zA-Z0-9_]+\.[a-zA-Z0-9]+$"
+                    pattern="^[a-zA-Z0-9_]+@[a-zA-Z0-9_]+\\.[a-zA-Z0-9]+$"
                     m=RegEx.match(pattern, person.Email)
                     if m is None:
                         count+=1
