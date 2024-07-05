@@ -58,7 +58,7 @@ class Item:
                 self.Parms[l]="True"
 
         # And save the name
-        self._Name=val.strip()
+        self._Name=val
 
     @property
     def Name(self) -> str:
