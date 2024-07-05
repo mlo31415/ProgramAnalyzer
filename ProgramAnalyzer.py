@@ -20,7 +20,7 @@ from google.oauth2 import service_account
 from googleapiclient.errors import HttpError
 
 from HelpersPackage import PyiResourcePath, ParmDict, ReadListAsParmDict, MessageLog, SquareUpMatrix, RemoveEmptyRowsFromMatrix
-from HelpersPackage import GetParmFromParmDict, SearchAndReplace
+from HelpersPackage import GetParmFromParmDict, SearchAndReplace, UnicodeToHtml
 
 from ScheduleElement import ScheduleElement
 from Item import Item
@@ -864,11 +864,11 @@ def main():
                         f.write('</td></tr>')
                         if len(item.People) > 0:            # And the item's people list
                             f.write('<tr><td width="40">&nbsp;</td><td width="40">&nbsp;</td><td width="600">')     # Three columns, the first two 40 pixes wide and empty; the third 600 pixels wide
-                            f.write(f'<p><span class="people">{item.DisplayPlist()}</span></p>')
+                            f.write(f'<p><span class="people">{UnicodeToHtml(item.DisplayPlist())}</span></p>')
                             f.write('</td></tr>\n')
                         if item.Precis is not None and item.Precis != "":
                             f.write('<tr><td width="40">&nbsp;</td><td width="40">&nbsp;</td><td width="600">')     # Same
-                            f.write(f'<p><span class="precis">{item.Precis}</span></p>')
+                            f.write(f'<p><span class="precis">{UnicodeToHtml(item.Precis)}</span></p>')
                             f.write('</td></tr>\n')
     if f is not None:
         # Read and append the footer
