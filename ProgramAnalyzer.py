@@ -20,7 +20,7 @@ from google.oauth2 import service_account
 from googleapiclient.errors import HttpError
 
 from HelpersPackage import PyiResourcePath, ParmDict, ReadListAsParmDict, MessageLog, SquareUpMatrix, RemoveEmptyRowsFromMatrix
-from HelpersPackage import GetParmFromParmDict
+from HelpersPackage import GetParmFromParmDict, SearchAndReplace
 
 from ScheduleElement import ScheduleElement
 from Item import Item
@@ -220,11 +220,14 @@ def main():
             if len(itemName) > 0:  # It is only an item if the cell contains text
 
                 # In some cases, the item may have a generic name, e.g.,  "Reading", "Autographs".  This name will be used in multiple places, but
-                # We require a unique name to track the isons of people with items.  If an item name is already in gItems, we uniquify the item name
-                # by appending day/time to it.
-                # Note that anything in {curly brackets} is ignored when printing, etc..
-                if itemName in gItems:
+                # We require a unique name to track the isons of people with items.  If an item name is already in gItems, we uniquify the next use of that item name
+                # by appending rom/day/time to it.
+                # Note that anything in {curly brackets} is ignored when printing, etc.
+                lst, val=SearchAndReplace("(<.*?>)", itemName, "")
+                itemNameStripped=val.strip()
+                if itemNameStripped in gItems:
                     itemName+=" {"+roomName+" "+str(time)+"}"
+                    Log(f"Item Name decorated {itemName}")
 
                 # Was there a people row following this time/items row?
                 if rowSecond is not None:
