@@ -216,8 +216,8 @@ def main():
                 continue
 
             # This has to be an item name since it's a cell containing text in a row that starts with a time and in a column that starts with a room
-            itemName=rowFirst[col]
-            if len(itemName) > 0:  # It is only an item if the cell contains text
+            itemName=rowFirst[col].strip()
+            if len(itemName) > 0 and not itemName.startswith("#"):  # It is only an item if the cell contains text
 
                 # In some cases, the item may have a generic name, e.g.,  "Reading", "Autographs".  This name will be used in multiple places, but
                 # We require a unique name to track the isons of people with items.  If an item name is already in gItems, we uniquify the next use of that item name
