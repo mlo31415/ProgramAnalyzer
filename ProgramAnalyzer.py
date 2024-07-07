@@ -157,6 +157,10 @@ def main():
         s="".join([r.strip() for r in row])
         if s[0] == "#":
             continue
+        # Cells which start with a "#" are treated as blank
+        for cell in row:
+            if cell.strip().startswith("#"):
+                cell=""
         cleanedSchedualCells.append(row)
 
     cleanedSchedualCells=SquareUpMatrix(cleanedSchedualCells)
