@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Language" content="en-us">
 <meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
-<title>Confluence 2019</title>
+<title>Schedule</title>
 
 <!-- External stylesheet reference -->
 <!--
@@ -14,11 +14,44 @@
 
 <!-- Internal stylesheet -->
 <style>
-
 body {
-  font-family: Calibri, sans-serif;
-  color: black;
-}
+background-color: white;
+font-size: 16px;
+font-color: black;
+        }
+
+        /* Mobile styles */
+        @media (max-width: 480px) {
+            body {
+                background-color: white;
+                font-size: 14px;
+            }
+        }
+
+        /* Tablet styles */
+        @media (min-width: 481px) and (max-width: 768px) {
+            body {
+                background-color: white;
+                font-size: 16px;
+            }
+        }
+
+        /* Desktop styles */
+        @media (min-width: 769px) {
+            body {
+                background-color: white;
+                font-size: 18px;
+            }
+        }
+
+        /* High-resolution display styles */
+        @media (-webkit-min-device-pixel-ratio: 2),
+        (min-resolution: 192dpi) {
+            body {
+                background-color: white;
+            }
+        }
+
 
 h1 {
   font-size: 18pt;
@@ -32,20 +65,21 @@ h2 {
   color: blue;
 }
 
-table {
-  background-color: Azure;
-}
 
 p {
-  font-size: 12pt;
   font-style: normal;
 }
 
 .important {
   color: red;
 }
+
 .room {
-  font-style: italic;
+font-style: italic;
+}
+
+.people {
+font-style: italic;
 }
 
 .time {
@@ -54,22 +88,24 @@ p {
 }
 
 .item {
-  font-weight: bold;
+font-weight: bold;
 }
 
-.precis {
-  font-size: 10pt;
-  font-style: italic;
+
+td, ul, li {
+  font-size: 12pt;
 }
+
+
 </style>
 
 </head>
 
-<body style='font-family="sans-serif"'>
+<body>
 
-<h1>DRAFT Program for Confluence 2019</h1>
-<p class="intro">Sheraton Pittsburgh Airport</p>
-<p class="important">July 26-28, 2019</p>
+<h1>SCHEDULE</h1>
+<p class="intro">LOCATION</p>
+<p class="important">DATE</p>
 <p>&nbsp;</p>
 
 
