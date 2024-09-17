@@ -106,7 +106,7 @@ def main():
     # Check for duplicate column headers -- this is always a fatal error.
     for item in columnLabels:
         if columnLabels.count(item) != 1:
-            MessageLog(f"'{item}' appears more than once as a column header.  Terminating.")
+            MessageLog(f"'{item}' appears other than once as a column header.  Terminating.")
             exit(999)
 
     # Now read the remaining rows one by one, storing the cells in a ParmDict with the column header as key.
