@@ -14,6 +14,8 @@ from docx import text
 from docx.text import paragraph
 from docx.enum.section import WD_ORIENTATION
 
+import openpyxl
+
 import numpy as np
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
@@ -44,34 +46,45 @@ def main():
         MessageLog(f"Can't open/read {os.getcwd()}/parameters.txt\nProgramAnalyzer terminated.")
         exit(999)
 
-    with open(GetParmFromParmDict(parms, "credentials")) as source:
-        info=json.load(source)
-        Log("Json read")
-
-    if info is None:
-        MessageLog("Json file is empty")
-        exit(999)
-    Log("Spreadsheet credentials read")
-
     # Create the reports subfolder if none exists
     reportsdir=GetParmFromParmDict(parms, "reportsdir", "Reports")
     if not os.path.exists(reportsdir):
         os.mkdir(reportsdir)
         Log(f"Reports directory {os.getcwd()}/{reportsdir} created ")
 
-    credentials=service_account.Credentials.from_service_account_info(info)
-    Log("Credentials established", Flush=True)
+    # Are we getting the program from Google docs or from an Excel spreadsheet?
+    source=GetParmFromParmDict(parms, "source", "Google")
+    if source.lower() == "google":
 
-    service=build('sheets', 'v4', credentials=credentials)
-    Log("Service established", Flush=True)
+        with open(GetParmFromParmDict(parms, "credentials")) as source:
+            info=json.load(source)
+            Log("Json read")
 
-    # Call the Sheets API to load the various tabs of the spreadsheet
-    googleSheets=service.spreadsheets()
-    SPREADSHEET_ID=GetParmFromParmDict(parms, "SheetID")  # This is the ID of the specific spreadsheet we're reading
-    scheduleCells=ReadSheetFromTab(googleSheets, SPREADSHEET_ID, parms, "ScheduleTab")
-    precisCells=ReadSheetFromTab(googleSheets, SPREADSHEET_ID, parms, "PrecisTab")
-    peopleCells=ReadSheetFromTab(googleSheets, SPREADSHEET_ID, parms, "PeopleTab")
-    parameterCells=ReadSheetFromTab(googleSheets, SPREADSHEET_ID, parms, "ControlTab")
+        if info is None:
+            MessageLog("Json file is empty")
+            exit(999)
+        Log("Spreadsheet credentials read")
+
+        credentials=service_account.Credentials.from_service_account_info(info)
+        Log("Credentials established", Flush=True)
+
+        service=build('sheets', 'v4', credentials=credentials)
+        Log("Service established", Flush=True)
+
+        # Call the Sheets API to load the various tabs of the spreadsheet
+        googleSheets=service.spreadsheets()
+        SPREADSHEET_ID=GetParmFromParmDict(parms, "SheetID")  # This is the ID of the specific spreadsheet we're reading
+        scheduleCells=ReadSheetFromGoogleTab(googleSheets, SPREADSHEET_ID, parms, "ScheduleTab")
+        precisCells=ReadSheetFromGoogleTab(googleSheets, SPREADSHEET_ID, parms, "PrecisTab")
+        peopleCells=ReadSheetFromGoogleTab(googleSheets, SPREADSHEET_ID, parms, "PeopleTab")
+        parameterCells=ReadSheetFromGoogleTab(googleSheets, SPREADSHEET_ID, parms, "ControlTab")
+
+    else:
+        workbook=openpyxl.load_workbook(source)
+        scheduleCells=ReadSheetFromXLSXTab(workbook, parms, "ScheduleTab")
+        precisCells=ReadSheetFromXLSXTab(workbook, parms, "PrecisTab")
+        peopleCells=ReadSheetFromXLSXTab(workbook, parms, "PeopleTab")
+        parameterCells=ReadSheetFromXLSXTab(workbook, parms, "ControlTab")
 
     # Read parameters from the Control sheet
     startingDay="Friday"
@@ -922,9 +935,9 @@ def main():
 #*************************************************************************************************
 # Miscellaneous helper functions
 
-# Read the contents of a spreadsheet tab into a list of lists of strings
+# Read the contents of a Google docs spreadsheet tab into a list of lists of strings
 # Ignore rows beginning with #
-def ReadSheetFromTab(sheet, spreadSheetID, parms: ParmDict, parmname: str) -> list[list[str]]:
+def ReadSheetFromGoogleTab(sheet, spreadSheetID, parms: ParmDict, parmname: str) -> list[list[str]]:
 
     # Convert the generic name of the tab to the specific name to be used this year
     tabname=GetParmFromParmDict(parms, parmname)
@@ -941,7 +954,29 @@ def ReadSheetFromTab(sheet, spreadSheetID, parms: ParmDict, parmname: str) -> li
         LogError(f"ReadSheetFromTab: Can't locate {tabname} tab in spreadsheet")
         raise (ValueError, "No cells found in tab")
 
-    return [p for p in cells if len(p) > 0 and "".join(p)[0] != "#"]  # Drop blank lines and lines with a "#" alone in column 1.
+    rows=[p for p in cells if len(p) > 0 and "".join(p)[0] != "#"]  # Drop empty lines and lines with a "#" alone in column 1.
+    return rows
+
+def ReadSheetFromXLSXTab(workbook: openpyxl.Workbook, parms: ParmDict, parmname: str) -> list[list[str]]:
+
+    # Convert the generic name of the tab to the specific name to be used this year
+    tabname=GetParmFromParmDict(parms, parmname)
+    if tabname not in workbook.sheetnames:
+        LogError(f"ReadSheetFromTab: Can't locate {tabname} tab in spreadsheet")
+        raise (ValueError, f"No cells found in tab '{tabname}'")
+
+    rows=workbook[tabname].values
+    rows=[list(row) for row in rows]        # Turn rows (supplied as tuples by values) into lists
+    rows=[["" if cell is None else cell for cell in row] for row in rows]   # Turn None values into empty strings
+    rows=[row for row in rows if any([cell != "" for cell in row])]         # Eliminate entirely empty rows
+    rows=[[str(cell) for cell in row] for row in rows]              # Some cells seem to come through as ints -- turn them into strs
+    rows=[row for row in rows if "".join(row)[0] != "#"]            # Ignore rows where the 1st character is a "#"
+    trimmed=[]
+    for row in rows:
+        while row[-1] == "":
+            row.pop()
+        trimmed.append(row)
+    return trimmed
 
 
 # Take a Person and gSchedules and return True if that Person is scheduled on some item *or* is listed as Response='y'
