@@ -56,6 +56,7 @@ def main():
     source=GetParmFromParmDict(parms, "source", "Google")
     if source.lower() == "google":
 
+        Log("Loading program from Googledocs")
         with open(GetParmFromParmDict(parms, "credentials")) as source:
             info=json.load(source)
             Log("Json read")
@@ -80,6 +81,8 @@ def main():
         parameterCells=ReadSheetFromGoogleTab(googleSheets, SPREADSHEET_ID, parms, "ControlTab")
 
     else:
+        Log(f"Loading program from '{source}'")
+
         workbook=openpyxl.load_workbook(source)
         scheduleCells=ReadSheetFromXLSXTab(workbook, parms, "ScheduleTab")
         precisCells=ReadSheetFromXLSXTab(workbook, parms, "PrecisTab")
