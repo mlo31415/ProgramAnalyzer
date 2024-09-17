@@ -971,7 +971,7 @@ def ReadSheetFromXLSXTab(workbook: openpyxl.Workbook, parms: ParmDict, parmname:
     rows=[row for row in rows if any([cell != "" for cell in row])]         # Eliminate entirely empty rows
     rows=[[str(cell) for cell in row] for row in rows]              # Some cells seem to come through as ints -- turn them into strs
     rows=[row for row in rows if "".join(row)[0] != "#"]            # Ignore rows where the 1st character is a "#"
-    trimmed=[]
+    trimmed=[]      # Remove trailing empty cells (Probably not needed, but better duplicates what Googledocs returns.)
     for row in rows:
         while row[-1] == "":
             row.pop()
