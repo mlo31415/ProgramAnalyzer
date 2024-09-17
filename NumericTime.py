@@ -118,7 +118,7 @@ class NumericTime:
         for i, day in enumerate(daylist):
             if day.startswith(dstr):
                 return i
-        LogError("StrToDayNumber(): Can't interpret '{dstr}' as the name of a day")
+        LogError(f"StrToDayNumber(): Can't interpret '{dstr}' as the name of a day")
         assert False
 
 
