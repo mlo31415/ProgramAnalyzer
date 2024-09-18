@@ -56,7 +56,7 @@ def main():
     source=GetParmFromParmDict(parms, "source", "Google")
     if source.lower() == "google":
 
-        Log("Loading program from Googledocs")
+        Log("Loading program from Google docs")
         with open(GetParmFromParmDict(parms, "credentials")) as source:
             info=json.load(source)
             Log("Json read")
