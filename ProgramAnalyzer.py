@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import re
 from collections import defaultdict
 
 import json
@@ -310,6 +312,8 @@ def main():
                 itemname=row[0]
                 if itemname in gItems:
                     gItems[itemname].Precis=row[1]
+                    # Stripe the non-public stuff -- ((in double parens)) from the precis
+                    gItems[itemname].Precis=re.sub(r"\(\(.*\)\)", "", gItems[itemname].Precis, flags=re.DOTALL)
                 else:
                     count+=1
                     print("   "+itemname, file=f)
