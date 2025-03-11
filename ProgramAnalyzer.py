@@ -312,8 +312,6 @@ def main():
                 itemname=row[0]
                 if itemname in gItems:
                     gItems[itemname].Precis=row[1]
-                    # Stripe the non-public stuff -- ((in double parens)) from the precis
-                    gItems[itemname].Precis=re.sub(r"\(\(.*\)\)", "", gItems[itemname].Precis, flags=re.DOTALL)
                 else:
                     count+=1
                     print("   "+itemname, file=f)
@@ -325,6 +323,13 @@ def main():
     #*************************************************************************************************
     # Generate reports
     # The first reports are all error reports or checking reports
+
+
+    # We have precois which include material in ((double parens).  This material goes into some reports, but not all.
+    # Strip the non-public stuff -- ((in double parens)) from one precis
+    def ScrubPrecis(pre: str) -> str:
+        return re.sub(r"\(\(.*\)\)", "", pre, flags=re.DOTALL)
+
 
     #******
     # Check for people in the schedule who are not in the people tab
@@ -511,7 +516,8 @@ def main():
                 print("    None found", file=f)
 
 
-    #****************************************************
+    # *********************************************************************************************************
+    # *********************************************************************************************************
     # Now do the content/working reports
 
     #*******
@@ -545,7 +551,7 @@ def main():
                     if item.Time == time and item.Room == room:
                         print(f"{time}, {room}: {itemName}   {item.DisplayPlist()}", file=f)
                         if item.Precis is not None and item.Precis != "":
-                            print("     "+item.Precis, file=f)
+                            print("     "+ScrubPrecis(item.Precis), file=f)
 
 
     #*******
@@ -774,8 +780,8 @@ def main():
                             AppendParaToDoc(doc, plist, size=12, indent=0.6)
                             print("            "+plist, file=f)
                         if item.Precis is not None and item.Precis != "":
-                            AppendParaToDoc(doc, item.Precis, italic=True, size=12, indent=0.6)
-                            print("            "+item.Precis, file=f)
+                            AppendParaToDoc(doc, ScrubPrecis(item.Precis), italic=True, size=12, indent=0.6)
+                            print("            "+ScrubPrecis(item.Precis), file=f)
     fname=os.path.join(reportsdir, "Pocket program.docx")
     doc.save(fname)
     f.close()
@@ -892,7 +898,7 @@ def main():
                             f.write('</td></tr>\n')
                         if item.Precis is not None and item.Precis != "":
                             f.write('<tr><td width="40">&nbsp;</td><td width="40">&nbsp;</td><td width="600">')     # Same
-                            f.write(f'<p><span class="precis">{UnicodeToHtml(item.Precis)}</span></p>')
+                            f.write(f'<p><span class="precis">{UnicodeToHtml(ScrubPrecis(item.Precis))}</span></p>')
                             f.write('</td></tr>\n')
     if f is not None:
         # Read and append the footer
