@@ -333,7 +333,7 @@ def main():
 
     #******
     # Check for people in the schedule who are not in the people tab
-    fname=os.path.join(reportsdir, "Diag - People in schedule  but not in People.txt")
+    fname=os.path.join(reportsdir, "Diag - People in schedule but not in People.txt")
     with open(fname, "w") as f:
         print("People who are scheduled but not in People:", file=f)
         print("(Note that these may be due to spelling differences, use of initials, etc.)", file=f)
