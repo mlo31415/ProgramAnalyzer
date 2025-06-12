@@ -1027,6 +1027,9 @@ def SafeDelete(fn: str) -> bool:
 # Add an item with a list of people to the gItems dict, and add the item to each of the persons who are on it
 def AddItemWithPeople(gItems: dict[str, Item], time: NumericTime, roomName: str, itemName: str, plistText: str, length: float=1.0) -> None:
 
+    # Ignore anything following a "#" as a comment
+    if "#" in plistText:
+        plistText=plistText[:plistText.index("#")]
     plist=[p.strip() for p in plistText.split(",") ]    # Get the people as a list with excess spaces removed
     plist=[p for p in plist if len(p) > 0]              # Ignore empty entries
     modName=""
