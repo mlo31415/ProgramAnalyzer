@@ -298,25 +298,26 @@ def main():
     #***********************************************************************
     # Analyze the Precis cells and add the information to gItems
     # The first row is column labels. So ignore it.
-    precisCells=precisCells[1:]
+    if precisCells is not None:
+        precisCells=precisCells[1:]
 
-    # The rest of the rows of the tab contains the title in the first column and the precis in the second
-    count: int=0
-    fname=os.path.join(reportsdir, "Diag - precis without items.txt")
-    with open(fname, "w") as f:
-        print("Precis without corresponding items:", file=f)
-        print(timestamp,  file=f)
-        for row in precisCells:
-            row=[r.strip() for r in row]    # Get rid of leading and trailing blanks
-            if len(row) > 1 and len(row[0]) > 0 and len(row[1]) > 0: # If both the item name and the precis exist, store them in the precis table.
-                itemname=row[0]
-                if itemname in gItems:
-                    gItems[itemname].Precis=row[1]
-                else:
-                    count+=1
-                    print("   "+itemname, file=f)
-        if count == 0:
-            print("    None found", file=f)
+        # The rest of the rows of the tab contains the title in the first column and the precis in the second
+        count: int=0
+        fname=os.path.join(reportsdir, "Diag - precis without items.txt")
+        with open(fname, "w") as f:
+            print("Precis without corresponding items:", file=f)
+            print(timestamp,  file=f)
+            for row in precisCells:
+                row=[r.strip() for r in row]    # Get rid of leading and trailing blanks
+                if len(row) > 1 and len(row[0]) > 0 and len(row[1]) > 0: # If both the item name and the precis exist, store them in the precis table.
+                    itemname=row[0]
+                    if itemname in gItems:
+                        gItems[itemname].Precis=row[1]
+                    else:
+                        count+=1
+                        print("   "+itemname, file=f)
+            if count == 0:
+                print("    None found", file=f)
 
 
     #*************************************************************************************************
@@ -950,7 +951,7 @@ def main():
 
 # Read the contents of a Google docs spreadsheet tab into a list of lists of strings
 # Ignore rows beginning with #
-def ReadSheetFromGoogleTab(sheet, spreadSheetID, parms: ParmDict, parmname: str) -> list[list[str]]:
+def ReadSheetFromGoogleTab(sheet, spreadSheetID, parms: ParmDict, parmname: str) -> list[list[str]]|None:
 
     # Convert the generic name of the tab to the specific name to be used this year
     tabname=GetParmFromParmDict(parms, parmname)
@@ -959,6 +960,8 @@ def ReadSheetFromGoogleTab(sheet, spreadSheetID, parms: ParmDict, parmname: str)
     except HttpError:
         LogError(f"ReadSheetFromTab: Can't locate {tabname} tab in spreadsheet. Is the supplied SheetID wrong?")
         exit(999)
+    except ValueError:
+        return None
     except Exception as e:
         LogError(f"ReadSheetFromTab: Exception {e} while attempting to load tab {tabname} tab in spreadsheet.")
         exit(999)
