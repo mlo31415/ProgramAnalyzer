@@ -12,7 +12,8 @@ import csv
 
 import docx
 from docx.shared import Pt, Inches
-from docx import text
+from docx import text, Document
+from docx.styles.style import ParagraphStyle
 from docx.text import paragraph
 from docx.enum.section import WD_ORIENTATION
 
@@ -996,7 +997,7 @@ def ReadSheetFromXLSXTab(workbook: openpyxl.Workbook, parms: ParmDict, parmname:
 
 
 # Take a Person and gSchedules and return True if that Person is scheduled on some item *or* is listed as Response='y'
-def PersonOfInterest(person: [Person, str], gschedules: dict[str, list[ScheduleElement]]) -> bool:
+def PersonOfInterest(person: Person|str, gschedules: dict[str, list[ScheduleElement]]) -> bool:
     if type(person) is Person:
         # These checks only apply for a Person structure
         if person.RespondedYes:
@@ -1061,6 +1062,7 @@ def AddItemWithoutPeople(gItems: dict[str, Item], time: NumericTime, roomName: s
 #******
 # Create a docx and a .txt version for the pocket program
 def AppendParaToDoc(doc: docx.Document, txt: str, bold=False, italic=False, size=14, indent=0.0, font="Calibri", alignment=0):
+def AppendParaToDoc(doc: Document, txt: str, bold=False, italic=False, size=14, indent=0.0, font="Calibri", alignment=0):
     para=doc.add_paragraph()
     run=para.add_run(txt)
     run.bold=bold
