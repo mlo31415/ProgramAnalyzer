@@ -967,8 +967,8 @@ def ReadSheetFromGoogleTab(sheet, spreadSheetID, parms: ParmDict, parmname: str)
         exit(999)
 
     if not cells:
-        LogError(f"ReadSheetFromTab: Can't locate {tabname} tab in spreadsheet")
-        raise (ValueError, "No cells found in tab")
+        LogError(f"ReadSheetFromGoogleTab: No cells found in tab{tabname}")
+        return None
 
     rows=[p for p in cells if len(p) > 0 and "".join(p)[0] != "#"]  # Drop empty lines and lines with a "#" alone in column 1.
     return rows
