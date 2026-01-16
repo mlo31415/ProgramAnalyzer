@@ -640,7 +640,7 @@ def main():
 
     fname=os.path.join(reportsdir, "Items' people counts.csv")
     with open(fname, mode='w', encoding='UTF8', newline="") as f:
-        writer=csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        writer=csv.writer(f, delimiter=',', quotechar='"')
         writer.writerow(["Number", "Item Time", "Item Title"])
         for id in itemdata:
             writer.writerow(id)
@@ -740,7 +740,7 @@ def main():
 
     fname=os.path.join(reportsdir, "Peoples' item counts.csv")
     with open(fname, "w", encoding='UTF8', newline="") as f:
-        writer=csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        writer=csv.writer(f, delimiter=',', quotechar='"')
         writer.writerow(["Number" , "Person"])
         for personname, person in gPersons.items():
             if PersonOfInterest(person, gSchedules):
