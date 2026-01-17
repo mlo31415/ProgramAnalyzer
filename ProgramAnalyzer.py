@@ -6,15 +6,11 @@ from collections import defaultdict
 import json
 import os.path
 import difflib
-import re as RegEx
 from datetime import datetime
 import csv
 
 import docx
-from docx.shared import Pt, Inches
-from docx import text, Document
-from docx.styles.style import ParagraphStyle
-from docx.text import paragraph
+from docx.shared import Inches
 from docx.enum.section import WD_ORIENTATION
 
 import openpyxl
@@ -26,6 +22,7 @@ from googleapiclient.errors import HttpError
 
 from HelpersPackage import PyiResourcePath, ParmDict, ReadListAsParmDict, MessageLog, SquareUpMatrix, RemoveEmptyRowsFromMatrix
 from HelpersPackage import GetParmFromParmDict, SearchAndReplace, UnicodeToHtml
+from DocxHelpers import AppendStyledParaToDoc, AppendStyledTextToPara
 
 from ScheduleElement import ScheduleElement
 from Item import Item
@@ -187,7 +184,7 @@ def main():
     # Now compress out non-room and non-time columns
     # This will leave one time column on the left followed by all the room columns
     # We will drop columns even if they have something in them if they are not headed by a room name
-    # We wprk in the transposed cleanedSchedualCells, since it's much easier to delete rows than columns
+    # We work in the transposed cleanedSchedualCells, since it's much easier to delete rows than columns
     temp=np.array(cleanedSchedualCells).T.tolist()  # Use numpy to transpose the array
     cleanedSchedualCells=[temp[0]]    # Copy over the time row
     for row in temp[1:]:
@@ -200,7 +197,12 @@ def main():
     if len(gRoomNames) == 0:
         LogError("Room names line (1st row of the schedule tab) is blank.")
         return
-    cleanedSchedualCells=cleanedSchedualCells[1:]
+
+    # Copy the needed cells while casting them into strs
+    new: list[list[str]]=[]
+    for row in cleanedSchedualCells[1:]:
+        new.append([str(x) for x in row])
+    cleanedSchedualCells=new
 
 
     # Now we have just the schedule rows.  They are of two types:
@@ -258,9 +260,9 @@ def main():
                     # Robert A. Heinlein, [0.5] John W. Campbell puts RAH on the hour and JWC a half-hour later.
                     # There is much messiness in this.
                     # We look for the [##] in the people list.  If we find it, we divide the people list in half and create two items with separate plists.
-                    r=RegEx.match(r"(.*)\[([0-9.]*)](.*)", rowSecond[col])
+                    r=re.match(r"(.*)\[([0-9.]*)](.*)", str(rowSecond[col]))
                     if r is None:
-                        AddItemWithPeople(gItems, time, roomName, itemName, rowSecond[col])
+                        AddItemWithPeople(gItems, time, roomName, itemName, str(rowSecond[col]))
                     else:
                         # Sometimes the first person can have a trailing comma, e.g., Socrates, [0.0] Plato.  Drop it.
                         plist1=r.groups()[0].strip().removesuffix(",")
@@ -380,7 +382,7 @@ def main():
                     print(f"   {personname} has a email address containing a comma or a space", file=f)
                 else:
                     pattern=r"^[a-zA-Z0-9_]+@[a-zA-Z0-9_]+\.[a-zA-Z0-9]+$"
-                    m=RegEx.match(pattern, person.Email)
+                    m=re.match(pattern, person.Email)
                     if m is None:
                         count+=1
                         print(f"   {personname} has a email address not of the form something@something.something", file=f)
@@ -557,37 +559,46 @@ def main():
 
 
     #*******
-    # Print the program participant's schedule report in .txt and docx formats, simultaneously.
+    # Print the program participant's schedule report in .txt and docx formats.
     # We print the .txt file as we go along, while accumulating the docx file in docx.Document() object, and then output it at the end.
     # Get a list of the program participants (the keys of the  participants dictionary) sorted by the last token in the name (which will usually be the last name)
-    doc=docx.Document()     # The object holding the partly-created Word document
+
     fname=os.path.join(reportsdir, "Program participant schedules.txt")
     SafeDelete(fname)
     with open(fname, "w") as f:
-        print(timestamp,  file=f)
+        print(timestamp, file=f)
         for personname in sortedAllParticipantList:
             if PersonOfInterest(personname, gSchedules):
-                section=doc.add_section()
-                section.orientation=WD_ORIENTATION.PORTRAIT
                 print("\n\n********************************************", file=f)
                 print(personname, file=f)
-                AppendParaToDoc(doc, personname, bold=True, size=16)
                 for schedElement in gSchedules[personname]:
                     if len(schedElement.DisplayName) > 0:
                         print(f"\n{schedElement.Time}: {schedElement.DisplayName} [{schedElement.Room}]", file=f)
-                        para=doc.add_paragraph()
-                        AppendTextToPara(para, f"\n{schedElement.Time}:", size=14)
-                        AppendTextToPara(para, "  "+schedElement.DisplayName, size=14, bold=True)
-                        AppendTextToPara(para, "  "+schedElement.Room, size=12)
                         item=gItems[schedElement.ItemName]
                         part=f"Participants: {item.DisplayPlist()}"
                         print(part, file=f)
-                        AppendParaToDoc(doc, part)
                         if item.Precis is not None and item.Precis != "":
                             print(f"Precis: {item.Precis}", file=f)
-                            AppendParaToDoc(doc, item.Precis, italic=True, size=12)
-    # The .txt file has been written and closed, so now output the docx.Document() object as a Word file.
+
+    doc=docx.Document("Template - Program Participant Schedules.docx")  # The object holding the partly-created Word document
     fname=os.path.join(reportsdir, "Program participant schedules.docx")
+    SafeDelete(fname)
+    for personname in sortedAllParticipantList:
+        if PersonOfInterest(personname, gSchedules):
+            section=doc.add_section()
+            section.orientation=WD_ORIENTATION.PORTRAIT
+            AppendStyledParaToDoc(doc, personname, style="ParaPersonHeader")
+            for schedElement in gSchedules[personname]:
+                if len(schedElement.DisplayName) > 0:
+                    para=doc.add_paragraph()
+                    AppendStyledTextToPara(para, f"\n{schedElement.Time}:", charstyle="CharDayTime")
+                    AppendStyledTextToPara(para, "  "+schedElement.DisplayName, charstyle="CharItem")
+                    AppendStyledTextToPara(para, "  "+schedElement.Room, charstyle="CharRoom")
+                    item=gItems[schedElement.ItemName]
+                    AppendStyledParaToDoc(doc, f"Participants: {item.DisplayPlist()}", style="ProgPanellists")
+                    if item.Precis is not None and item.Precis != "":
+                        AppendStyledParaToDoc(doc, item.Precis, style="ProgPrecis")
+    # Output the docx.Document() object as a Word file.
     doc.save(fname)
 
 
@@ -761,36 +772,45 @@ def main():
         pass
         # Popup("open("+fname+")  threw exception")
 
-    doc=docx.Document()     # The object holding the partly-created Word document
-    AppendParaToDoc(doc, "Schedule", bold=True, size=24)
     print("Schedule", file=f)
     for time in gTimes:
-        AppendParaToDoc(doc, "")
-        AppendParaToDoc(doc, str(time), bold=True)
         print(f"\n{time}", file=f)
         for room in gRoomNames:
             # Now search for the program item and people list for this slot
             for itemName, item in gItems.items():
                 if item.Time == time and item.Room == room:
                     if len(item.DisplayName) > 0:
-                        para=doc.add_paragraph()
-                        AppendTextToPara(para, room+": ", italic=True, size=12, indent=0.3)
-                        AppendTextToPara(para, item.DisplayName, size=12, indent=0.3)
                         print(f"   {room}:  {item.DisplayName}", file=f)   # Print the room and item name
                         if len(item.People) > 0:            # And the item's people list
                             plist=item.DisplayPlist()
-                            AppendParaToDoc(doc, plist, size=12, indent=0.6)
                             print("            "+plist, file=f)
                         if item.Precis is not None and item.Precis != "":
-                            AppendParaToDoc(doc, ScrubPrecis(item.Precis), italic=True, size=12, indent=0.6)
                             print("            "+ScrubPrecis(item.Precis), file=f)
+    f.close()
+
+    doc=docx.Document("Template - Pocket Program.docx")     # The object holding the partly-created Word document
+    for time in gTimes:
+        AppendStyledParaToDoc(doc, "")
+        AppendStyledParaToDoc(doc, str(time), style="ParaTimeTitle2")
+        for room in gRoomNames:
+            # Now search for the program item and people list for this slot
+            for itemName, item in gItems.items():
+                if item.Time == time and item.Room == room:
+                    if len(item.DisplayName) > 0:
+                        para=doc.add_paragraph()
+                        AppendStyledTextToPara(para, room+": ", charstyle="CharProgItemRoom")
+                        AppendStyledTextToPara(para, item.DisplayName, charstyle="CharProgItemName")
+                        if len(item.People) > 0:            # And the item's people list
+                            plist=item.DisplayPlist()
+                            AppendStyledParaToDoc(doc, plist, style="ParaPeopleList")
+                        if item.Precis is not None and item.Precis != "":
+                            AppendStyledParaToDoc(doc, ScrubPrecis(item.Precis), style="ParaPrecis")
     fname=os.path.join(reportsdir, "Pocket program.docx")
     doc.save(fname)
-    f.close()
 
 
     # Create the individual (one per person) tentcard Word document
-    doc=docx.Document()
+    doc=docx.Document("Template - Tentcards.docx")
     for personname in sortedAllParticipantList:
         if any([not x.IsDummy for x in gSchedules[personname]]):
             section=doc.add_section()
@@ -807,13 +827,13 @@ def main():
             size=86
             if len(personname) > 18:
                 size=86*18/len(personname)
-            AppendTextToPara(para, personname, size=size, indent=0)
+            AppendStyledParaToDoc(doc, personname, style="TentcardPerson")
 
     doc.save(os.path.join(reportsdir, "Tentcards -- Individual.docx"))
 
 
     # Create the tentcards for each program item Word document
-    doc=docx.Document()
+    doc=docx.Document("Template - Tentcards.docx")
     for room in gRoomNames:
         for time in gTimes:
             for itemName, item in gItems.items():
@@ -833,15 +853,14 @@ def main():
                             section.bottom_margin=Inches(1)
 
                             # Add the paragraph for this tentcard
-                            AppendParaToDoc(doc, f"{time} --  {room}\n", size=12, indent=0)
-                            AppendParaToDoc(doc, f"{item.DisplayName}\n", size=12, indent=0)
+                            AppendStyledParaToDoc(doc, f"{time} --  {room}\n{item.DisplayName}\n", style="TentcardPerson")
 
                             # Set the margins for the big person's name for the front of the tentcard
-                            AppendParaToDoc(doc, "\n", size=230)
+                            AppendStyledTextToPara(doc.paragraphs[-1], "\n", size=230)
                             size=86
                             if len(person) > 18:
                                 size=86*18/len(person)
-                            AppendParaToDoc(doc, person, size=size, indent=0, alignment=1)
+                            AppendStyledParaToDoc(doc, person, style="TentcardPerson")
 
     doc.save(os.path.join(reportsdir, "Tentcards -- By Program Item.docx"))
 
@@ -917,25 +936,25 @@ def main():
     # Do the room signs.  They'll go in reports/rooms/<name>.docx
     # Create the roomsigns subfolder if none exists
     path=os.path.join(reportsdir, "roomsigns")
+    doc=docx.Document("Template - Roomsigns.docx")
     if not os.path.exists(path):
         os.mkdir(path)
     for room in gRoomNames:
         inuse=False  # Make sure that this room is actually in use
         if len(room.strip()) == 0:
             continue
-        doc=docx.Document()
-        AppendParaToDoc(doc, room, bold=True, size=32)  # Room name at top
+        AppendStyledParaToDoc(doc, room, style="RoomName")  # Room name at top
         for time in gTimes:
             for itemName in gItems.keys():
                 item=gItems[itemName]
                 if len(item.DisplayName) > 0:
                     if item.Time == time and item.Room == room:
                         inuse=True
-                        AppendParaToDoc(doc, "")    # Skip a line
+                        AppendStyledParaToDoc(doc, "")    # Skip a line
                         para=doc.add_paragraph()
-                        AppendTextToPara(para, f"{item.Time}:  ", bold=True)   # Add the time in bold followed by the item's title
-                        AppendTextToPara(para, item.DisplayName)
-                        AppendParaToDoc(doc, item.DisplayPlist(), italic=True, indent=0.5)        # Then, on a new line, the people list in italic
+                        AppendStyledTextToPara(para, f"{item.Time}:  ", charstyle="TimeOfItem")   # Add the time in bold followed by the item's title
+                        AppendStyledTextToPara(para, item.DisplayName, charstyle="NameOfItem")
+                        AppendStyledParaToDoc(doc, item.DisplayPlist(), style="Participants")        # Then, on a new line, the people list in italic
         fname=os.path.join(path, room.replace("/", "-")+".docx")
         SafeDelete(fname)
         if inuse:
@@ -1058,33 +1077,6 @@ def AddItemWithoutPeople(gItems: dict[str, Item], time: NumericTime, roomName: s
     item=Item(ItemText=itemName, Time=time, Room=roomName, Length=length)
     gItems[item.Name]=item
 
-
-#******
-# Create a docx and a .txt version for the pocket program
-def AppendParaToDoc(doc: docx.Document, txt: str, bold=False, italic=False, size=14, indent=0.0, font="Calibri", alignment=0):
-def AppendParaToDoc(doc: Document, txt: str, bold=False, italic=False, size=14, indent=0.0, font="Calibri", alignment=0):
-    para=doc.add_paragraph()
-    run=para.add_run(txt)
-    run.bold=bold
-    run.italic=italic
-    runfont=run.font
-    runfont.name=font
-    runfont.size=Pt(size)
-    para.alignment=alignment
-    para.paragraph_format.left_indent=Inches(indent)
-    para.paragraph_format.line_spacing=1
-    para.paragraph_format.space_after=0
-
-def AppendTextToPara(para: docx.text.paragraph.Paragraph, txt: str, bold: bool=False, italic: bool=False, size: float=14, indent: float=0.0, font: str="Calibri"):
-    run=para.add_run(txt)
-    run.bold=bold
-    run.italic=italic
-    runfont=run.font
-    runfont.name=font
-    runfont.size=Pt(size)
-    para.paragraph_format.left_indent=Inches(indent)
-    para.paragraph_format.line_spacing=1
-    para.paragraph_format.space_after=0
 
 
 
