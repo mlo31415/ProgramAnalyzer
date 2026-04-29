@@ -763,28 +763,32 @@ def main():
         if not SafeDelete(fname):
             pass
     except:
+        MessageLog(f"Can't do a safe deolete of {fname}")
         pass
     try:
         f=open(fname, "w")    # The file to receive the .txt document
     except:
+        MessageLog(f"Can't open {fname}")
+        f=None
         pass
         # Popup("open("+fname+")  threw exception")
 
-    print("Schedule", file=f)
-    for time in gTimes:
-        print(f"\n{time}", file=f)
-        for room in gRoomNames:
-            # Now search for the program item and people list for this slot
-            for itemName, item in gItems.items():
-                if item.Time == time and item.Room == room:
-                    if len(item.DisplayName) > 0:
-                        print(f"   {room}:  {item.DisplayName}", file=f)   # Print the room and item name
-                        if len(item.People) > 0:            # And the item's people list
-                            plist=item.DisplayPlist()
-                            print("            "+plist, file=f)
-                        if item.Precis is not None and item.Precis != "":
-                            print("            "+ScrubPrecis(item.Precis), file=f)
-    f.close()
+    if f is not None:
+        print("Schedule", file=f)
+        for time in gTimes:
+            print(f"\n{time}", file=f)
+            for room in gRoomNames:
+                # Now search for the program item and people list for this slot
+                for itemName, item in gItems.items():
+                    if item.Time == time and item.Room == room:
+                        if len(item.DisplayName) > 0:
+                            print(f"   {room}:  {item.DisplayName}", file=f)   # Print the room and item name
+                            if len(item.People) > 0:            # And the item's people list
+                                plist=item.DisplayPlist()
+                                print("            "+plist, file=f)
+                            if item.Precis is not None and item.Precis != "":
+                                print("            "+ScrubPrecis(item.Precis), file=f)
+        f.close()
 
     doc=docx.Document("Template - Pocket Program.docx")     # The object holding the partly-created Word document
     for time in gTimes:
