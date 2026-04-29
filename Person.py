@@ -162,7 +162,7 @@ def ParseAvoid(avstring: str) -> list[Avoidment]:
                     ret.Description=avs
                     out.append(ret)
             case None:
-                i=0
+                raise ValueError(f"ParseAvoid: invalid avoid string '{avs}'")
 
     return out
 
