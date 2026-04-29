@@ -293,6 +293,7 @@ def main():
     # Make sure times are sorted into ascending order.
     # The simple sort works because the times are stored as numeric hours since start of first day.
     gTimes.sort()
+    ItemsByTimeAndRoom: dict[tuple, Item]={(item.Time, item.Room): item for item in gItems.values()}
 
     # Create a timestemp
     timestamp=f"Generated: {datetime.now():%A %B %d, %Y at %H:%M:%S}\n\n"
@@ -549,12 +550,11 @@ def main():
         print(timestamp,  file=f)
         for time in gTimes:
             for room in gRoomNames:
-                # Now search for the program item and people list for this slot
-                for itemName, item in gItems.items():
-                    if item.Time == time and item.Room == room:
-                        print(f"{time}, {room}: {itemName}   {item.DisplayPlist()}", file=f)
-                        if item.Precis is not None and item.Precis != "":
-                            print("     "+ScrubPrecis(item.Precis), file=f)
+                item=ItemsByTimeAndRoom.get((time, room))
+                if item is not None:
+                    print(f"{time}, {room}: {item.Name}   {item.DisplayPlist()}", file=f)
+                    if item.Precis is not None and item.Precis != "":
+                        print("     "+ScrubPrecis(item.Precis), file=f)
 
 
     #*******
@@ -779,16 +779,14 @@ def main():
         for time in gTimes:
             print(f"\n{time}", file=f)
             for room in gRoomNames:
-                # Now search for the program item and people list for this slot
-                for itemName, item in gItems.items():
-                    if item.Time == time and item.Room == room:
-                        if len(item.DisplayName) > 0:
-                            print(f"   {room}:  {item.DisplayName}", file=f)   # Print the room and item name
-                            if len(item.People) > 0:            # And the item's people list
-                                plist=item.DisplayPlist()
-                                print("            "+plist, file=f)
-                            if item.Precis is not None and item.Precis != "":
-                                print("            "+ScrubPrecis(item.Precis), file=f)
+                item=ItemsByTimeAndRoom.get((time, room))
+                if item is not None and len(item.DisplayName) > 0:
+                    print(f"   {room}:  {item.DisplayName}", file=f)   # Print the room and item name
+                    if len(item.People) > 0:            # And the item's people list
+                        plist=item.DisplayPlist()
+                        print("            "+plist, file=f)
+                    if item.Precis is not None and item.Precis != "":
+                        print("            "+ScrubPrecis(item.Precis), file=f)
         f.close()
 
     doc=docx.Document("Template - Pocket Program.docx")     # The object holding the partly-created Word document
@@ -796,18 +794,16 @@ def main():
         AppendStyledParaToDoc(doc, "")
         AppendStyledParaToDoc(doc, str(time), style="ParaTimeTitle2")
         for room in gRoomNames:
-            # Now search for the program item and people list for this slot
-            for itemName, item in gItems.items():
-                if item.Time == time and item.Room == room:
-                    if len(item.DisplayName) > 0:
-                        para=doc.add_paragraph()
-                        AppendStyledTextToPara(para, room+": ", charstyle="CharProgItemRoom")
-                        AppendStyledTextToPara(para, item.DisplayName, charstyle="CharProgItemName")
-                        if len(item.People) > 0:            # And the item's people list
-                            plist=item.DisplayPlist()
-                            AppendStyledParaToDoc(doc, plist, style="ParaPeopleList")
-                        if item.Precis is not None and item.Precis != "":
-                            AppendStyledParaToDoc(doc, ScrubPrecis(item.Precis), style="ParaPrecis")
+            item=ItemsByTimeAndRoom.get((time, room))
+            if item is not None and len(item.DisplayName) > 0:
+                para=doc.add_paragraph()
+                AppendStyledTextToPara(para, room+": ", charstyle="CharProgItemRoom")
+                AppendStyledTextToPara(para, item.DisplayName, charstyle="CharProgItemName")
+                if len(item.People) > 0:            # And the item's people list
+                    plist=item.DisplayPlist()
+                    AppendStyledParaToDoc(doc, plist, style="ParaPeopleList")
+                if item.Precis is not None and item.Precis != "":
+                    AppendStyledParaToDoc(doc, ScrubPrecis(item.Precis), style="ParaPrecis")
     fname=os.path.join(reportsdir, "Pocket program.docx")
     doc.save(fname)
 
@@ -839,31 +835,30 @@ def main():
     doc=docx.Document("Template - Tentcards.docx")
     for room in gRoomNames:
         for time in gTimes:
-            for itemName, item in gItems.items():
-                if item.Time == time and item.Room == room:
-                    if len(item.DisplayName) > 0:
-                        for person in item.People:
-                            # Do a tentcard for this person
-                            section=doc.add_section()
-                            section.orientation=WD_ORIENTATION.LANDSCAPE
-                            section.page_width=Inches(11)
-                            section.page_height=Inches(8.5)
+            item=ItemsByTimeAndRoom.get((time, room))
+            if item is not None and len(item.DisplayName) > 0:
+                for person in item.People:
+                    # Do a tentcard for this person
+                    section=doc.add_section()
+                    section.orientation=WD_ORIENTATION.LANDSCAPE
+                    section.page_width=Inches(11)
+                    section.page_height=Inches(8.5)
 
-                            section.top_margin=Inches(1)
-                            section.right_margin=Inches(0.2)
-                            section.left_margin=Inches(0.2)
-                            #section.top_margin=Inches(5)
-                            section.bottom_margin=Inches(1)
+                    section.top_margin=Inches(1)
+                    section.right_margin=Inches(0.2)
+                    section.left_margin=Inches(0.2)
+                    #section.top_margin=Inches(5)
+                    section.bottom_margin=Inches(1)
 
-                            # Add the paragraph for this tentcard
-                            AppendStyledParaToDoc(doc, f"{time} --  {room}\n{item.DisplayName}\n", style="TentcardPerson")
+                    # Add the paragraph for this tentcard
+                    AppendStyledParaToDoc(doc, f"{time} --  {room}\n{item.DisplayName}\n", style="TentcardPerson")
 
-                            # Set the margins for the big person's name for the front of the tentcard
-                            AppendStyledTextToPara(doc.paragraphs[-1], "\n", size=230)
-                            size=86
-                            if len(person) > 18:
-                                size=86*18/len(person)
-                            AppendStyledParaToDoc(doc, person, style="TentcardPerson")
+                    # Set the margins for the big person's name for the front of the tentcard
+                    AppendStyledTextToPara(doc.paragraphs[-1], "\n", size=230)
+                    size=86
+                    if len(person) > 18:
+                        size=86*18/len(person)
+                    AppendStyledParaToDoc(doc, person, style="TentcardPerson")
 
     doc.save(os.path.join(reportsdir, "Tentcards -- By Program Item.docx"))
 
@@ -909,21 +904,19 @@ def main():
         f.write(f'<p class="time">{time.NumericToTextTime()}</p>')
         f.write('</td></tr>\n')
         for room in gRoomNames:
-            # Now search for the program item and people list for this slot
-            for itemName, item in gItems.items():
-                if len(item.DisplayName) > 0:
-                    if item.Time == time and item.Room == room:
-                        f.write('<tr><td width="40">&nbsp;</td><td colspan="2">')   # Two columns, the first 40 pixes wide and empty
-                        f.write(f'<p><span class="room">{room}: </span><span class="item">{item.DisplayName}</span></p>')
-                        f.write('</td></tr>')
-                        if len(item.People) > 0:            # And the item's people list
-                            f.write('<tr><td width="40">&nbsp;</td><td width="40">&nbsp;</td><td width="600">')     # Three columns, the first two 40 pixes wide and empty; the third 600 pixels wide
-                            f.write(f'<p><span class="people">{UnicodeToHtml(item.DisplayPlist())}</span></p>')
-                            f.write('</td></tr>\n')
-                        if item.Precis is not None and item.Precis != "":
-                            f.write('<tr><td width="40">&nbsp;</td><td width="40">&nbsp;</td><td width="600">')     # Same
-                            f.write(f'<p><span class="precis">{UnicodeToHtml(ScrubPrecis(item.Precis))}</span></p>')
-                            f.write('</td></tr>\n')
+            item=ItemsByTimeAndRoom.get((time, room))
+            if item is not None and len(item.DisplayName) > 0:
+                f.write('<tr><td width="40">&nbsp;</td><td colspan="2">')   # Two columns, the first 40 pixes wide and empty
+                f.write(f'<p><span class="room">{room}: </span><span class="item">{item.DisplayName}</span></p>')
+                f.write('</td></tr>')
+                if len(item.People) > 0:            # And the item's people list
+                    f.write('<tr><td width="40">&nbsp;</td><td width="40">&nbsp;</td><td width="600">')     # Three columns, the first two 40 pixes wide and empty; the third 600 pixels wide
+                    f.write(f'<p><span class="people">{UnicodeToHtml(item.DisplayPlist())}</span></p>')
+                    f.write('</td></tr>\n')
+                if item.Precis is not None and item.Precis != "":
+                    f.write('<tr><td width="40">&nbsp;</td><td width="40">&nbsp;</td><td width="600">')     # Same
+                    f.write(f'<p><span class="precis">{UnicodeToHtml(ScrubPrecis(item.Precis))}</span></p>')
+                    f.write('</td></tr>\n')
     if f is not None:
         # Read and append the footer
         f.write('</table>\n')
@@ -948,16 +941,14 @@ def main():
             continue
         AppendStyledParaToDoc(doc, room, style="RoomName")  # Room name at top
         for time in gTimes:
-            for itemName in gItems.keys():
-                item=gItems[itemName]
-                if len(item.DisplayName) > 0:
-                    if item.Time == time and item.Room == room:
-                        inuse=True
-                        AppendStyledParaToDoc(doc, "")    # Skip a line
-                        para=doc.add_paragraph()
-                        AppendStyledTextToPara(para, f"{item.Time}:  ", charstyle="TimeOfItem")   # Add the time in bold followed by the item's title
-                        AppendStyledTextToPara(para, item.DisplayName, charstyle="NameOfItem")
-                        AppendStyledParaToDoc(doc, item.DisplayPlist(), style="Participants")        # Then, on a new line, the people list in italic
+            item=ItemsByTimeAndRoom.get((time, room))
+            if item is not None and len(item.DisplayName) > 0:
+                inuse=True
+                AppendStyledParaToDoc(doc, "")    # Skip a line
+                para=doc.add_paragraph()
+                AppendStyledTextToPara(para, f"{item.Time}:  ", charstyle="TimeOfItem")   # Add the time in bold followed by the item's title
+                AppendStyledTextToPara(para, item.DisplayName, charstyle="NameOfItem")
+                AppendStyledParaToDoc(doc, item.DisplayPlist(), style="Participants")        # Then, on a new line, the people list in italic
         fname=os.path.join(path, room.replace("/", "-")+".docx")
         SafeDelete(fname)
         if inuse:
