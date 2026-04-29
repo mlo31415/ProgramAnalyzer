@@ -295,7 +295,7 @@ def main():
     gTimes.sort()
     ItemsByTimeAndRoom: dict[tuple, Item]={(item.Time, item.Room): item for item in gItems.values()}
 
-    # Create a timestemp
+    # Create a timestamp
     timestamp=f"Generated: {datetime.now():%A %B %d, %Y at %H:%M:%S}\n\n"
 
     #***********************************************************************
