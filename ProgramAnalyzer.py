@@ -165,7 +165,7 @@ def main():
     # The rows for a particular time con be a single row or two rows, in which case the 2nd row contains the people scheduled on that item.
     # Rows that are blank or start with a # as the 1st character of column 0 are ignored
     # Compress out the ignored rows
-    cleanedSchedualCells: list[list[str]]=[]
+    cleanedScheduleCells: list[list[str]]=[]
     for row in scheduleCells:
         if len(row) == 0:  # Ignore empty rows
             continue
@@ -177,32 +177,32 @@ def main():
         for cell in row:
             if cell.strip().startswith("#"):
                 cell=""
-        cleanedSchedualCells.append(row)
+        cleanedScheduleCells.append(row)
 
-    cleanedSchedualCells=SquareUpMatrix(cleanedSchedualCells)
+    cleanedScheduleCells=SquareUpMatrix(cleanedScheduleCells)
 
     # Now compress out non-room and non-time columns
     # This will leave one time column on the left followed by all the room columns
     # We will drop columns even if they have something in them if they are not headed by a room name
-    # We work in the transposed cleanedSchedualCells, since it's much easier to delete rows than columns
-    temp=np.array(cleanedSchedualCells).T.tolist()  # Use numpy to transpose the array
-    cleanedSchedualCells=[temp[0]]    # Copy over the time row
+    # We work in the transposed cleanedScheduleCells, since it's much easier to delete rows than columns
+    temp=np.array(cleanedScheduleCells).T.tolist()  # Use numpy to transpose the array
+    cleanedScheduleCells=[temp[0]]    # Copy over the time row
     for row in temp[1:]:
         if len(row[0].strip()) > 0:     # Copy over any rows with text in the first cell
-            cleanedSchedualCells.append(row)
-    cleanedSchedualCells=np.array(cleanedSchedualCells).T.tolist()  # And transpose it back
+            cleanedScheduleCells.append(row)
+    cleanedScheduleCells=np.array(cleanedScheduleCells).T.tolist()  # And transpose it back
 
-    # Move the room names line out of cleanedSchedualCells and into gRoomNames
-    gRoomNames=[r.strip() for r in cleanedSchedualCells[0]] # Get the room names which are in the first row of the scheduleCells tab
+    # Move the room names line out of cleanedScheduleCells and into gRoomNames
+    gRoomNames=[r.strip() for r in cleanedScheduleCells[0]] # Get the room names which are in the first row of the scheduleCells tab
     if len(gRoomNames) == 0:
         LogError("Room names line (1st row of the schedule tab) is blank.")
         return
 
     # Copy the needed cells while casting them into strs
     new: list[list[str]]=[]
-    for row in cleanedSchedualCells[1:]:
+    for row in cleanedScheduleCells[1:]:
         new.append([str(x) for x in row])
-    cleanedSchedualCells=new
+    cleanedScheduleCells=new
 
 
     # Now we have just the schedule rows.  They are of two types:
@@ -210,9 +210,9 @@ def main():
     #       A people row which follows a time row and has column 0 empty. This may contain a list of people for each of the items
     # Process them.
     rowIndex=0
-    while rowIndex < len(cleanedSchedualCells):
+    while rowIndex < len(cleanedScheduleCells):
         # The first row must be a time/items row.
-        row=cleanedSchedualCells[rowIndex]
+        row=cleanedScheduleCells[rowIndex]
         if len(row[0]) == 0:     # Time/items rows have content in the 1st column. Is it a time/items row?
             LogError("Error reading schedule tab: The row below is a people row; we were expecting a time/items row:")
             LogError("       row="+" ".join(row))
@@ -223,8 +223,8 @@ def main():
 
         # Possibly followed by a people row
         rowSecond=None
-        if rowIndex < len(cleanedSchedualCells):
-            row=cleanedSchedualCells[rowIndex]   # Peek ahead to the next row
+        if rowIndex < len(cleanedScheduleCells):
+            row=cleanedScheduleCells[rowIndex]   # Peek ahead to the next row
             if len(row[0]) == 0:
                 # We found a people row
                 rowSecond=row
