@@ -202,11 +202,7 @@ class NumericTime:
 
     @property
     def Hour(self) -> float:
-        d, h, t, ispm=self.DayHourMinute
-        h+=t
-        if ispm:
-            h+=12
-        return h
+        return self._time
 
     @property
     def DayHourMinute(self) -> Tuple[int, int, float, bool]:
