@@ -93,7 +93,7 @@ class NumericTime:
         return f"{self.gDayList[self.Day]} {self.NumericToTextTime()}"
 
     def __repr__(self):
-        return self.__str__
+        return str(self)
 
     @classmethod
     def SetStartingDay(cls, day: str):
