@@ -740,7 +740,7 @@ def main():
         print("List of number of items each person is scheduled on\n", file=f)
         print(timestamp,  file=f)
         for personname, person in gPersons.items():
-            if PersonOfInterest(person, gSchedules):
+            if person.RespondedYes or PersonOfInterest(personname, gSchedules):
                 if personname in gSchedules.keys():
                     numItems=sum(not x.IsDummy for x in gSchedules[personname])
                     print(f"{personname}: {numItems}{'' if person.RespondedYes else ' not confirmed'}", file=f)
@@ -753,7 +753,7 @@ def main():
         writer=csv.writer(f, delimiter=',', quotechar='"')
         writer.writerow(["Number" , "Person"])
         for personname, person in gPersons.items():
-            if PersonOfInterest(person, gSchedules):
+            if person.RespondedYes or PersonOfInterest(personname, gSchedules):
                 numItems=sum(not x.IsDummy for x in gSchedules[personname])
                 writer.writerow([numItems, personname])
 
@@ -1009,18 +1009,8 @@ def ReadSheetFromXLSXTab(workbook: openpyxl.Workbook, parms: ParmDict, parmname:
     return trimmed
 
 
-# Take a Person and gSchedules and return True if that Person is scheduled on some item *or* is listed as Response='y'
-def PersonOfInterest(person: Person|str, gschedules: dict[str, list[ScheduleElement]]) -> bool:
-    if type(person) is Person:
-        # These checks only apply for a Person structure
-        if person.RespondedYes:
-            return True
-        if person.Fullname not in gschedules.keys():
-            return False
-        # The last test needs person to be a string
-        person=person.Fullname
-        
-    return sum(not x.IsDummy for x in gschedules[person]) > 0
+def PersonOfInterest(personname: str, gschedules: dict[str, list[ScheduleElement]]) -> bool:
+    return sum(not x.IsDummy for x in gschedules[personname]) > 0
 
 
 # Take a name string which may contain the (M) moderater flag and split it into isMon and the name by itself
