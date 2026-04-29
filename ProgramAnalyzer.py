@@ -1001,7 +1001,7 @@ def ReadSheetFromXLSXTab(workbook: openpyxl.Workbook, parms: ParmDict, parmname:
     tabname=GetParmFromParmDict(parms, parmname)
     if tabname not in workbook.sheetnames:
         LogError(f"ReadSheetFromTab: Can't locate {tabname} tab in spreadsheet")
-        raise (ValueError, f"No cells found in tab '{tabname}'")
+        raise ValueError(f"No cells found in tab '{tabname}'")
 
     rows=workbook[tabname].values
     rows=[list(row) for row in rows]        # Turn rows (supplied as tuples by values) into lists
