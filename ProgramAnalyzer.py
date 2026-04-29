@@ -8,6 +8,7 @@ import os.path
 import difflib
 from datetime import datetime
 import csv
+import html
 
 import docx
 from docx.shared import Inches
@@ -607,20 +608,20 @@ def main():
     SafeDelete(fname)
     with open(fname, "w") as xml:
         for personname in sortedAllParticipantList:
-            print(f"<person><full name>{personname}</full name>", file=xml)
-            print(f"<email>{gPersons[personname].Email}</email>", file=xml)
+            print(f"<person><full name>{html.escape(personname)}</full name>", file=xml)
+            print(f"<email>{html.escape(gPersons[personname].Email)}</email>", file=xml)
             if sum(not x.IsDummy for x in gSchedules[personname]) == 0:
-                print(f"<item><title>No Items Scheduled Yet</title><participants>{personname}</participants></item>", file=xml)
+                print(f"<item><title>No Items Scheduled Yet</title><participants>{html.escape(personname)}</participants></item>", file=xml)
             else:
                 for schedElement in gSchedules[personname]:
                     if len(schedElement.DisplayName) > 0:
-                        print(f"<item><title>{schedElement.Time}: {schedElement.DisplayName} [{schedElement.Room}]</title>", file=xml)
+                        print(f"<item><title>{html.escape(str(schedElement.Time))}: {html.escape(schedElement.DisplayName)} [{html.escape(schedElement.Room)}]</title>", file=xml)
                         item=gItems[schedElement.ItemName]
                         if schedElement.DisplayName in gItems and gItems[schedElement.DisplayName].Parms.Exists("equipment"):
-                            print(f"<equipment>{gItems[schedElement.DisplayName].Parms['equipment']}</equipment>", file=xml)
-                        print(f"<participants>{item.DisplayPlist()}</participants>", file=xml)
+                            print(f"<equipment>{html.escape(gItems[schedElement.DisplayName].Parms['equipment'])}</equipment>", file=xml)
+                        print(f"<participants>{html.escape(item.DisplayPlist())}</participants>", file=xml)
                         if item.Precis is not None and item.Precis != "":
-                            print(f"<precis>{item.Precis}</precis>", file=xml)
+                            print(f"<precis>{html.escape(item.Precis)}</precis>", file=xml)
                         print(f"</item>\n", file=xml)
             print("</person>", file=xml)
 
@@ -633,7 +634,7 @@ def main():
         for person in gPersons.values():
             xml.writelines(f"<person>")
             for key, val in person.Parms.items():
-                xml.writelines(f"<{key}>{val}</{key}>")
+                xml.writelines(f"<{key}>{html.escape(str(val))}</{key}>")
             xml.writelines("</person>\n")
 
 
