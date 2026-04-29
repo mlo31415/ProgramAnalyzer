@@ -380,7 +380,7 @@ def main():
                     count+=1
                     print(f"   {personname} has a email address containing a comma or a space", file=f)
                 else:
-                    pattern=r"^[a-zA-Z0-9_]+@[a-zA-Z0-9_]+\.[a-zA-Z0-9]+$"
+                    pattern=r"^[^@\s,]+@[^@\s,]+\.[^@\s,]+$"
                     m=re.match(pattern, person.Email)
                     if m is None:
                         count+=1
