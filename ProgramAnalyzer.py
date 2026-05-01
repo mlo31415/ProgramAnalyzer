@@ -172,10 +172,11 @@ def main():
             continue
         # Skip rows where the first character in the row is a "#"
         s="".join([r.strip() for r in row])
-        if s[0] == "#":
+        if len(s) > 0 and s[0] == "#":
             continue
-        # Cells which start with a "#" are treated as blank
-        row=["" if cell.strip().startswith("#") else cell for cell in row]
+        # Cells which start with a "#" are treated as blank (but not in the header row -- see column filtering below)
+        if cleanedScheduleCells:
+            row=["" if cell.strip().startswith("#") else cell for cell in row]
         cleanedScheduleCells.append(row)
 
     cleanedScheduleCells=SquareUpMatrix(cleanedScheduleCells)
@@ -184,11 +185,13 @@ def main():
     # This will leave one time column on the left followed by all the room columns
     # We will drop columns even if they have something in them if they are not headed by a room name
     # We work in the transposed cleanedScheduleCells, since it's much easier to delete rows than columns
-    temp=np.array(cleanedScheduleCells).T.tolist()  # Use numpy to transpose the array
+    temp=np.array(cleanedScheduleCells).T.tolist()  # Use numpy to transpose the array so we can temporarily deal with columns as rows, which is easier
     cleanedScheduleCells=[temp[0]]    # Copy over the time row
     for row in temp[1:]:
-        if len(row[0].strip()) > 0:     # Copy over any rows with text in the first cell
-            cleanedScheduleCells.append(row)
+        s="".join([r.strip() for r in row])     # String all the cells in the row (col) together
+        if len(s) > 0 and s[0] == "#":
+            continue
+        cleanedScheduleCells.append(row)
     cleanedScheduleCells=np.array(cleanedScheduleCells).T.tolist()  # And transpose it back
 
     # Move the room names line out of cleanedScheduleCells and into gRoomNames
