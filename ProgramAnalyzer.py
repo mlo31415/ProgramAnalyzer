@@ -889,7 +889,6 @@ def main():
                 except:
                     MessageLog("Can't read 'control-WebpageFooter.txt' (1)")
                 f.close()
-                f=None
             # And open the new file
             currentday=sortday
             fname=os.path.join(reportsdir, "Schedule - "+sortday+".html")
