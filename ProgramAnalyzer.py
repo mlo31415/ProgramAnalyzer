@@ -612,6 +612,9 @@ def main():
     with open(fname, "w") as xml:
         for personname in sortedAllParticipantList:
             print(f"<person><full name>{html.escape(personname)}</full name>", file=xml)
+            if gPersons[personname].Email is None:
+                LogError(f"Error: {personname} was found in the schedule, but is not in People")
+                continue
             print(f"<email>{html.escape(gPersons[personname].Email)}</email>", file=xml)
             if sum(not x.IsDummy for x in gSchedules[personname]) == 0:
                 print(f"<item><title>No Items Scheduled Yet</title><participants>{html.escape(personname)}</participants></item>", file=xml)
