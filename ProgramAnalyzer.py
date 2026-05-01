@@ -105,7 +105,7 @@ def main():
 
     # We're done with reading the spreadsheet. Now analyze the data.
     # ******
-    # Start reading ths spreadsheet and building the participants and items databases (dictionaries)
+    # Start reading the spreadsheet and building the participants and items databases (dictionaries)
     # Note that time and room are redundant and could be pulled out of the Items dictionary
     gItems: dict[str, Item]={}  # A dictionary keyed by item name containing an Item (time, room, people-list, moderator), where people-list is the list of people on the item
     gTimes: list[NumericTime]=[]  # A list of times found in the spreadsheet.
@@ -208,7 +208,7 @@ def main():
 
 
     # Now we have just the schedule rows.  They are of two types:
-    #       A time/items row, which contains a time in column 0 and may contain items in some or all of the rest of the columns
+    #       A time/items row which contains a time in column 0 and may contain items in some or all of the rest of the columns
     #       A people row which follows a time row and has column 0 empty. This may contain a list of people for each of the items
     # Process them.
     rowIndex=0
@@ -237,7 +237,7 @@ def main():
         if time not in gTimes:
             gTimes.append(time)  # We want to allow duplicate time rows, just-in-case
 
-        # Looking at the rest of the row, there may be text in one or more of the room columns which defines an item
+        # Looking at the rest of the row, there may be text in one or more of the room columns that defines an item
         for col, roomName in enumerate(gRoomNames):
             if col == 0:    # Time is in col 0, so we don't want to look at that
                 continue
@@ -282,7 +282,7 @@ def main():
 
     # Extract information from Items, etc., to be used to process schedules
     gSchedules: dict[str, list[ScheduleElement]]=defaultdict(list)  # A dictionary keyed by a person's name containing a ScheduleElement list
-    # ScheduleElement is the (time, room, item, moderator) tuples, of an item that that person is on.
+    # ScheduleElement is the (time, room, item, moderator) tuples of an item that that person is on.
 
     # Used so that the gSchedules XML contains entries for unscheduled people which will be used in ProgramMailAnalyzer to handle things like invitations
     for person in gPersons:
@@ -332,7 +332,7 @@ def main():
     # The first reports are all error reports or checking reports
 
 
-    # We have precois which include material in ((double parens).  This material goes into some reports, but not all.
+    # We have precois which include material in ((double parens)).  This material goes into some reports, but not all.
     # Strip the non-public stuff -- ((in double parens)) from one precis
     def ScrubPrecis(pre: str) -> str:
         return re.sub(r"\(\(.*\)\)", "", pre, flags=re.DOTALL)
@@ -427,7 +427,7 @@ def main():
         if t1.Bogus or t2.Bogus:
             return False
 
-        # Note that we want to ignore 0-length overlaps such as  (10.0, 1.0) not overlapping (11.0, x)
+        # Note that we want to ignore 0-length overlaps such as (10.0, 1.0) not overlapping (11.0, x)
         if t1 < t2:
             if t1+l1 > t2+epsilon:
                 return True    # t1+l1 is less than t2 or exceeds t2 by less than epsilon
@@ -545,7 +545,7 @@ def main():
 
     #*******
     # Print the Items with people by time report
-    # Get a list of the program participants (the keys of the  participants dictionary) sorted by the last token in the name (which will usually be the last name)
+    # Get a list of the program participants (the keys of the participants dictionary) sorted by the last token in the name (which will usually be the last name)
     fname=os.path.join(reportsdir, "Items with people by time.txt")
     SafeDelete(fname)
     with open(fname, "w") as f:
@@ -563,7 +563,7 @@ def main():
     #*******
     # Print the program participant's schedule report in .txt and docx formats.
     # We print the .txt file as we go along, while accumulating the docx file in docx.Document() object, and then output it at the end.
-    # Get a list of the program participants (the keys of the  participants dictionary) sorted by the last token in the name (which will usually be the last name)
+    # Get a list of the program participants (the keys of the participants dictionary) sorted by the last token in the name (which will usually be the last name)
 
     fname=os.path.join(reportsdir, "Program participant schedules.txt")
     SafeDelete(fname)
@@ -582,7 +582,7 @@ def main():
                         if item.Precis is not None and item.Precis != "":
                             print(f"Precis: {item.Precis}", file=f)
 
-    doc=docx.Document("Template - Program Participant Schedules.docx")  # The object holding the partly-created Word document
+    doc=docx.Document("Template - Program Participant Schedules.docx")  # The object holding the partly created Word document
     fname=os.path.join(reportsdir, "Program participant schedules.docx")
     SafeDelete(fname)
     for personname in sortedAllParticipantList:
@@ -606,7 +606,7 @@ def main():
 
     # *******
     # Print the program participant's schedule report
-    # Get a list of the program participants (the keys of the  participants dictionary) sorted by the last token in the name (which will usually be the last name)
+    # Get a list of the program participants (the keys of the participants dictionary) sorted by the last token in the name (which will usually be the last name)
     fname=os.path.join(reportsdir, "Program participant schedules.xml")
     SafeDelete(fname)
     with open(fname, "w") as xml:
@@ -795,7 +795,7 @@ def main():
                         print("            "+ScrubPrecis(item.Precis), file=f)
         f.close()
 
-    doc=docx.Document("Template - Pocket Program.docx")     # The object holding the partly-created Word document
+    doc=docx.Document("Template - Pocket Program.docx")     # The object holding the partly created Word document
     for time in gTimes:
         AppendStyledParaToDoc(doc, "")
         AppendStyledParaToDoc(doc, str(time), style="ParaTimeTitle2")
