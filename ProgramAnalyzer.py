@@ -992,6 +992,7 @@ def ReadSheetFromGoogleTab(sheet, spreadSheetID, parms: ParmDict, parmname: str)
     rows=[p for p in cells if len(p) > 0 and "".join(p)[0] != "#"]  # Drop empty lines and lines with a "#" alone in column 1.
     return rows
 
+
 def ReadSheetFromXLSXTab(workbook: openpyxl.Workbook, parms: ParmDict, parmname: str) -> list[list[str]]:
 
     # Convert the generic name of the tab to the specific name to be used this year
@@ -1008,6 +1009,7 @@ def ReadSheetFromXLSXTab(workbook: openpyxl.Workbook, parms: ParmDict, parmname:
     rows=[row for row in rows if "".join(row)[0] != "#"]            # Ignore rows where the 1st character is a "#"
     trimmedRows=[]      # Remove trailing empty cells (Probably not needed, but better duplicates what Googledocs returns.)
     for row in rows:
+        # Remove trailing empty cells
         while row[-1] == "":
             row.pop()
         trimmedRows.append(row)
